@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const auth = getAuth(app);
 
 document.querySelector('form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -21,21 +21,16 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value;
   
   try {
-    const adminDoc = await getDoc(doc(db, 'Admin', 'Admin1'));
-    
-    if (adminDoc.exists()) {
-      const data = adminDoc.data();
-      if (email === data.email && password === data.password) {
-        sessionStorage.setItem('adminLoggedIn', 'true');
-        alert('Login successful');
-      } else {
-        alert('Invalid email or password');
-      }
-    } else {
-      alert('Admin account not found');
-    }
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    sessionStorage.setItem('adminLoggedIn', 'true');
+    alert('Login successful!');
+    window.location.href = '../EventCRUD/EventCRUD.html';
   } catch (error) {
     console.error('Error:', error);
-    alert('Login failed');
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      alert('Invalid email or password');
+    } else {
+      alert('Login failed: ' + error.message);
+    }
   }
 });
