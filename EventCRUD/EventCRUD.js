@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -31,6 +31,7 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
   const eventDate = document.getElementById('eventDate').value;
   const eventTime = document.getElementById('eventTime').value;
   const eventLocation = document.getElementById('eventLocation').value;
+  const eventDuration = document.getElementById('eventDuration').value;
   
   try {
     await addDoc(collection(db, 'Events'), {
@@ -40,6 +41,7 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
       date: eventDate,
       time: eventTime,
       location: eventLocation,
+      duration: eventDuration ? parseInt(eventDuration) : null,
       status: 'active',
       createdAt: new Date()
     });
@@ -82,6 +84,7 @@ async function renderEvents(events) {
           <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
             <span>📅 ${event.date}</span>
             <span>⏰ ${event.time}</span>
+            ${event.duration ? `<span>⏱️ ${event.duration} hrs</span>` : ''}
             <span>📍 ${escapeHtml(event.location)}</span>
           </div>
           <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-medium ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
@@ -92,6 +95,10 @@ async function renderEvents(events) {
           <button onclick="window.manageAttendees('${event.id}')" 
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Manage Attendees
+          </button>
+          <button onclick="window.exportSingleEvent('${event.id}', '${escapeHtml(event.title)}')" 
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Export to Excel
           </button>
           <button onclick="window.closeEvent('${event.id}')" 
             class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
@@ -113,12 +120,58 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+window.exportSingleEvent = async (eventId, eventTitle) => {
+  try {
+    const eventDoc = await getDoc(doc(db, 'Events', eventId));
+    const attendeesSnapshot = await getDocs(collection(db, 'Events', eventId, 'Attendees'));
+    const attendees = attendeesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Status', 'Event Name', 'Certificate UUID'];
+    const rows = attendees.map(attendee => [
+      attendee.fullName || '',
+      attendee.course || '',
+      attendee.role || '',
+      attendee.dateAttended || '',
+      attendee.status || '',
+      eventTitle || '',
+      attendee.uuid || ''
+    ]);
+    
+    let csvContent = headers.join(',') + '\n';
+    rows.forEach(row => {
+      csvContent += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${eventTitle.replace(/\s+/g, '_')}_attendees.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting event:', error);
+    alert('Failed to export event');
+  }
+};
+
 window.deleteEvent = async (eventId) => {
   if (!confirm('Are you sure you want to delete this event?')) return;
   
   try {
+    const attendeesQuery = query(collection(db, 'Events', eventId, 'Attendees'));
+    const snapshot = await getDocs(attendeesQuery);
+    
+    const batch = writeBatch(db);
+    snapshot.forEach((docSnap) => {
+      batch.delete(docSnap.ref);
+    });
+    await batch.commit();
+    
     await deleteDoc(doc(db, 'Events', eventId));
-    alert('Event deleted');
+    alert('Event and all associated attendees deleted');
   } catch (error) {
     console.error('Error deleting event:', error);
     alert('Failed to delete event');

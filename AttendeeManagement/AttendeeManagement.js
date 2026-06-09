@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -26,6 +26,7 @@ const db = getFirestore(app);
 
 let currentEventId = localStorage.getItem('currentEventId');
 let currentEvent = null;
+let allAttendees = [];
 
 document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -43,9 +44,7 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   try {
     const certificateUuid = generateUUID();
     
-    await addDoc(collection(db, 'Certificates'), {
-      eventId: currentEventId,
-      eventTitle: currentEvent.title,
+    await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
       fullName: attendeeName,
       course: course,
       role: role,
@@ -123,7 +122,7 @@ function escapeHtml(text) {
 
 window.markCompleted = async (attendeeId) => {
   try {
-    await updateDoc(doc(db, 'Certificates', attendeeId), {
+    await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'completed'
     });
     console.log('Marked as completed');
@@ -135,7 +134,7 @@ window.markCompleted = async (attendeeId) => {
 
 window.markAbsent = async (attendeeId) => {
   try {
-    await updateDoc(doc(db, 'Certificates', attendeeId), {
+    await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'absent'
     });
     console.log('Marked as absent');
@@ -149,13 +148,48 @@ window.deleteAttendee = async (attendeeId) => {
   if (!confirm('Are you sure you want to delete this attendee?')) return;
   
   try {
-    await deleteDoc(doc(db, 'Certificates', attendeeId));
+    await deleteDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId));
     console.log('Attendee deleted');
   } catch (error) {
     console.error('Error deleting attendee:', error);
     alert('Failed to delete attendee');
   }
 };
+
+window.exportAttendeesToExcel = () => {
+  if (!currentEvent || allAttendees.length === 0) {
+    alert('No attendees to export');
+    return;
+  }
+  
+  const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Status', 'Event Name', 'Certificate UUID'];
+  const rows = allAttendees.map(attendee => [
+    attendee.fullName || '',
+    attendee.course || '',
+    attendee.role || '',
+    attendee.dateAttended || '',
+    attendee.status || '',
+    currentEvent.title || '',
+    attendee.uuid || ''
+  ]);
+  
+  let csvContent = headers.join(',') + '\n';
+  rows.forEach(row => {
+    csvContent += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
+  });
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentEvent.title.replace(/\s+/g, '_')}_attendees.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById('exportAttendeesBtn').addEventListener('click', window.exportAttendeesToExcel);
 
 onAuthStateChanged(auth, async (user) => {
   console.log('Auth state changed:', user ? 'logged in' : 'logged out');
@@ -183,14 +217,14 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
     
     console.log('Setting up listener for eventId:', currentEventId);
-    const q = query(collection(db, 'Certificates'), where('eventId', '==', currentEventId));
+    const q = query(collection(db, 'Events', currentEventId, 'Attendees'));
     onSnapshot(q, (snapshot) => {
       console.log('Snapshot received, docs:', snapshot.size);
-      const attendeesList = [];
+      allAttendees = [];
       snapshot.forEach((docSnap) => {
-        attendeesList.push({ id: docSnap.id, ...docSnap.data() });
+        allAttendees.push({ id: docSnap.id, ...docSnap.data() });
       });
-      renderAttendees(attendeesList);
+      renderAttendees(allAttendees);
     });
     
   } catch (error) {
