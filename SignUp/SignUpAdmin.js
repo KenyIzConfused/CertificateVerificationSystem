@@ -1,6 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { showAlert, showToast } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -25,7 +26,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   const confirmPassword = document.getElementById('confirmPassword').value;
   
   if (password !== confirmPassword) {
-    alert('Passwords do not match');
+    showAlert('Passwords do not match', { type: 'warning' });
     return;
   }
   
@@ -37,10 +38,10 @@ document.querySelector('form').addEventListener('submit', async (e) => {
       createdAt: new Date()
     });
     await sendEmailVerification(userCredential.user);
-    alert('Account created! Please verify your email.');
+    showToast('Account created! Please verify your email.');
     window.location.href = '../logIn/LogInAdmin.html';
   } catch (error) {
     console.error('Error:', error);
-    alert('Sign up failed: ' + error.message);
+    showAlert('Sign up failed: ' + error.message, { type: 'error' });
   }
 });

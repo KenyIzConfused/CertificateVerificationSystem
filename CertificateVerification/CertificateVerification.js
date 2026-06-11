@@ -1,5 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { showAlert, showToast } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -20,7 +21,7 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
   const uuid = document.getElementById('certificateUuid').value.trim();
   
   if (!uuid) {
-    alert('Please enter a certificate UUID');
+    showAlert('Please enter a certificate UUID', { type: 'warning' });
     return;
   }
   
@@ -51,11 +52,11 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
     }
     
     if (!found) {
-      alert('Certificate not found');
+      showAlert('Certificate not found', { type: 'error' });
       document.getElementById('result').classList.add('hidden');
     }
   } catch (error) {
     console.error('Error verifying certificate:', error);
-    alert('Failed to verify certificate');
+    showAlert('Failed to verify certificate', { type: 'error' });
   }
 });

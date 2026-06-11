@@ -1,6 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -18,49 +19,14 @@ const db = getFirestore(app);
 
 let currentUser = null;
 
-document.getElementById('createEventForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  if (!currentUser) {
-    alert('Please log in first');
-    return;
-  }
-  
-  const eventTitle = document.getElementById('eventTitle').value;
-  const eventDescription = document.getElementById('eventDescription').value;
-  const eventDate = document.getElementById('eventDate').value;
-  const eventTime = document.getElementById('eventTime').value;
-  const eventLocation = document.getElementById('eventLocation').value;
-  const eventDuration = document.getElementById('eventDuration').value;
-  
-  try {
-    await addDoc(collection(db, 'Events'), {
-      adminId: currentUser.uid,
-      title: eventTitle,
-      description: eventDescription,
-      date: eventDate,
-      time: eventTime,
-      location: eventLocation,
-      duration: eventDuration ? parseInt(eventDuration) : null,
-      status: 'active',
-      createdAt: new Date()
-    });
-    
-    alert('Event created successfully!');
-    document.getElementById('createEventForm').reset();
-    document.getElementById('createEventPanel').classList.add('hidden');
-  } catch (error) {
-    console.error('Error creating event:', error);
-    alert('Failed to create event');
-  }
-});
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
 
-document.getElementById('showCreateFormBtn').addEventListener('click', () => {
-  document.getElementById('createEventPanel').classList.remove('hidden');
-  document.getElementById('createEventPanel').scrollIntoView({ behavior: 'smooth' });
-});
-
-async function renderEvents(events) {
+window.handleEventUpdate = (events) => {
+  events.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
   const eventsStack = document.getElementById('eventsStack');
   const eventCount = document.getElementById('eventCount');
   const noEvents = document.getElementById('noEvents');
@@ -69,13 +35,13 @@ async function renderEvents(events) {
   
   if (events.length === 0) {
     noEvents.style.display = 'block';
+    eventsStack.innerHTML = '';
     return;
   }
   
   noEvents.style.display = 'none';
   
-      events.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
-      eventsStack.innerHTML = events.map(event => `
+  eventsStack.innerHTML = events.map(event => `
     <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
       <div class="flex justify-between items-start">
         <div class="flex-1">
@@ -92,6 +58,10 @@ async function renderEvents(events) {
           </span>
         </div>
         <div class="flex gap-2 ml-4">
+          <button onclick="window.editEvent('${event.id}')" 
+            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+            Edit
+          </button>
           <button onclick="window.manageAttendees('${event.id}')" 
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Manage Attendees
@@ -100,10 +70,12 @@ async function renderEvents(events) {
             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             Export to Excel
           </button>
+          ${event.status === 'active' ? `
           <button onclick="window.closeEvent('${event.id}')" 
             class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
             Close Event
           </button>
+          ` : ''}
           <button onclick="window.deleteEvent('${event.id}')" 
             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
             Delete
@@ -112,13 +84,66 @@ async function renderEvents(events) {
       </div>
     </div>
   `).join('');
-}
+};
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
+document.getElementById('createEventForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  if (!currentUser) {
+    showAlert('Please log in first', { type: 'warning' });
+    return;
+  }
+  
+  const eventTitle = document.getElementById('eventTitle').value;
+  const eventDescription = document.getElementById('eventDescription').value;
+  const eventDate = document.getElementById('eventDate').value;
+  const eventTime = document.getElementById('eventTime').value;
+  const eventLocation = document.getElementById('eventLocation').value;
+  const eventDuration = document.getElementById('eventDuration').value;
+  
+  const editId = e.target.dataset.editId;
+  
+  try {
+    if (editId) {
+      await updateDoc(doc(db, 'Events', editId), {
+        title: eventTitle,
+        description: eventDescription,
+        date: eventDate,
+        time: eventTime,
+        location: eventLocation,
+        duration: eventDuration ? parseInt(eventDuration) : null
+      });
+      showToast('Event updated successfully!');
+      delete e.target.dataset.editId;
+      document.getElementById('createEventPanel').classList.add('hidden');
+      document.querySelector('#createEventForm button[type="submit"]').textContent = 'Create Event';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+    } else {
+      await addDoc(collection(db, 'Events'), {
+        adminId: currentUser.uid,
+        title: eventTitle,
+        description: eventDescription,
+        date: eventDate,
+        time: eventTime,
+        location: eventLocation,
+        duration: eventDuration ? parseInt(eventDuration) : null,
+        status: 'active',
+        createdAt: new Date()
+      });
+      showToast('Event created successfully!');
+      document.getElementById('createEventForm').reset();
+      document.getElementById('createEventPanel').classList.add('hidden');
+    }
+  } catch (error) {
+    console.error('Error saving event:', error);
+    showAlert(editId ? 'Failed to update event' : 'Failed to create event', { type: 'error' });
+  }
+});
+
+document.getElementById('showCreateFormBtn').addEventListener('click', () => {
+  document.getElementById('createEventPanel').classList.remove('hidden');
+  document.getElementById('createEventPanel').scrollIntoView({ behavior: 'smooth' });
+});
 
 window.exportSingleEvent = async (eventId, eventTitle) => {
   try {
@@ -153,12 +178,13 @@ window.exportSingleEvent = async (eventId, eventTitle) => {
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Error exporting event:', error);
-    alert('Failed to export event');
+    showAlert('Failed to export event', { type: 'error' });
   }
 };
 
 window.deleteEvent = async (eventId) => {
-  if (!confirm('Are you sure you want to delete this event?')) return;
+  const confirmed = await showConfirm('Are you sure you want to delete this event?');
+  if (confirmed !== 1) return;
   
   try {
     const attendeesQuery = query(collection(db, 'Events', eventId, 'Attendees'));
@@ -171,31 +197,69 @@ window.deleteEvent = async (eventId) => {
     await batch.commit();
     
     await deleteDoc(doc(db, 'Events', eventId));
-    alert('Event and all associated attendees deleted');
+    showToast('Event and all associated attendees deleted');
   } catch (error) {
     console.error('Error deleting event:', error);
-    alert('Failed to delete event');
+    showAlert('Failed to delete event', { type: 'error' });
   }
 };
 
 window.closeEvent = async (eventId) => {
-  if (!confirm('Are you sure you want to close this event? This will mark it as completed.')) return;
+  const confirmed = await showConfirm('Are you sure you want to close this event? This will mark it as completed.');
+  if (confirmed !== 1) return;
   
   try {
     await updateDoc(doc(db, 'Events', eventId), {
       status: 'completed',
       closedAt: new Date()
     });
-    alert('Event closed successfully');
+    showToast('Event closed successfully');
   } catch (error) {
     console.error('Error closing event:', error);
-    alert('Failed to close event');
+    showAlert('Failed to close event', { type: 'error' });
   }
 };
 
 window.manageAttendees = (eventId) => {
   localStorage.setItem('currentEventId', eventId);
   window.location.href = '../AttendeeManagement/AttendeeManagement.html';
+};
+
+window.editEvent = async (eventId) => {
+  const eventDoc = await getDoc(doc(db, 'Events', eventId));
+  if (!eventDoc.exists()) {
+    showAlert('Event not found', { type: 'error' });
+    return;
+  }
+  const event = eventDoc.data();
+  
+  const panel = document.getElementById('createEventPanel');
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({ behavior: 'smooth' });
+  
+  document.getElementById('eventTitle').value = event.title || '';
+  document.getElementById('eventDescription').value = event.description || '';
+  document.getElementById('eventDate').value = event.date || '';
+  document.getElementById('eventTime').value = event.time || '';
+  document.getElementById('eventLocation').value = event.location || '';
+  document.getElementById('eventDuration').value = event.duration || '';
+  
+  const form = document.getElementById('createEventForm');
+  form.dataset.editId = eventId;
+  
+  const submitBtn = form.querySelector('button[type="submit"]');
+  submitBtn.textContent = 'Update Event';
+  
+  document.getElementById('cancelEditBtn').classList.remove('hidden');
+};
+
+window.cancelEdit = () => {
+  const form = document.getElementById('createEventForm');
+  delete form.dataset.editId;
+  form.reset();
+  document.getElementById('createEventPanel').classList.add('hidden');
+  form.querySelector('button[type="submit"]').textContent = 'Create Event';
+  document.getElementById('cancelEditBtn').classList.add('hidden');
 };
 
 onAuthStateChanged(auth, async (user) => {
@@ -212,7 +276,7 @@ onAuthStateChanged(auth, async (user) => {
       snapshot.forEach((doc) => {
         events.push({ id: doc.id, ...doc.data() });
       });
-      renderEvents(events);
+      window.handleEventUpdate(events);
     });
   } else {
     window.location.href = '../logIn/LogInAdmin.html';
