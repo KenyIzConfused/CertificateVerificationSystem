@@ -253,6 +253,48 @@ window.editEvent = async (eventId) => {
   document.getElementById('cancelEditBtn').classList.remove('hidden');
 };
 
+window.generateAccomplishmentReport = async () => {
+  try {
+    const eventsSnapshot = await getDocs(collection(db, 'Events'));
+    const events = [];
+    eventsSnapshot.forEach((doc) => {
+      events.push({ id: doc.id, ...doc.data() });
+    });
+
+    if (events.length === 0) {
+      showAlert('No events to generate report', { type: 'warning' });
+      return;
+    }
+
+    const lines = ['Accomplishment Report', `Generated: ${new Date().toLocaleString()}`, ''];
+    for (const event of events) {
+      const attendeesSnapshot = await getDocs(collection(db, 'Events', event.id, 'Attendees'));
+      lines.push(`Title: ${event.title || ''}`);
+      lines.push(`Description: ${event.description || ''}`);
+      lines.push(`Date: ${event.date || ''}`);
+      lines.push(`Time: ${event.time || ''}`);
+      lines.push(`Venue: ${event.location || ''}`);
+      lines.push(`Duration: ${event.duration ? event.duration + ' hours' : ''}`);
+      lines.push(`Participants: ${attendeesSnapshot.size}`);
+      lines.push('');
+    }
+
+    const blob = new Blob([lines.join('\n')], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Accomplishment_Report.doc';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Accomplishment report generated', 'success');
+  } catch (error) {
+    console.error('Error generating report:', error);
+    showAlert('Failed to generate report', { type: 'error' });
+  }
+};
+
 window.cancelEdit = () => {
   const form = document.getElementById('createEventForm');
   delete form.dataset.editId;

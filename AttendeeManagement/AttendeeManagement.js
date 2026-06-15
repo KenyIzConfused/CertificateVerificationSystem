@@ -38,6 +38,7 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   }
   
   const attendeeName = document.getElementById('attendeeName').value;
+  const idNumber = document.getElementById('idNumber').value;
   const course = document.getElementById('course').value;
   const role = document.getElementById('role').value;
   const dateAttended = document.getElementById('dateAttended').value;
@@ -48,6 +49,7 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     
     await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
       fullName: attendeeName,
+      idNumber: idNumber,
       course: course,
       role: role,
       dateAttended: dateAttended,
@@ -86,6 +88,7 @@ function filterAttendees(attendeesList, searchTerm) {
   const term = searchTerm.toLowerCase();
   return attendeesList.filter(a => 
     (a.fullName || '').toLowerCase().includes(term) ||
+    (a.idNumber || '').toLowerCase().includes(term) ||
     (a.course || '').toLowerCase().includes(term) ||
     (a.role || '').toLowerCase().includes(term) ||
     (a.dateAttended || '').toLowerCase().includes(term) ||
@@ -110,6 +113,7 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
       <td class="py-4 px-4">
         <span class="font-medium text-gray-800">${escapeHtml(attendee.fullName)}</span>
       </td>
+      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.idNumber || '')}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.course)}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.role)}</td>
       <td class="py-4 px-4 text-gray-600">${attendee.dateAttended}</td>
@@ -331,53 +335,63 @@ window.exportAttendeesToExcel = () => {
   const morningAttendees = allAttendees.filter(a => a.session === 'morning');
   const afternoonAttendees = allAttendees.filter(a => a.session === 'afternoon');
   
-  const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Session', 'Status', 'Certificate UUID'];
+  const headers = ['Attendee Name', 'ID Number', 'Course', 'Role', 'Date Attended', 'Status', 'Certificate UUID'];
   
   let csvContent = `Event: ${currentEvent.title}\n\n`;
   
   csvContent += '=== MORNING SESSION ===\n';
-  csvContent += `Total: ${morningAttendees.length}\n`;
-  csvContent += `Present: ${morningAttendees.filter(a => a.status === 'present').length}\n`;
-  csvContent += `Late: ${morningAttendees.filter(a => a.status === 'late').length}\n`;
-  csvContent += `Absent: ${morningAttendees.filter(a => a.status === 'absent').length}\n\n`;
   
-  if (morningAttendees.length > 0) {
+  const sortedMorning = [...morningAttendees].sort((a, b) => a.course?.localeCompare(b.course) || a.fullName?.localeCompare(b.fullName));
+  const morningByCourse = {};
+  sortedMorning.forEach(a => {
+    const course = a.course || 'Unknown';
+    if (!morningByCourse[course]) morningByCourse[course] = [];
+    morningByCourse[course].push(a);
+  });
+  
+  Object.keys(morningByCourse).sort().forEach(course => {
+    csvContent += `\n--- ${course} ---\n`;
     csvContent += headers.join(',') + '\n';
-    morningAttendees.forEach(attendee => {
+    morningByCourse[course].forEach(attendee => {
       const row = [
         attendee.fullName || '',
+        attendee.idNumber || '',
         attendee.course || '',
         attendee.role || '',
         attendee.dateAttended || '',
-        attendee.session || '',
         attendee.status || '',
         attendee.uuid || ''
       ];
       csvContent += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
     });
-  }
+  });
   
   csvContent += '\n=== AFTERNOON SESSION ===\n';
-  csvContent += `Total: ${afternoonAttendees.length}\n`;
-  csvContent += `Present: ${afternoonAttendees.filter(a => a.status === 'present').length}\n`;
-  csvContent += `Late: ${afternoonAttendees.filter(a => a.status === 'late').length}\n`;
-  csvContent += `Absent: ${afternoonAttendees.filter(a => a.status === 'absent').length}\n\n`;
   
-  if (afternoonAttendees.length > 0) {
+  const sortedAfternoon = [...afternoonAttendees].sort((a, b) => a.course?.localeCompare(b.course) || a.fullName?.localeCompare(b.fullName));
+  const afternoonByCourse = {};
+  sortedAfternoon.forEach(a => {
+    const course = a.course || 'Unknown';
+    if (!afternoonByCourse[course]) afternoonByCourse[course] = [];
+    afternoonByCourse[course].push(a);
+  });
+  
+  Object.keys(afternoonByCourse).sort().forEach(course => {
+    csvContent += `\n--- ${course} ---\n`;
     csvContent += headers.join(',') + '\n';
-    afternoonAttendees.forEach(attendee => {
+    afternoonByCourse[course].forEach(attendee => {
       const row = [
         attendee.fullName || '',
+        attendee.idNumber || '',
         attendee.course || '',
         attendee.role || '',
         attendee.dateAttended || '',
-        attendee.session || '',
         attendee.status || '',
         attendee.uuid || ''
       ];
       csvContent += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
     });
-  }
+  });
   
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
