@@ -20,7 +20,9 @@
   "homepage": "https://github.com/KenyIzConfused/CertificateVerificationSystem#readme",
   "dependencies": {
     "docxtemplater": "^3.68.7",
+    "exceljs": "^4.4.0",
     "pizzip": "^3.2.0",
+    "qrcode": "^1.5.4",
     "uui": "^1.0.7"
   }
 }

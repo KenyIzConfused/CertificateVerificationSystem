@@ -3,12 +3,31 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
 
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+// Generate a unique 6-character uppercase alphanumeric certificate ID
+function generateShortId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = '';
+  for (let i = 0; i < 6; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
+
+// Check if a generated certificate ID already exists among attendees
+async function isIdUnique(attendeesList, candidateId) {
+  return !attendeesList.some(a => a.certificateId === candidateId);
+}
+
+// Keep generating IDs until a unique one is found
+async function generateUniqueCertificateId(attendeesList) {
+  let id = generateShortId();
+  let attempts = 0;
+  const maxAttempts = 50;
+  while (!(await isIdUnique(attendeesList, id)) && attempts < maxAttempts) {
+    id = generateShortId();
+    attempts++;
+  }
+  return id;
 }
 
 const firebaseConfig = {
@@ -44,18 +63,30 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   const session = document.getElementById('session').value;
   
   try {
-    const certificateUuid = generateUUID();
-    
-    await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
+    const certificateId = await generateUniqueCertificateId(allAttendees);
+    const docRef = await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
       fullName: attendeeName,
       course: course,
       role: role,
       dateAttended: dateAttended,
       session: session,
       status: 'present',
-      uuid: certificateUuid,
+      certificateId: certificateId,
       createdAt: serverTimestamp()
     });
+    
+    const newAttendee = {
+      id: docRef.id,
+      fullName: attendeeName,
+      course: course,
+      role: role,
+      dateAttended: dateAttended,
+      session: session,
+      status: 'present',
+      certificateId: certificateId
+    };
+    allAttendees.push(newAttendee);
+    renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
     
     console.log('Attendee added successfully');
     document.getElementById('addAttendeeForm').reset();
@@ -89,7 +120,8 @@ function filterAttendees(attendeesList, searchTerm) {
     (a.course || '').toLowerCase().includes(term) ||
     (a.role || '').toLowerCase().includes(term) ||
     (a.dateAttended || '').toLowerCase().includes(term) ||
-    (a.status || '').toLowerCase().includes(term)
+    (a.status || '').toLowerCase().includes(term) ||
+    (a.certificateId || '').toLowerCase().includes(term)
   );
 }
 
@@ -116,6 +148,11 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
       <td class="py-4 px-4">
         <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${attendee.status === 'present' ? 'bg-green-100 text-green-800' : attendee.status === 'late' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}">
           ${attendee.status.toUpperCase()}
+        </span>
+      </td>
+      <td class="py-4 px-4">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          ${escapeHtml(attendee.certificateId || '')}
         </span>
       </td>
       <td class="py-4 px-4">
@@ -155,6 +192,8 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+
 
 window.markPresent = async (attendeeId) => {
   try {
@@ -277,7 +316,7 @@ window.copyMorningToAfternoon = async () => {
         dateAttended: attendee.dateAttended,
         session: 'afternoon',
         status: 'present',
-        uuid: generateUUID(),
+        certificateId: generateShortId(),
         createdAt: serverTimestamp()
       });
       batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
@@ -322,72 +361,106 @@ window.lockAfternoon = async () => {
   }
 };
 
-window.exportAttendeesToExcel = () => {
+// Build and export attendance data to a real .xlsx workbook using ExcelJS
+window.exportAttendeesToExcel = async () => {
   if (!currentEvent || allAttendees.length === 0) {
     showAlert('No attendees to export', { type: 'warning' });
     return;
   }
-  
+
+  // Segregate attendees by session
   const morningAttendees = allAttendees.filter(a => a.session === 'morning');
   const afternoonAttendees = allAttendees.filter(a => a.session === 'afternoon');
-  
-  const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Session', 'Status', 'Certificate UUID'];
-  
-  let csvContent = `Event: ${currentEvent.title}\n\n`;
-  
-  csvContent += '=== MORNING SESSION ===\n';
-  csvContent += `Total: ${morningAttendees.length}\n`;
-  csvContent += `Present: ${morningAttendees.filter(a => a.status === 'present').length}\n`;
-  csvContent += `Late: ${morningAttendees.filter(a => a.status === 'late').length}\n`;
-  csvContent += `Absent: ${morningAttendees.filter(a => a.status === 'absent').length}\n\n`;
-  
-  if (morningAttendees.length > 0) {
-    csvContent += headers.join(',') + '\n';
-    morningAttendees.forEach(attendee => {
-      const row = [
-        attendee.fullName || '',
-        attendee.course || '',
-        attendee.role || '',
-        attendee.dateAttended || '',
-        attendee.session || '',
-        attendee.status || '',
-        attendee.uuid || ''
+
+  // Derive headers required by the spec
+  const headers = [
+    'Attendee Name',
+    'Course',
+    'Role',
+    'Date Attended',
+    'Session',
+    'Status',
+    'Certificate ID'
+  ];
+
+  // Workbook + worksheet header styling constants
+  const headerFillColor = 'FF92D050';
+  const headerFontColor = 'FFFFFFFF';
+  const headerFontBold = true;
+
+  try {
+    const workbook = ExcelJS.Workbook ? new ExcelJS.Workbook() : new ExcelJS.xlsx.Workbook();
+    workbook.creator = 'Information Unit';
+    workbook.created = new Date();
+
+    // Helper: build a worksheet for a given session
+    const buildWorksheet = (sessionName, attendeesList) => {
+      const worksheet = workbook.addWorksheet(sessionName);
+
+      // Columns definition: name and width only
+      worksheet.columns = [
+        { header: 'Attendee Name', key: 'fullName', width: 28 },
+        { header: 'Course', key: 'course', width: 18 },
+        { header: 'Role', key: 'role', width: 18 },
+        { header: 'Date Attended', key: 'dateAttended', width: 18 },
+        { header: 'Session', key: 'session', width: 14 },
+        { header: 'Status', key: 'status', width: 14 },
+        { header: 'Certificate ID', key: 'certificateId', width: 18 }
       ];
-      csvContent += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
+
+      // Row 1 = headers, apply styling
+      const headerRow = worksheet.getRow(1);
+      headerRow.values = headers;
+      headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+      headerRow.font = { bold: headerFontBold, color: { argb: headerFontColor } };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: headerFillColor }
+      };
+      headerRow.height = 22;
+
+      // Populate data rows
+      attendeesList.forEach((attendee, index) => {
+        const row = worksheet.getRow(index + 2);
+        row.height = 18;
+
+        row.values = [
+          attendee.fullName || '',
+          attendee.course || '',
+          attendee.role || '',
+          attendee.dateAttended || '',
+          attendee.session || '',
+          attendee.status || '',
+          attendee.certificateId || ''
+        ];
+      });
+
+      // Freeze header for easier navigation
+      worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+    };
+
+    // Build both session worksheets
+    buildWorksheet('Morning Session', morningAttendees);
+    buildWorksheet('Afternoon Session', afternoonAttendees);
+
+    // Trigger browser download
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
     });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${(currentEvent.title || 'event').replace(/\s+/g, '_')}_attendance.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    showAlert('Failed to export to Excel', { type: 'error' });
   }
-  
-  csvContent += '\n=== AFTERNOON SESSION ===\n';
-  csvContent += `Total: ${afternoonAttendees.length}\n`;
-  csvContent += `Present: ${afternoonAttendees.filter(a => a.status === 'present').length}\n`;
-  csvContent += `Late: ${afternoonAttendees.filter(a => a.status === 'late').length}\n`;
-  csvContent += `Absent: ${afternoonAttendees.filter(a => a.status === 'absent').length}\n\n`;
-  
-  if (afternoonAttendees.length > 0) {
-    csvContent += headers.join(',') + '\n';
-    afternoonAttendees.forEach(attendee => {
-      const row = [
-        attendee.fullName || '',
-        attendee.course || '',
-        attendee.role || '',
-        attendee.dateAttended || '',
-        attendee.session || '',
-        attendee.status || '',
-        attendee.uuid || ''
-      ];
-      csvContent += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
-    });
-  }
-  
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${currentEvent.title.replace(/\s+/g, '_')}_attendance_report.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 };
 
 document.getElementById('exportAttendeesBtn').addEventListener('click', window.exportAttendeesToExcel);

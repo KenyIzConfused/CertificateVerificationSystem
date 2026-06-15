@@ -18,10 +18,11 @@ const db = getFirestore(app);
 document.getElementById('verifyForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const uuid = document.getElementById('certificateUuid').value.trim();
+  // Get input and normalize to uppercase for case-insensitive search
+  const certificateId = document.getElementById('certificateId').value.trim().toUpperCase();
   
-  if (!uuid) {
-    showAlert('Please enter a certificate UUID', { type: 'warning' });
+  if (!certificateId) {
+    showAlert('Please enter a certificate ID', { type: 'warning' });
     return;
   }
   
@@ -30,30 +31,37 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
     let found = false;
     
     for (const eventDoc of eventsSnapshot.docs) {
+      // Query using case-insensitive comparison by fetching all and filtering
       const attendeesQuery = query(
-        collection(db, 'Events', eventDoc.id, 'Attendees'),
-        where('uuid', '==', uuid)
+        collection(db, 'Events', eventDoc.id, 'Attendees')
       );
       const attendeesSnapshot = await getDocs(attendeesQuery);
       
-      if (!attendeesSnapshot.empty) {
-        const attendee = attendeesSnapshot.docs[0].data();
-        document.getElementById('certName').textContent = attendee.fullName || '';
-        document.getElementById('certEvent').textContent = eventDoc.data().title || '';
-        document.getElementById('certCourse').textContent = attendee.course || '';
-        document.getElementById('certRole').textContent = attendee.role || '';
-        document.getElementById('certDate').textContent = attendee.dateAttended || '';
-        document.getElementById('certUuid').textContent = attendee.uuid || '';
-        document.getElementById('verifyForm').classList.add('hidden');
-        document.getElementById('result').classList.remove('hidden');
-        found = true;
-        break;
+      for (const docSnap of attendeesSnapshot.docs) {
+        const attendee = docSnap.data();
+        if ((attendee.certificateId || '').toUpperCase() === certificateId) {
+          document.getElementById('certName').textContent = attendee.fullName || '';
+          document.getElementById('certEvent').textContent = eventDoc.data().title || '';
+          document.getElementById('certCourse').textContent = attendee.course || '';
+          document.getElementById('certRole').textContent = attendee.role || '';
+          document.getElementById('certDate').textContent = attendee.dateAttended || '';
+          document.getElementById('certSession').textContent = attendee.session === 'morning' ? 'Morning Session' : 'Afternoon Session';
+          document.getElementById('certStatus').textContent = attendee.status ? attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1) : '';
+          document.getElementById('certId').textContent = attendee.certificateId || '';
+          document.getElementById('verifyForm').classList.add('hidden');
+          document.getElementById('result').classList.remove('hidden');
+          found = true;
+          break;
+        }
       }
+      
+      if (found) break;
     }
     
     if (!found) {
-      showAlert('Certificate not found', { type: 'error' });
+      showAlert('Certificate Not Found', { type: 'error' });
       document.getElementById('result').classList.add('hidden');
+      document.getElementById('verifyForm').classList.remove('hidden');
     }
   } catch (error) {
     console.error('Error verifying certificate:', error);
