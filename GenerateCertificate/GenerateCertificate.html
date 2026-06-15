@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Certificates</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'green-primary': '#22c55e',
+                        'green-dark': '#16a34a',
+                        'green-light': '#86efac'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-green-100 min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">Generate Certificates</h1>
+                <p id="eventInfo" class="text-gray-600 mt-1"></p>
+            </div>
+            <div>
+                <button id="printAllBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">Print All</button>
+                <button id="exportExcelBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium ml-2">Export to Excel</button>
+            </div>
+        </header>
+        <div id="certificatesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        </div>
+    </div>
+    <script type="module">
+        import '../PopupSystem.js';
+        import './GenerateCertificate.js';
+    </script>
+</body>
+</html>

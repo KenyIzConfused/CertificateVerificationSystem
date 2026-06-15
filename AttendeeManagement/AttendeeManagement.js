@@ -57,16 +57,24 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   }
   
   const attendeeName = document.getElementById('attendeeName').value;
+  const idNumber = document.getElementById('idNumber').value;
   const course = document.getElementById('course').value;
   const role = document.getElementById('role').value;
   const dateAttended = document.getElementById('dateAttended').value;
   const session = document.getElementById('session').value;
+  const year = document.getElementById('year').value;
+  const section = document.getElementById('section').value;
+  const major = document.getElementById('major').value;
   
   try {
     const certificateId = await generateUniqueCertificateId(allAttendees);
     const docRef = await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
       fullName: attendeeName,
+      idNumber: idNumber,
       course: course,
+      year: year,
+      section: section,
+      major: major,
       role: role,
       dateAttended: dateAttended,
       session: session,
@@ -78,7 +86,11 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     const newAttendee = {
       id: docRef.id,
       fullName: attendeeName,
+      idNumber: idNumber,
       course: course,
+      year: year,
+      section: section,
+      major: major,
       role: role,
       dateAttended: dateAttended,
       session: session,
@@ -117,7 +129,11 @@ function filterAttendees(attendeesList, searchTerm) {
   const term = searchTerm.toLowerCase();
   return attendeesList.filter(a => 
     (a.fullName || '').toLowerCase().includes(term) ||
+    (a.idNumber || '').toLowerCase().includes(term) ||
     (a.course || '').toLowerCase().includes(term) ||
+    (a.year || '').toLowerCase().includes(term) ||
+    (a.section || '').toLowerCase().includes(term) ||
+    (a.major || '').toLowerCase().includes(term) ||
     (a.role || '').toLowerCase().includes(term) ||
     (a.dateAttended || '').toLowerCase().includes(term) ||
     (a.status || '').toLowerCase().includes(term) ||
@@ -142,7 +158,11 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
       <td class="py-4 px-4">
         <span class="font-medium text-gray-800">${escapeHtml(attendee.fullName)}</span>
       </td>
+      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.idNumber)}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.course)}</td>
+      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.year)}</td>
+      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.section)}</td>
+      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.major)}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.role)}</td>
       <td class="py-4 px-4 text-gray-600">${attendee.dateAttended}</td>
       <td class="py-4 px-4">
@@ -237,7 +257,11 @@ window.editAttendee = async (attendeeId) => {
   
   document.getElementById('editAttendeeId').value = attendee.id;
   document.getElementById('editName').value = attendee.fullName || '';
+  document.getElementById('editIdNumber').value = attendee.idNumber || '';
   document.getElementById('editCourse').value = attendee.course || '';
+  document.getElementById('editYear').value = attendee.year || '';
+  document.getElementById('editSection').value = attendee.section || '';
+  document.getElementById('editMajor').value = attendee.major || '';
   document.getElementById('editRole').value = attendee.role || '';
   document.getElementById('editDateAttended').value = attendee.dateAttended || '';
   document.getElementById('editSession').value = attendee.session || 'morning';
@@ -257,7 +281,11 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   
   const attendeeId = document.getElementById('editAttendeeId').value;
   const fullName = document.getElementById('editName').value;
+  const idNumber = document.getElementById('editIdNumber').value;
   const course = document.getElementById('editCourse').value;
+  const year = document.getElementById('editYear').value;
+  const section = document.getElementById('editSection').value;
+  const major = document.getElementById('editMajor').value;
   const role = document.getElementById('editRole').value;
   const dateAttended = document.getElementById('editDateAttended').value;
   const session = document.getElementById('editSession').value;
@@ -266,7 +294,11 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       fullName,
+      idNumber,
       course,
+      year,
+      section,
+      major,
       role,
       dateAttended,
       session,
@@ -307,22 +339,26 @@ window.copyMorningToAfternoon = async () => {
   try {
     const batch = writeBatch(db);
     
-    morningAttendees.forEach(attendee => {
-      const ref = doc(collection(db, 'Events', currentEventId, 'Attendees'));
-      batch.set(ref, {
-        fullName: attendee.fullName,
-        course: attendee.course,
-        role: attendee.role,
-        dateAttended: attendee.dateAttended,
-        session: 'afternoon',
-        status: 'present',
-        certificateId: generateShortId(),
-        createdAt: serverTimestamp()
-      });
-      batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
-        locked: true
-      });
-    });
+morningAttendees.forEach(attendee => {
+       const ref = doc(collection(db, 'Events', currentEventId, 'Attendees'));
+       batch.set(ref, {
+         fullName: attendee.fullName,
+         idNumber: attendee.idNumber,
+         year: attendee.year,
+         section: attendee.section,
+         major: attendee.major,
+         course: attendee.course,
+         role: attendee.role,
+         dateAttended: attendee.dateAttended,
+         session: 'afternoon',
+         status: 'present',
+         certificateId: generateShortId(),
+         createdAt: serverTimestamp()
+       });
+       batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
+         locked: true
+       });
+     });
     
     await batch.commit();
     showToast(`Successfully saved ${morningAttendees.length} attendee(s) to afternoon`, 'success');
@@ -375,7 +411,8 @@ window.exportAttendeesToExcel = async () => {
   // Derive headers required by the spec
   const headers = [
     'Attendee Name',
-    'Course',
+    'ID Number',
+    'Course, Year, Section, Major',
     'Role',
     'Date Attended',
     'Session',
@@ -400,7 +437,8 @@ window.exportAttendeesToExcel = async () => {
       // Columns definition: name and width only
       worksheet.columns = [
         { header: 'Attendee Name', key: 'fullName', width: 28 },
-        { header: 'Course', key: 'course', width: 18 },
+        { header: 'ID Number', key: 'idNumber', width: 18 },
+        { header: 'Course, Year, Section, Major', key: 'academicInfo', width: 45 },
         { header: 'Role', key: 'role', width: 18 },
         { header: 'Date Attended', key: 'dateAttended', width: 18 },
         { header: 'Session', key: 'session', width: 14 },
@@ -427,7 +465,8 @@ window.exportAttendeesToExcel = async () => {
 
         row.values = [
           attendee.fullName || '',
-          attendee.course || '',
+          attendee.idNumber || '',
+          `${attendee.course || ''} ${attendee.year || ''} ${attendee.section || ''} ${attendee.major || ''}`.trim(),
           attendee.role || '',
           attendee.dateAttended || '',
           attendee.session || '',

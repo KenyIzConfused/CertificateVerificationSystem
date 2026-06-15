@@ -62,6 +62,10 @@ window.handleEventUpdate = (events) => {
             class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
             Edit
           </button>
+          <button onclick="window.generateCertificates('${event.id}')" 
+            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            Generate Certificates
+          </button>
           <button onclick="window.manageAttendees('${event.id}')" 
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
             Manage Attendees
@@ -100,6 +104,7 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
   const eventTime = document.getElementById('eventTime').value;
   const eventLocation = document.getElementById('eventLocation').value;
   const eventDuration = document.getElementById('eventDuration').value;
+  const department = document.getElementById('department').value;
   
   const editId = e.target.dataset.editId;
   
@@ -111,7 +116,8 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
         date: eventDate,
         time: eventTime,
         location: eventLocation,
-        duration: eventDuration ? parseInt(eventDuration) : null
+        duration: eventDuration ? parseInt(eventDuration) : null,
+        department: department
       });
       showToast('Event updated successfully!');
       delete e.target.dataset.editId;
@@ -127,6 +133,7 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
         time: eventTime,
         location: eventLocation,
         duration: eventDuration ? parseInt(eventDuration) : null,
+        department: department,
         status: 'active',
         createdAt: new Date()
       });
@@ -151,7 +158,7 @@ window.exportSingleEvent = async (eventId, eventTitle) => {
     const attendeesSnapshot = await getDocs(collection(db, 'Events', eventId, 'Attendees'));
     const attendees = attendeesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     
-    const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Status', 'Event Name', 'Certificate UUID'];
+    const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Status', 'Event Name', 'Certificate ID'];
     const rows = attendees.map(attendee => [
       attendee.fullName || '',
       attendee.course || '',
@@ -159,7 +166,7 @@ window.exportSingleEvent = async (eventId, eventTitle) => {
       attendee.dateAttended || '',
       attendee.status || '',
       eventTitle || '',
-      attendee.uuid || ''
+      attendee.certificateId || ''
     ]);
     
     let csvContent = headers.join(',') + '\n';
@@ -179,6 +186,28 @@ window.exportSingleEvent = async (eventId, eventTitle) => {
   } catch (error) {
     console.error('Error exporting event:', error);
     showAlert('Failed to export event', { type: 'error' });
+  }
+};
+
+window.generateCertificates = async (eventId) => {
+  try {
+    const eventDoc = await getDoc(doc(db, 'Events', eventId));
+    if (!eventDoc.exists()) {
+      showAlert('Event not found', { type: 'error' });
+      return;
+    }
+    const event = eventDoc.data();
+    const attendeesSnapshot = await getDocs(collection(db, 'Events', eventId, 'Attendees'));
+    const attendees = attendeesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (attendees.length === 0) {
+      showAlert('No attendees to generate certificates for', { type: 'warning' });
+      return;
+    }
+    localStorage.setItem('certEventData', JSON.stringify({ id: eventId, event, attendees }));
+    window.open('GenerateCertificate.html', '_blank');
+  } catch (error) {
+    console.error('Error generating certificates:', error);
+    showAlert('Failed to generate certificates', { type: 'error' });
   }
 };
 
@@ -243,6 +272,7 @@ window.editEvent = async (eventId) => {
   document.getElementById('eventTime').value = event.time || '';
   document.getElementById('eventLocation').value = event.location || '';
   document.getElementById('eventDuration').value = event.duration || '';
+  document.getElementById('department').value = event.department || '';
   
   const form = document.getElementById('createEventForm');
   form.dataset.editId = eventId;

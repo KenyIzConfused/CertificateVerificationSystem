@@ -41,13 +41,16 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
         const attendee = docSnap.data();
         if ((attendee.certificateId || '').toUpperCase() === certificateId) {
           document.getElementById('certName').textContent = attendee.fullName || '';
-          document.getElementById('certEvent').textContent = eventDoc.data().title || '';
+          document.getElementById('certIdNumber').textContent = attendee.idNumber || '';
           document.getElementById('certCourse').textContent = attendee.course || '';
+          document.getElementById('certYear').textContent = attendee.year || '';
+          document.getElementById('certSection').textContent = attendee.section || '';
+          document.getElementById('certMajor').textContent = attendee.major || '';
           document.getElementById('certRole').textContent = attendee.role || '';
-          document.getElementById('certDate').textContent = attendee.dateAttended || '';
           document.getElementById('certSession').textContent = attendee.session === 'morning' ? 'Morning Session' : 'Afternoon Session';
           document.getElementById('certStatus').textContent = attendee.status ? attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1) : '';
           document.getElementById('certId').textContent = attendee.certificateId || '';
+          document.getElementById('certEvent').textContent = eventDoc.data().title || '';
           document.getElementById('verifyForm').classList.add('hidden');
           document.getElementById('result').classList.remove('hidden');
           found = true;
