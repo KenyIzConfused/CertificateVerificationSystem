@@ -32,7 +32,7 @@ function showPopup(options) {
 
   const popup = document.createElement('div');
   popup.style.opacity = '0';
-  popup.className = 'bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-95 mx-auto';
+  popup.className = 'bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform transition-all scale-95 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2';
   popup.innerHTML = `
     <div class="flex items-start gap-4">
       <div class="flex-shrink-0">${createIcon(type)}</div>
@@ -56,7 +56,7 @@ function showPopup(options) {
 
   requestAnimationFrame(() => {
     overlay.style.opacity = '1';
-    popup.style.transform = 'scale(1)';
+    popup.style.transform = 'translate(-50%, -50%) scale(1)';
     popup.style.opacity = '1';
   });
 

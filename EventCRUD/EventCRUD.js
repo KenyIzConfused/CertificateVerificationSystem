@@ -25,6 +25,85 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function toCamelCase(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase())
+    .replace(/^[A-Z]/, c => c.toLowerCase());
+}
+
+function to12Hour(time24) {
+  if (!time24) return '';
+  const [hours, minutes] = time24.split(':').map(Number);
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${String(minutes).padStart(2, '0')}`;
+}
+
+function to24Hour(time12) {
+  if (!time12) return '';
+  const match = time12.trim().match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!match) return time12;
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2];
+  const period = match[3].toUpperCase();
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  return `${String(hours).padStart(2, '0')}:${minutes}`;
+}
+
+const initAutoFormat = () => {
+  const fields = ['eventTitle', 'eventDescription', 'eventLocation'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.value = smartTitleCase(el.value);
+    });
+  });
+};
+
+const initTimeFormat = () => {
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const roundToHalfHour = (mins) => Math.round(mins / 30) * 30;
+  const currentRounded = roundToHalfHour(currentMinutes);
+  const currentHour = Math.floor(currentRounded / 60) % 24;
+  const currentMinute = currentRounded % 60;
+  const currentTime24 = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+  
+  const isMorning = currentHour < 12;
+  
+  const defaults = {
+    morningTimeIn: isMorning ? currentTime24 : '07:00',
+    morningTimeOut: isMorning ? '12:00' : '12:00',
+    afternoonTimeIn: isMorning ? '13:00' : currentTime24,
+    afternoonTimeOut: '17:00'
+  };
+  
+  const timeFields = [
+    { id: 'morningTimeIn', defaultVal: defaults.morningTimeIn },
+    { id: 'morningTimeOut', defaultVal: defaults.morningTimeOut },
+    { id: 'afternoonTimeIn', defaultVal: defaults.afternoonTimeIn },
+    { id: 'afternoonTimeOut', defaultVal: defaults.afternoonTimeOut }
+  ];
+  
+  timeFields.forEach(({ id, defaultVal }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!el.value) el.value = defaultVal;
+  });
+};
+
+function smartTitleCase(str) {
+  return str
+    .split(/(\s+)/)
+    .map(word => {
+      if (!word.trim() || /^[A-Z]/.test(word)) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join('');
+}
+
 window.handleEventUpdate = (events) => {
   events.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
   const eventsStack = document.getElementById('eventsStack');
@@ -49,8 +128,8 @@ window.handleEventUpdate = (events) => {
           <p class="text-gray-600 mt-1">${escapeHtml(event.description)}</p>
           <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
             <span>📅 ${event.date}</span>
-            <span>⏰ ${event.time}</span>
-            ${event.duration ? `<span>⏱️ ${event.duration} hrs</span>` : ''}
+            ${event.morningTimeIn ? `<span>☀️ Morning: ${to12Hour(event.morningTimeIn)} - ${event.morningTimeOut ? to12Hour(event.morningTimeOut) : ''}</span>` : ''}
+            ${event.afternoonTimeIn ? `<span>🌤️ Afternoon: ${to12Hour(event.afternoonTimeIn)} - ${event.afternoonTimeOut ? to12Hour(event.afternoonTimeOut) : ''}</span>` : ''}
             <span>📍 ${escapeHtml(event.location)}</span>
           </div>
           <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-medium ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
@@ -94,14 +173,18 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
     return;
   }
   
+  const editId = e.target.dataset.editId;
+  const confirmed = await showConfirm(editId ? 'Are you sure you want to update this event?' : 'Are you sure you want to create this event?');
+  if (confirmed !== 1) return;
+  
   const eventTitle = document.getElementById('eventTitle').value;
   const eventDescription = document.getElementById('eventDescription').value;
   const eventDate = document.getElementById('eventDate').value;
-  const eventTime = document.getElementById('eventTime').value;
+  const morningTimeIn = to24Hour(document.getElementById('morningTimeIn').value);
+  const morningTimeOut = to24Hour(document.getElementById('morningTimeOut').value);
+const afternoonTimeIn = to24Hour(document.getElementById('afternoonTimeIn').value);
+  const afternoonTimeOut = to24Hour(document.getElementById('afternoonTimeOut').value);
   const eventLocation = document.getElementById('eventLocation').value;
-  const eventDuration = document.getElementById('eventDuration').value;
-  
-  const editId = e.target.dataset.editId;
   
   try {
     if (editId) {
@@ -109,9 +192,11 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
         title: eventTitle,
         description: eventDescription,
         date: eventDate,
-        time: eventTime,
-        location: eventLocation,
-        duration: eventDuration ? parseInt(eventDuration) : null
+        morningTimeIn,
+        morningTimeOut,
+        afternoonTimeIn,
+        afternoonTimeOut,
+        location: eventLocation
       });
       showToast('Event updated successfully!');
       delete e.target.dataset.editId;
@@ -124,9 +209,11 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
         title: eventTitle,
         description: eventDescription,
         date: eventDate,
-        time: eventTime,
+        morningTimeIn,
+        morningTimeOut,
+        afternoonTimeIn,
+        afternoonTimeOut,
         location: eventLocation,
-        duration: eventDuration ? parseInt(eventDuration) : null,
         status: 'active',
         createdAt: new Date()
       });
@@ -140,26 +227,21 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
   }
 });
 
-document.getElementById('showCreateFormBtn').addEventListener('click', () => {
-  document.getElementById('createEventPanel').classList.remove('hidden');
-  document.getElementById('createEventPanel').scrollIntoView({ behavior: 'smooth' });
-});
-
 window.exportSingleEvent = async (eventId, eventTitle) => {
   try {
     const eventDoc = await getDoc(doc(db, 'Events', eventId));
     const attendeesSnapshot = await getDocs(collection(db, 'Events', eventId, 'Attendees'));
     const attendees = attendeesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     
-    const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Status', 'Event Name', 'Certificate UUID'];
+    const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Time Attended', 'Status', 'Event Name'];
     const rows = attendees.map(attendee => [
       attendee.fullName || '',
       attendee.course || '',
       attendee.role || '',
       attendee.dateAttended || '',
+      attendee.timeAttended ? to12Hour(attendee.timeAttended) : '',
       attendee.status || '',
-      eventTitle || '',
-      attendee.uuid || ''
+      eventTitle || ''
     ]);
     
     let csvContent = headers.join(',') + '\n';
@@ -240,9 +322,11 @@ window.editEvent = async (eventId) => {
   document.getElementById('eventTitle').value = event.title || '';
   document.getElementById('eventDescription').value = event.description || '';
   document.getElementById('eventDate').value = event.date || '';
-  document.getElementById('eventTime').value = event.time || '';
+  document.getElementById('morningTimeIn').value = event.morningTimeIn || '07:00';
+  document.getElementById('morningTimeOut').value = event.morningTimeOut || '12:00';
+  document.getElementById('afternoonTimeIn').value = event.afternoonTimeIn || '13:00';
+  document.getElementById('afternoonTimeOut').value = event.afternoonTimeOut || '17:00';
   document.getElementById('eventLocation').value = event.location || '';
-  document.getElementById('eventDuration').value = event.duration || '';
   
   const form = document.getElementById('createEventForm');
   form.dataset.editId = eventId;
@@ -272,9 +356,8 @@ window.generateAccomplishmentReport = async () => {
       lines.push(`Title: ${event.title || ''}`);
       lines.push(`Description: ${event.description || ''}`);
       lines.push(`Date: ${event.date || ''}`);
-      lines.push(`Time: ${event.time || ''}`);
-      lines.push(`Venue: ${event.location || ''}`);
-      lines.push(`Duration: ${event.duration ? event.duration + ' hours' : ''}`);
+      lines.push(`Morning Session: ${event.morningTimeIn ? to12Hour(event.morningTimeIn) : ''} - ${event.morningTimeOut ? to12Hour(event.morningTimeOut) : ''}`);
+      lines.push(`Afternoon Session: ${event.afternoonTimeIn ? to12Hour(event.afternoonTimeIn) : ''} - ${event.afternoonTimeOut ? to12Hour(event.afternoonTimeOut) : ''}`);
       lines.push(`Participants: ${attendeesSnapshot.size}`);
       lines.push('');
     }
@@ -307,6 +390,9 @@ window.cancelEdit = () => {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
+    initAutoFormat();
+    initTimeFormat();
+    updateOrgDisplay();
     
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminName = adminDoc.exists() ? adminDoc.data().adminName : user.email;
@@ -324,3 +410,42 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = '../logIn/LogInAdmin.html';
   }
 });
+
+window.openSettings = () => {
+  const savedOrg = localStorage.getItem('orgName') || '';
+  document.getElementById('orgName').value = savedOrg;
+  document.getElementById('settingsModal').classList.remove('hidden');
+  document.getElementById('settingsModal').classList.add('flex');
+};
+
+window.closeSettings = () => {
+  document.getElementById('settingsModal').classList.add('hidden');
+  document.getElementById('settingsModal').classList.remove('flex');
+};
+
+document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const orgName = document.getElementById('orgName').value.trim();
+  const savedOrg = localStorage.getItem('orgName') || '';
+  
+  if (orgName === savedOrg) {
+    showAlert('Already saved', { type: 'info' });
+    return;
+  }
+  
+  const confirmed = await showConfirm('Are you sure you want to save these settings?');
+  if (confirmed !== 1) return;
+  
+  localStorage.setItem('orgName', orgName);
+  document.getElementById('orgNameDisplay').textContent = orgName || 'Information Unit';
+  window.closeSettings();
+  showToast('Settings saved');
+});
+
+const updateOrgDisplay = () => {
+  const orgName = localStorage.getItem('orgName') || '';
+  const display = document.getElementById('orgNameDisplay');
+  if (display) {
+    display.textContent = orgName || 'Information Unit';
+  }
+};

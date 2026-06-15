@@ -11,17 +11,17 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#f6f8fb',
-                            100: '#eef2f7',
-                            200: '#dde5ef',
-                            300: '#c5d3e4',
-                            400: '#9bb0ce',
-                            500: '#748eb8',
-                            600: '#596f9a',
-                            700: '#4a5a7d',
-                            800: '#3e4a67',
-                            900: '#353f53',
-                            950: '#1a1f2b'
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16'
                         }
                     },
                     fontFamily: {
@@ -37,10 +37,10 @@
     <style>
         body {
             background:
-                radial-gradient(at 0% 0%, rgba(120, 142, 184, 0.22), transparent 55%),
-                radial-gradient(at 90% 10%, rgba(160, 180, 210, 0.18), transparent 55%),
-                radial-gradient(at 100% 100%, rgba(120, 140, 178, 0.18), transparent 55%),
-                linear-gradient(135deg, #f6f8fb 0%, #eef2f7 100%);
+                radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.22), transparent 55%),
+                radial-gradient(at 90% 10%, rgba(74, 222, 128, 0.18), transparent 55%),
+                radial-gradient(at 100% 100%, rgba(34, 197, 94, 0.18), transparent 55%),
+                linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
         }
         .glass {
             background: rgba(255, 255, 255, 0.72);
@@ -58,25 +58,25 @@
         }
         .input-glass {
             background: rgba(255,255,255,0.55);
-            border: 1px solid rgba(120,142,184,0.25);
+            border: 1px solid rgba(34, 197, 94, 0.25);
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
             transition: all .2s ease;
         }
         .input-glass:focus {
             outline: none;
-            border-color: rgba(108,128,172,0.6);
-            box-shadow: 0 0 0 4px rgba(108,128,172,0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+            border-color: rgba(22, 163, 74, 0.6);
+            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15), inset 0 1px 0 rgba(255,255,255,0.9);
         }
         .btn-primary {
-            background: linear-gradient(180deg, #3a4560 0%, #2b3348 100%);
+            background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
             color: white;
             border: 1px solid rgba(255,255,255,0.12);
         }
         .btn-primary:hover { transform: translateY(-1px); }
         .btn-secondary {
             background: rgba(255,255,255,0.55);
-            border: 1px solid rgba(120,142,184,0.25);
-            color: #3a4560;
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            color: #16a34a;
         }
         .btn-secondary:hover { background: rgba(255,255,255,0.75); }
         .event-card {
@@ -87,22 +87,34 @@
         }
         .badge-glass {
             background: rgba(255,255,255,0.65);
-            border: 1px solid rgba(120,142,184,0.25);
+            border: 1px solid rgba(34, 197, 94, 0.25);
             backdrop-filter: blur(14px);
         }
     </style>
 </head>
 <body class="min-h-screen p-6 text-brand-900 antialiased">
     <div class="max-w-4xl mx-auto">
+        <!-- Menu Button (Top Left) -->
+        <div class="relative mb-4">
+            <button id="menuBtn" class="p-2 rounded-lg hover:bg-white/50 transition-colors">
+                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <div id="menuDropdown" class="hidden absolute top-10 left-0 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50">
+                <a href="../logIn/LogInAdmin.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Logout</a>
+                <button onclick="window.openSettings()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Settings</button>
+            </div>
+        </div>
+
         <!-- Header -->
         <header class="flex justify-between items-center mb-8">
             <div>
-                <h1 class="text-4xl font-bold tracking-tight text-brand-950">Information Unit</h1>
+                <h1 class="text-4xl font-bold tracking-tight text-brand-950"><span id="orgNameDisplay">Information Unit</span></h1>
                 <p id="adminName" class="text-brand-500 mt-1"></p>
             </div>
             <div class="flex gap-3">
                 <a href="../SignUp/SignUpAdmin.html" class="px-4 py-2 rounded-xl btn-secondary text-sm font-medium">Sign Up New Account</a>
-                <a href="../logIn/LogInAdmin.html" class="px-4 py-2 rounded-xl btn-secondary text-sm font-medium">Logout</a>
             </div>
         </header>
 
@@ -134,16 +146,39 @@
                         class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400 resize-none"
                         placeholder="Describe what the event is about..."></textarea>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label for="eventDate" class="block text-sm font-semibold text-brand-700">Date</label>
-                        <input type="date" id="eventDate" name="eventDate" required
-                            class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                <div class="space-y-2">
+                    <label for="eventDate" class="block text-sm font-semibold text-brand-700">Date</label>
+                    <input type="date" id="eventDate" name="eventDate" required
+                        class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-brand-700">Morning Session</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="morningTimeIn" class="block text-xs text-brand-500">Time In</label>
+                            <input type="time" id="morningTimeIn" name="morningTimeIn" required
+                                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="morningTimeOut" class="block text-xs text-brand-500">Time Out</label>
+                            <input type="time" id="morningTimeOut" name="morningTimeOut" required
+                                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                        </div>
                     </div>
-                    <div class="space-y-2">
-                        <label for="eventTime" class="block text-sm font-semibold text-brand-700">Time</label>
-                        <input type="time" id="eventTime" name="eventTime" required
-                            class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-brand-700">Afternoon Session</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="afternoonTimeIn" class="block text-xs text-brand-500">Time In</label>
+                            <input type="time" id="afternoonTimeIn" name="afternoonTimeIn" required
+                                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="afternoonTimeOut" class="block text-xs text-brand-500">Time Out</label>
+                            <input type="time" id="afternoonTimeOut" name="afternoonTimeOut" required
+                                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                        </div>
                     </div>
                 </div>
                 <div class="space-y-2">
@@ -151,12 +186,6 @@
                     <input type="text" id="eventLocation" name="eventLocation" required
                         class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400"
                         placeholder="e.g., Main Auditorium, Online (Zoom)">
-                </div>
-                <div class="space-y-2">
-                    <label for="eventDuration" class="block text-sm font-semibold text-brand-700">Duration (hours)</label>
-                    <input type="number" id="eventDuration" name="eventDuration" min="1" required
-                        class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400"
-                        placeholder="e.g., 8">
                 </div>
                 <div class="flex gap-2">
                     <button type="button" onclick="window.cancelEdit()"
@@ -185,9 +214,45 @@
             <button onclick="window.generateAccomplishmentReport()" class="w-full btn-primary font-semibold py-3 rounded-xl transition-all shadow-lg">Generate Accomplishment Report</button>
         </div>
     </div>
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+            <form id="settingsForm" class="space-y-4">
+                <div class="space-y-2">
+                    <label for="orgName" class="block text-sm font-semibold text-gray-700">Name of Organization</label>
+                    <input type="text" id="orgName" 
+                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
+                        placeholder="Enter organization name">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" 
+                        class="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg">
+                        Save
+                    </button>
+                    <button type="button" onclick="window.closeSettings()" 
+                        class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script type="module">
         import '../PopupSystem.js';
-        import './EventCRUD.js';
+        import './EventCRUD.js?v=2';
+        
+        const menuBtn = document.getElementById('menuBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        
+        if (menuBtn && menuDropdown) {
+          menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuDropdown.classList.toggle('hidden');
+          });
+          document.addEventListener('click', () => {
+            menuDropdown.classList.add('hidden');
+          });
+        }
     </script>
 </body>
 </html>

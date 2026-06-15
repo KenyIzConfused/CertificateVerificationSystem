@@ -3,6 +3,59 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
 
+function calculateStatus(attendee, event) {
+  if (attendee.status === 'absent') return 'absent';
+  
+  const session = attendee.session;
+  const timeAttended = attendee.timeAttended;
+  
+  if (!timeAttended) return 'present';
+  
+  let scheduledTimeIn = '';
+  if (session === 'morning') {
+    scheduledTimeIn = event.morningTimeIn;
+  } else if (session === 'afternoon') {
+    scheduledTimeIn = event.afternoonTimeIn;
+  }
+  
+  if (!scheduledTimeIn) return 'present';
+  
+  const timeToMinutes = (timeStr) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  const attendedMinutes = timeToMinutes(timeAttended);
+  const scheduledMinutes = timeToMinutes(scheduledTimeIn);
+  const gracePeriod = 15;
+  
+  if (attendedMinutes <= scheduledMinutes + gracePeriod) {
+    return 'present';
+  } else {
+    return 'late';
+  }
+}
+
+function formatTime12Hour(time24) {
+  if (!time24) return '-';
+  const [hours, minutes] = time24.split(':').map(Number);
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${String(minutes).padStart(2, '0')}`;
+}
+
+function getCurrentDateTime() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return {
+    date: `${year}-${month}-${day}`,
+    time: `${hours}:${minutes}`
+  };
+}
+
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = Math.random() * 16 | 0;
@@ -29,6 +82,29 @@ let currentEventId = localStorage.getItem('currentEventId');
 let currentEvent = null;
 let allAttendees = [];
 
+document.getElementById('todayBtn').addEventListener('click', () => {
+  const { date, time } = getCurrentDateTime();
+  document.getElementById('dateAttended').value = date;
+  document.getElementById('timeAttended').value = time;
+  document.getElementById('timeAttended').readOnly = true;
+});
+
+const initDefaultDateTime = () => {
+  const { date, time } = getCurrentDateTime();
+  const dateInput = document.getElementById('dateAttended');
+  const timeInput = document.getElementById('timeAttended');
+  if (dateInput && !dateInput.value) dateInput.value = date;
+  if (timeInput && !timeInput.value) {
+    timeInput.value = time;
+    timeInput.readOnly = true;
+  }
+};
+
+document.getElementById('dateAttended').addEventListener('change', () => {
+  const timeInput = document.getElementById('timeAttended');
+  timeInput.readOnly = false;
+});
+
 document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
@@ -37,30 +113,47 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     return;
   }
   
+  const confirmed = await showConfirm('Are you sure you want to add this attendee?');
+  if (confirmed !== 1) return;
+  
   const attendeeName = document.getElementById('attendeeName').value;
   const idNumber = document.getElementById('idNumber').value;
-  const course = document.getElementById('course').value;
+  const course = document.getElementById('course').value.trim();
+  const major = document.getElementById('major').value.trim();
+  const year = document.getElementById('year').value.trim();
   const role = document.getElementById('role').value;
   const dateAttended = document.getElementById('dateAttended').value;
+  const timeAttended = document.getElementById('timeAttended').value;
   const session = document.getElementById('session').value;
+  
+  const parts = [course, major, year].filter(Boolean);
+  const combinedCourse = parts.join('-');
   
   try {
     const certificateUuid = generateUUID();
     
-    await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
+    const attendeeData = {
       fullName: attendeeName,
       idNumber: idNumber,
-      course: course,
+      course: combinedCourse,
       role: role,
       dateAttended: dateAttended,
+      timeAttended: timeAttended,
       session: session,
-      status: 'present',
       uuid: certificateUuid,
       createdAt: serverTimestamp()
-    });
+    };
+    
+    const tempAttendee = { ...attendeeData, status: 'present' };
+    const computedStatus = calculateStatus(tempAttendee, currentEvent);
+    attendeeData.status = computedStatus;
+    
+    await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), attendeeData);
     
     console.log('Attendee added successfully');
     document.getElementById('addAttendeeForm').reset();
+    document.getElementById('dateAttended').value = '';
+    document.getElementById('timeAttended').value = '';
   } catch (error) {
     console.error('Error adding attendee:', error);
     showAlert('Failed to add attendee', { type: 'error' });
@@ -83,6 +176,11 @@ function renderAttendees(attendeesList, morningSearchTerm = '', afternoonSearchT
   renderTable(filteredAfternoon, 'afternoonTableBody', 'noAfternoon');
 }
 
+function getDisplayStatus(attendee) {
+  const computed = calculateStatus(attendee, currentEvent);
+  return computed;
+}
+
 function filterAttendees(attendeesList, searchTerm) {
   if (!searchTerm) return attendeesList;
   const term = searchTerm.toLowerCase();
@@ -92,7 +190,7 @@ function filterAttendees(attendeesList, searchTerm) {
     (a.course || '').toLowerCase().includes(term) ||
     (a.role || '').toLowerCase().includes(term) ||
     (a.dateAttended || '').toLowerCase().includes(term) ||
-    (a.status || '').toLowerCase().includes(term)
+    (getDisplayStatus(a) || '').toLowerCase().includes(term)
   );
 }
 
@@ -108,7 +206,12 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
   
   noData.style.display = 'none';
   
-  tableBody.innerHTML = attendeesList.map(attendee => `
+  const enrichedAttendees = attendeesList.map(attendee => ({
+    ...attendee,
+    displayStatus: getDisplayStatus(attendee)
+  }));
+  
+  tableBody.innerHTML = enrichedAttendees.map(attendee => `
     <tr class="border-b border-gray-100 hover:bg-green-50 transition-colors">
       <td class="py-4 px-4">
         <span class="font-medium text-gray-800">${escapeHtml(attendee.fullName)}</span>
@@ -117,9 +220,10 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.course)}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.role)}</td>
       <td class="py-4 px-4 text-gray-600">${attendee.dateAttended}</td>
+      <td class="py-4 px-4 text-gray-600">${formatTime12Hour(attendee.timeAttended)}</td>
       <td class="py-4 px-4">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${attendee.status === 'present' ? 'bg-green-100 text-green-800' : attendee.status === 'late' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}">
-          ${attendee.status.toUpperCase()}
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${attendee.displayStatus === 'present' ? 'bg-green-100 text-green-800' : attendee.displayStatus === 'late' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}">
+          ${attendee.displayStatus.toUpperCase()}
         </span>
       </td>
       <td class="py-4 px-4">
@@ -127,17 +231,9 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
           <span class="text-gray-400 text-xs italic">Locked</span>
         ` : `
           <div class="flex gap-1 flex-wrap">
-            <button onclick="window.markPresent('${attendee.id}')" 
-              class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs">
-              Present
-            </button>
             <button onclick="window.markAbsent('${attendee.id}')" 
               class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs">
               Absent
-            </button>
-            <button onclick="window.markLate('${attendee.id}')" 
-              class="px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-xs">
-              Late
             </button>
             <button onclick="window.editAttendee('${attendee.id}')" 
               class="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs">
@@ -160,39 +256,19 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-window.markPresent = async (attendeeId) => {
-  try {
-    await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
-      status: 'present'
-    });
-    console.log('Marked as present');
-  } catch (error) {
-    console.error('Error updating status:', error);
-    showAlert('Failed to update status', { type: 'error' });
-  }
-};
-
 window.markAbsent = async (attendeeId) => {
+  const confirmed = await showConfirm('Are you sure you want to mark this attendee as absent?');
+  if (confirmed !== 1) return;
+  
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'absent'
     });
-    console.log('Marked as absent');
+    console.log('Attendee marked as absent');
+    showToast('Attendee marked as absent');
   } catch (error) {
-    console.error('Error updating status:', error);
-    showAlert('Failed to update status', { type: 'error' });
-  }
-};
-
-window.markLate = async (attendeeId) => {
-  try {
-    await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
-      status: 'late'
-    });
-    console.log('Marked as late');
-  } catch (error) {
-    console.error('Error updating status:', error);
-    showAlert('Failed to update status', { type: 'error' });
+    console.error('Error marking absent:', error);
+    showAlert('Failed to mark absent', { type: 'error' });
   }
 };
 
@@ -200,13 +276,19 @@ window.editAttendee = async (attendeeId) => {
   const attendee = allAttendees.find(a => a.id === attendeeId);
   if (!attendee) return;
   
-  document.getElementById('editAttendeeId').value = attendee.id;
+  document.getElementById('editAttendeeId').value = attendeeId;
   document.getElementById('editName').value = attendee.fullName || '';
-  document.getElementById('editCourse').value = attendee.course || '';
+  
+  const parts = (attendee.course || '').split('-');
+  document.getElementById('editCourse').value = parts[0] || '';
+  document.getElementById('editMajor').value = parts[1] || '';
+  document.getElementById('editYear').value = parts[2] || '';
+  
   document.getElementById('editRole').value = attendee.role || '';
-  document.getElementById('editDateAttended').value = attendee.dateAttended || '';
-  document.getElementById('editSession').value = attendee.session || 'morning';
-  document.getElementById('editStatus').value = attendee.status || 'present';
+  document.getElementById('dateAttended').value = attendee.dateAttended || '';
+  document.getElementById('timeAttended').value = attendee.timeAttended || '';
+  document.getElementById('session').value = attendee.session || 'morning';
+  document.getElementById('editStatus').value = 'auto';
   
   document.getElementById('editModal').classList.remove('hidden');
   document.getElementById('editModal').classList.add('flex');
@@ -222,23 +304,43 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   
   const attendeeId = document.getElementById('editAttendeeId').value;
   const fullName = document.getElementById('editName').value;
-  const course = document.getElementById('editCourse').value;
+  const course = document.getElementById('editCourse').value.trim();
+  const major = document.getElementById('editMajor').value.trim();
+  const year = document.getElementById('editYear').value.trim();
   const role = document.getElementById('editRole').value;
-  const dateAttended = document.getElementById('editDateAttended').value;
-  const session = document.getElementById('editSession').value;
-  const status = document.getElementById('editStatus').value;
+  const dateAttended = document.getElementById('dateAttended').value;
+  const timeAttended = document.getElementById('timeAttended').value;
+  const session = document.getElementById('session').value;
+  const statusValue = document.getElementById('editStatus').value;
+  
+  const parts = [course, major, year].filter(Boolean);
+  const combinedCourse = parts.join('-');
+  let finalStatus = statusValue;
+  if (statusValue === 'auto') {
+    const tempAttendee = {
+      session,
+      timeAttended,
+      status: 'present'
+    };
+    finalStatus = calculateStatus(tempAttendee, currentEvent);
+  }
+  
+  const confirmed = await showConfirm('Save changes to this attendee?');
+  if (confirmed !== 1) return;
   
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       fullName,
-      course,
+      course: combinedCourse,
       role,
       dateAttended,
+      timeAttended,
       session,
-      status
+      status: finalStatus
     });
     console.log('Attendee updated');
     window.closeEditModal();
+    showToast('Attendee updated');
   } catch (error) {
     console.error('Error updating attendee:', error);
     showAlert('Failed to update attendee', { type: 'error' });
@@ -258,43 +360,37 @@ window.deleteAttendee = async (attendeeId) => {
   }
 };
 
-window.copyMorningToAfternoon = async () => {
-  const morningAttendees = allAttendees.filter(a => a.session === 'morning' && !a.locked);
+window.lockMorning = async () => {
+  const morningAttendees = allAttendees.filter(a => a.session === 'morning');
   
   if (morningAttendees.length === 0) {
-    showAlert('No new morning attendees to save', { type: 'info' });
+    showAlert('No morning attendees to lock', { type: 'warning' });
     return;
   }
   
-  const confirmed = await showConfirm(`Save ${morningAttendees.length} new morning attendee(s) to afternoon?\nStatus will be reset to Present.`);
+  const unlockedCount = morningAttendees.filter(a => !a.locked).length;
+  if (unlockedCount === 0) {
+    showAlert('Already saved', { type: 'info' });
+    return;
+  }
+  
+  const confirmed = await showConfirm(`Lock all ${morningAttendees.length} morning attendee(s)?\nThis will remove all action buttons.`);
   if (confirmed !== 1) return;
   
   try {
     const batch = writeBatch(db);
-    
     morningAttendees.forEach(attendee => {
-      const ref = doc(collection(db, 'Events', currentEventId, 'Attendees'));
-      batch.set(ref, {
-        fullName: attendee.fullName,
-        course: attendee.course,
-        role: attendee.role,
-        dateAttended: attendee.dateAttended,
-        session: 'afternoon',
-        status: 'present',
-        uuid: generateUUID(),
-        createdAt: serverTimestamp()
-      });
       batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
         locked: true
       });
     });
     
     await batch.commit();
-    showToast(`Successfully saved ${morningAttendees.length} attendee(s) to afternoon`, 'success');
-    console.log('Morning attendees saved to afternoon');
+    showToast(`Successfully locked ${morningAttendees.length} morning attendee(s)`, 'success');
+    console.log('Morning attendees locked');
   } catch (error) {
-    console.error('Error saving attendees:', error);
-    showAlert('Failed to save attendees', { type: 'error' });
+    console.error('Error locking attendees:', error);
+    showAlert('Failed to lock attendees', { type: 'error' });
   }
 };
 
@@ -303,6 +399,12 @@ window.lockAfternoon = async () => {
   
   if (afternoonAttendees.length === 0) {
     showAlert('No afternoon attendees to lock', { type: 'warning' });
+    return;
+  }
+  
+  const unlockedCount = afternoonAttendees.filter(a => !a.locked).length;
+  if (unlockedCount === 0) {
+    showAlert('Already saved', { type: 'info' });
     return;
   }
   
@@ -335,7 +437,7 @@ window.exportAttendeesToExcel = () => {
   const morningAttendees = allAttendees.filter(a => a.session === 'morning');
   const afternoonAttendees = allAttendees.filter(a => a.session === 'afternoon');
   
-  const headers = ['Attendee Name', 'ID Number', 'Course', 'Role', 'Date Attended', 'Status', 'Certificate UUID'];
+  const headers = ['Attendee Name', 'ID Number', 'Course', 'Role', 'Date Attended', 'Time Attended', 'Status'];
   
   let csvContent = `Event: ${currentEvent.title}\n\n`;
   
@@ -359,8 +461,8 @@ window.exportAttendeesToExcel = () => {
         attendee.course || '',
         attendee.role || '',
         attendee.dateAttended || '',
-        attendee.status || '',
-        attendee.uuid || ''
+        attendee.timeAttended ? formatTime12Hour(attendee.timeAttended) : '',
+        attendee.status || ''
       ];
       csvContent += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
     });
@@ -386,8 +488,8 @@ window.exportAttendeesToExcel = () => {
         attendee.course || '',
         attendee.role || '',
         attendee.dateAttended || '',
-        attendee.status || '',
-        attendee.uuid || ''
+        attendee.timeAttended ? formatTime12Hour(attendee.timeAttended) : '',
+        attendee.status || ''
       ];
       csvContent += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
     });
@@ -421,10 +523,46 @@ const initSearch = () => {
   }
 };
 
+const initAutoFormat = () => {
+  const uppercaseFields = ['course', 'major', 'year', 'editCourse', 'editMajor', 'editYear'];
+  const titleFields = ['attendeeName', 'role', 'editName', 'editRole'];
+  
+  uppercaseFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.value = el.value.toUpperCase();
+    });
+  });
+  
+  titleFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.value = toTitleCase(el.value);
+    });
+  });
+};
+
+function toTitleCase(str) {
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function toCamelCase(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase())
+    .replace(/^[A-Z]/, c => c.toLowerCase());
+}
+
 onAuthStateChanged(auth, async (user) => {
   console.log('Auth state changed:', user ? 'logged in' : 'logged out');
   
+  initDefaultDateTime();
   initSearch();
+  initAutoFormat();
   
   if (!user) {
     window.location.href = '../logIn/LogInAdmin.html';
@@ -463,4 +601,34 @@ onAuthStateChanged(auth, async (user) => {
     console.error('Error loading event:', error);
     window.location.href = '../EventCRUD/EventCRUD.html';
   }
+});
+
+window.openSettings = () => {
+  const savedOrg = localStorage.getItem('orgName') || '';
+  document.getElementById('orgName').value = savedOrg;
+  document.getElementById('settingsModal').classList.remove('hidden');
+  document.getElementById('settingsModal').classList.add('flex');
+};
+
+window.closeSettings = () => {
+  document.getElementById('settingsModal').classList.add('hidden');
+  document.getElementById('settingsModal').classList.remove('flex');
+};
+
+document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const orgName = document.getElementById('orgName').value.trim();
+  const savedOrg = localStorage.getItem('orgName') || '';
+  
+  if (orgName === savedOrg) {
+    showAlert('Already saved', { type: 'info' });
+    return;
+  }
+  
+  const confirmed = await showConfirm('Are you sure you want to save these settings?');
+  if (confirmed !== 1) return;
+  
+  localStorage.setItem('orgName', orgName);
+  window.closeSettings();
+  showToast('Settings saved');
 });
