@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
+import { showAlert, showConfirm, showToast, showLoading, hideLoading } from '../PopupSystem.js';
 
 function calculateStatus(attendee, event) {
   if (attendee.status === 'absent') return 'absent';
@@ -62,6 +62,12 @@ function generateUUID() {
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
+}
+
+function isEventStarted(eventDate) {
+  if (!eventDate) return true;
+  const now = getCurrentDateTime();
+  return now.date >= eventDate;
 }
 
 const firebaseConfig = {
@@ -130,6 +136,7 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   const combinedCourse = parts.join('-');
   
   try {
+    showLoading('addAttendee');
     const certificateUuid = generateUUID();
     
     const attendeeData = {
@@ -151,10 +158,12 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), attendeeData);
     
     console.log('Attendee added successfully');
+    hideLoading('addAttendee');
     document.getElementById('addAttendeeForm').reset();
     document.getElementById('dateAttended').value = '';
     document.getElementById('timeAttended').value = '';
   } catch (error) {
+    hideLoading('addAttendee');
     console.error('Error adding attendee:', error);
     showAlert('Failed to add attendee', { type: 'error' });
   }
@@ -261,12 +270,15 @@ window.markAbsent = async (attendeeId) => {
   if (confirmed !== 1) return;
   
   try {
+    showLoading('markAbsent');
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'absent'
     });
+    hideLoading('markAbsent');
     console.log('Attendee marked as absent');
     showToast('Attendee marked as absent');
   } catch (error) {
+    hideLoading('markAbsent');
     console.error('Error marking absent:', error);
     showAlert('Failed to mark absent', { type: 'error' });
   }
@@ -329,6 +341,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   if (confirmed !== 1) return;
   
   try {
+    showLoading('editAttendee');
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       fullName,
       course: combinedCourse,
@@ -338,10 +351,12 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
       session,
       status: finalStatus
     });
+    hideLoading('editAttendee');
     console.log('Attendee updated');
     window.closeEditModal();
     showToast('Attendee updated');
   } catch (error) {
+    hideLoading('editAttendee');
     console.error('Error updating attendee:', error);
     showAlert('Failed to update attendee', { type: 'error' });
   }
@@ -352,9 +367,12 @@ window.deleteAttendee = async (attendeeId) => {
   if (confirmed !== 1) return;
   
   try {
+    showLoading('deleteAttendee');
     await deleteDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId));
+    hideLoading('deleteAttendee');
     console.log('Attendee deleted');
   } catch (error) {
+    hideLoading('deleteAttendee');
     console.error('Error deleting attendee:', error);
     showAlert('Failed to delete attendee', { type: 'error' });
   }
@@ -378,6 +396,7 @@ window.lockMorning = async () => {
   if (confirmed !== 1) return;
   
   try {
+    showLoading('lockMorning');
     const batch = writeBatch(db);
     morningAttendees.forEach(attendee => {
       batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
@@ -386,9 +405,11 @@ window.lockMorning = async () => {
     });
     
     await batch.commit();
+    hideLoading('lockMorning');
     showToast(`Successfully locked ${morningAttendees.length} morning attendee(s)`, 'success');
     console.log('Morning attendees locked');
   } catch (error) {
+    hideLoading('lockMorning');
     console.error('Error locking attendees:', error);
     showAlert('Failed to lock attendees', { type: 'error' });
   }
@@ -412,6 +433,7 @@ window.lockAfternoon = async () => {
   if (confirmed !== 1) return;
   
   try {
+    showLoading('lockAfternoon');
     const batch = writeBatch(db);
     afternoonAttendees.forEach(attendee => {
       batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
@@ -420,9 +442,11 @@ window.lockAfternoon = async () => {
     });
     
     await batch.commit();
+    hideLoading('lockAfternoon');
     showToast(`Successfully locked ${afternoonAttendees.length} afternoon attendee(s)`, 'success');
     console.log('Afternoon attendees locked');
   } catch (error) {
+    hideLoading('lockAfternoon');
     console.error('Error locking attendees:', error);
     showAlert('Failed to lock attendees', { type: 'error' });
   }
@@ -586,6 +610,20 @@ onAuthStateChanged(auth, async (user) => {
     currentEvent = { id: eventDoc.id, ...eventDoc.data() };
     document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
     
+    const started = isEventStarted(currentEvent.date);
+    const addAttendeeWrapper = document.getElementById('addAttendeeWrapper');
+    const lockOverlay = document.getElementById('addAttendeeLockOverlay');
+    if (!started) {
+      addAttendeeWrapper.classList.add('opacity-40', 'pointer-events-none');
+      lockOverlay.classList.remove('hidden');
+      lockOverlay.classList.add('flex');
+      document.getElementById('lockEventDate').textContent = `Opens: ${currentEvent.date}`;
+    } else {
+      addAttendeeWrapper.classList.remove('opacity-40', 'pointer-events-none');
+      lockOverlay.classList.add('hidden');
+      lockOverlay.classList.remove('flex');
+    }
+    
     console.log('Setting up listener for eventId:', currentEventId);
     const q = query(collection(db, 'Events', currentEventId, 'Attendees'));
     onSnapshot(q, (snapshot) => {
@@ -597,11 +635,48 @@ onAuthStateChanged(auth, async (user) => {
       renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
     });
     
-  } catch (error) {
+    } catch (error) {
     console.error('Error loading event:', error);
     window.location.href = '../EventCRUD/EventCRUD.html';
   }
+  
+  if (currentEvent.date && isEventStarted(currentEvent.date)) {
+    setupAutoLock();
+  }
 });
+
+let autoLockInterval = null;
+
+window.setupAutoLock = () => {
+  if (autoLockInterval) clearInterval(autoLockInterval);
+  let morningLocked = false;
+  let afternoonLocked = false;
+  autoLockInterval = setInterval(() => {
+    if (!currentEvent) return;
+    const now = getCurrentDateTime();
+    if (now.date !== currentEvent.date) {
+      morningLocked = false;
+      afternoonLocked = false;
+      return;
+    }
+    const [nowH, nowM] = now.time.split(':').map(Number);
+    const currentTotalMinutes = nowH * 60 + nowM;
+    if (currentEvent.morningTimeOut && !morningLocked) {
+      const [h, m] = currentEvent.morningTimeOut.split(':').map(Number);
+      if (currentTotalMinutes >= h * 60 + m) {
+        window.lockMorning();
+        morningLocked = true;
+      }
+    }
+    if (currentEvent.afternoonTimeOut && !afternoonLocked) {
+      const [h, m] = currentEvent.afternoonTimeOut.split(':').map(Number);
+      if (currentTotalMinutes >= h * 60 + m) {
+        window.lockAfternoon();
+        afternoonLocked = true;
+      }
+    }
+  }, 30000);
+};
 
 window.openSettings = () => {
   const savedOrg = localStorage.getItem('orgName') || '';
@@ -613,6 +688,10 @@ window.openSettings = () => {
 window.closeSettings = () => {
   document.getElementById('settingsModal').classList.add('hidden');
   document.getElementById('settingsModal').classList.remove('flex');
+};
+
+window.backToEvents = () => {
+  window.location.href = '../EventCRUD/EventCRUD.html';
 };
 
 document.getElementById('settingsForm').addEventListener('submit', async (e) => {

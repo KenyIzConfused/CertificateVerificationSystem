@@ -1,4 +1,5 @@
 let popupContainer = null;
+let loadingOverlay = null;
 
 function ensurePopupContainer() {
   if (!popupContainer) {
@@ -9,6 +10,30 @@ function ensurePopupContainer() {
     document.body.appendChild(popupContainer);
   }
   return popupContainer;
+}
+
+function ensureLoadingOverlay() {
+  if (!loadingOverlay) {
+    loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'app-loading-overlay';
+    loadingOverlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-white/80 backdrop-blur-sm';
+    loadingOverlay.style.display = 'none';
+    loadingOverlay.innerHTML = `
+      <div class="flex flex-col items-center gap-4">
+        <div class="w-10 h-10 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-gray-700 font-medium text-sm">Loading, please wait...</p>
+      </div>
+    `;
+    document.body.appendChild(loadingOverlay);
+  }
+  return loadingOverlay;
+}
+
+function hideLoadingIfCaller(callerId) {
+  if (loadingOverlay && loadingOverlay.dataset.caller === callerId) {
+    loadingOverlay.style.display = 'none';
+    loadingOverlay.dataset.caller = '';
+  }
 }
 
 function createIcon(type) {
@@ -122,5 +147,18 @@ export function showToast(message, type = 'success', duration = 3000) {
   });
 }
 
+export function showLoading(callerId = 'default') {
+  const overlay = ensureLoadingOverlay();
+  overlay.dataset.caller = callerId;
+  overlay.style.display = 'flex';
+}
+
+export function hideLoading(callerId = 'default') {
+  hideLoadingIfCaller(callerId);
+}
+
 window.showAlert = showAlert;
 window.showConfirm = showConfirm;
+window.showToast = showToast;
+window.showLoading = showLoading;
+window.hideLoading = hideLoading;

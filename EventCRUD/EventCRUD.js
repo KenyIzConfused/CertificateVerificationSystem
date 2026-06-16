@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
+import { showAlert, showConfirm, showToast, showLoading, hideLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -188,6 +188,7 @@ const afternoonTimeIn = to24Hour(document.getElementById('afternoonTimeIn').valu
   
   try {
     if (editId) {
+      showLoading('updateEvent');
       await updateDoc(doc(db, 'Events', editId), {
         title: eventTitle,
         description: eventDescription,
@@ -198,12 +199,14 @@ const afternoonTimeIn = to24Hour(document.getElementById('afternoonTimeIn').valu
         afternoonTimeOut,
         location: eventLocation
       });
+      hideLoading('updateEvent');
       showToast('Event updated successfully!');
       delete e.target.dataset.editId;
       document.getElementById('createEventPanel').classList.add('hidden');
       document.querySelector('#createEventForm button[type="submit"]').textContent = 'Create Event';
       document.getElementById('cancelEditBtn').classList.add('hidden');
     } else {
+      showLoading('createEvent');
       await addDoc(collection(db, 'Events'), {
         adminId: currentUser.uid,
         title: eventTitle,
@@ -217,6 +220,7 @@ const afternoonTimeIn = to24Hour(document.getElementById('afternoonTimeIn').valu
         status: 'active',
         createdAt: new Date()
       });
+      hideLoading('createEvent');
       showToast('Event created successfully!');
       document.getElementById('createEventForm').reset();
       document.getElementById('createEventPanel').classList.add('hidden');
@@ -229,9 +233,11 @@ const afternoonTimeIn = to24Hour(document.getElementById('afternoonTimeIn').valu
 
 window.exportSingleEvent = async (eventId, eventTitle) => {
   try {
+    showLoading('exportEvent');
     const eventDoc = await getDoc(doc(db, 'Events', eventId));
     const attendeesSnapshot = await getDocs(collection(db, 'Events', eventId, 'Attendees'));
     const attendees = attendeesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    hideLoading('exportEvent');
     
     const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Time Attended', 'Status', 'Event Name'];
     const rows = attendees.map(attendee => [
@@ -269,6 +275,7 @@ window.deleteEvent = async (eventId) => {
   if (confirmed !== 1) return;
   
   try {
+    showLoading('deleteEvent');
     const attendeesQuery = query(collection(db, 'Events', eventId, 'Attendees'));
     const snapshot = await getDocs(attendeesQuery);
     
@@ -279,8 +286,10 @@ window.deleteEvent = async (eventId) => {
     await batch.commit();
     
     await deleteDoc(doc(db, 'Events', eventId));
+    hideLoading('deleteEvent');
     showToast('Event and all associated attendees deleted');
   } catch (error) {
+    hideLoading('deleteEvent');
     console.error('Error deleting event:', error);
     showAlert('Failed to delete event', { type: 'error' });
   }
@@ -291,12 +300,15 @@ window.closeEvent = async (eventId) => {
   if (confirmed !== 1) return;
   
   try {
+    showLoading('closeEvent');
     await updateDoc(doc(db, 'Events', eventId), {
       status: 'completed',
       closedAt: new Date()
     });
+    hideLoading('closeEvent');
     showToast('Event closed successfully');
   } catch (error) {
+    hideLoading('closeEvent');
     console.error('Error closing event:', error);
     showAlert('Failed to close event', { type: 'error' });
   }
@@ -449,3 +461,10 @@ const updateOrgDisplay = () => {
     display.textContent = orgName || 'Information Unit';
   }
 };
+
+document.getElementById('showCreateFormBtn').addEventListener('click', () => {
+  const panel = document.getElementById('createEventPanel');
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('eventTitle').focus();
+});

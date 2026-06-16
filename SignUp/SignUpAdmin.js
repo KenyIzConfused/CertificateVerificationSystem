@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showToast } from '../PopupSystem.js';
+import { showAlert, showToast, showLoading, hideLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -31,6 +31,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   }
   
   try {
+    showLoading('signup');
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, 'Admin', userCredential.user.uid), {
       adminName: adminName,
@@ -38,10 +39,12 @@ document.querySelector('form').addEventListener('submit', async (e) => {
       createdAt: new Date()
     });
     await sendEmailVerification(userCredential.user);
+    hideLoading('signup');
     showToast('Account created! Please verify your email.');
     window.location.href = '../logIn/LogInAdmin.html';
-  } catch (error) {
-    console.error('Error:', error);
-    showAlert('Sign up failed: ' + error.message, { type: 'error' });
-  }
+   } catch (error) {
+    hideLoading('signup');
+     console.error('Error:', error);
+     showAlert('Sign up failed: ' + error.message, { type: 'error' });
+   }
 });
