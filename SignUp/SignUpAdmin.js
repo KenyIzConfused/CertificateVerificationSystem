@@ -20,7 +20,7 @@ const db = getFirestore(app);
 document.querySelector('form').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const adminName = document.getElementById('adminName').value;
+  const collegeName = document.getElementById('collegeName').value;
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
@@ -34,13 +34,14 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     showLoading('signup');
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, 'Admin', userCredential.user.uid), {
-      adminName: adminName,
+      collegeName: collegeName,
       email: email,
+      status: 'pending',
       createdAt: new Date()
     });
     await sendEmailVerification(userCredential.user);
     hideLoading('signup');
-    showToast('Account created! Please verify your email.');
+    showToast('Account created! Pending approval by Super Admin.');
     window.location.href = '../logIn/LogInAdmin.html';
    } catch (error) {
     hideLoading('signup');

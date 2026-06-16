@@ -121,45 +121,41 @@ window.handleEventUpdate = (events) => {
   noEvents.style.display = 'none';
   
   eventsStack.innerHTML = events.map(event => `
-    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-      <div class="flex justify-between items-start">
-        <div class="flex-1">
-          <h3 class="text-xl font-bold text-gray-800">${escapeHtml(event.title)}</h3>
-          <p class="text-gray-600 mt-1">${escapeHtml(event.description)}</p>
-          <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
-            <span>📅 ${event.date}</span>
-            ${event.morningTimeIn ? `<span>☀️ Morning: ${to12Hour(event.morningTimeIn)} - ${event.morningTimeOut ? to12Hour(event.morningTimeOut) : ''}</span>` : ''}
-            ${event.afternoonTimeIn ? `<span>🌤️ Afternoon: ${to12Hour(event.afternoonTimeIn)} - ${event.afternoonTimeOut ? to12Hour(event.afternoonTimeOut) : ''}</span>` : ''}
-            <span>📍 ${escapeHtml(event.location)}</span>
-          </div>
-          <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-medium ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-            ${event.status.toUpperCase()}
-          </span>
-        </div>
-        <div class="flex gap-2 ml-4">
-          <button onclick="window.editEvent('${event.id}')" 
-            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
-            Edit
-          </button>
-          <button onclick="window.manageAttendees('${event.id}')" 
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-            Manage Attendees
-          </button>
-          <button onclick="window.exportSingleEvent('${event.id}', '${escapeHtml(event.title)}')" 
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Export to Excel
-          </button>
-          ${event.status === 'active' ? `
-          <button onclick="window.closeEvent('${event.id}')" 
-            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-            Close Event
-          </button>
-          ` : ''}
-          <button onclick="window.deleteEvent('${event.id}')" 
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-            Delete
-          </button>
-        </div>
+    <div class="event-card rounded-xl p-6 flex flex-col">
+      <h3 class="text-xl font-bold text-brand-950">${escapeHtml(event.title)}</h3>
+      <p class="text-brand-600 mt-1 mb-4">About events: ${escapeHtml(event.description)}</p>
+      <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-brand-700 mb-4">
+        <span>📅 Date: ${event.date}</span>
+        ${event.morningTimeIn ? `<span>☀️ Morning Session: ${to12Hour(event.morningTimeIn)} - ${event.morningTimeOut ? to12Hour(event.morningTimeOut) : ''}</span>` : ''}
+        ${event.afternoonTimeIn ? `<span>🌤️ Afternoon Session: ${to12Hour(event.afternoonTimeIn)} - ${event.afternoonTimeOut ? to12Hour(event.afternoonTimeOut) : ''}</span>` : ''}
+        <span>📍 Location: ${escapeHtml(event.location)}</span>
+      </div>
+      <span class="inline-block mb-4 px-3 py-1 rounded-full text-xs font-medium self-start ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+        ${event.status.toUpperCase()}
+      </span>
+      <div class="flex flex-wrap gap-2 mt-auto">
+        <button onclick="window.editEvent('${event.id}')" 
+          class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+          Edit
+        </button>
+        <button onclick="window.manageAttendees('${event.id}')" 
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+          Manage Attendees
+        </button>
+        <button onclick="window.exportSingleEvent('${event.id}', '${escapeHtml(event.title)}')" 
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          Export to Excel
+        </button>
+        ${event.status === 'active' ? `
+        <button onclick="window.closeEvent('${event.id}')" 
+          class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+          Close Event
+        </button>
+        ` : ''}
+        <button onclick="window.deleteEvent('${event.id}')" 
+          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+          Delete
+        </button>
       </div>
     </div>
   `).join('');
@@ -407,8 +403,14 @@ onAuthStateChanged(auth, async (user) => {
     updateOrgDisplay();
     
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
-    const adminName = adminDoc.exists() ? adminDoc.data().adminName : user.email;
+    const adminData = adminDoc.exists() ? adminDoc.data() : {};
+    const adminName = adminData.collegeName || user.email;
     document.getElementById('adminName').textContent = `Admin: ${adminName}`;
+    
+    if (adminData.collegeName) {
+      localStorage.setItem('orgName', adminData.collegeName);
+      document.getElementById('orgNameDisplay').textContent = adminData.collegeName;
+    }
     
     const q = query(collection(db, 'Events'), where('adminId', '==', user.uid));
     onSnapshot(q, (snapshot) => {
@@ -424,8 +426,9 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 window.openSettings = () => {
-  const savedOrg = localStorage.getItem('orgName') || '';
-  document.getElementById('orgName').value = savedOrg;
+  document.getElementById('settingsModal').classList.remove('hidden');
+  document.getElementById('settingsModal').classList.add('flex');
+};
   document.getElementById('settingsModal').classList.remove('hidden');
   document.getElementById('settingsModal').classList.add('flex');
 };
@@ -434,25 +437,6 @@ window.closeSettings = () => {
   document.getElementById('settingsModal').classList.add('hidden');
   document.getElementById('settingsModal').classList.remove('flex');
 };
-
-document.getElementById('settingsForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const orgName = document.getElementById('orgName').value.trim();
-  const savedOrg = localStorage.getItem('orgName') || '';
-  
-  if (orgName === savedOrg) {
-    showAlert('Already saved', { type: 'info' });
-    return;
-  }
-  
-  const confirmed = await showConfirm('Are you sure you want to save these settings?');
-  if (confirmed !== 1) return;
-  
-  localStorage.setItem('orgName', orgName);
-  document.getElementById('orgNameDisplay').textContent = orgName || 'Information Unit';
-  window.closeSettings();
-  showToast('Settings saved');
-});
 
 const updateOrgDisplay = () => {
   const orgName = localStorage.getItem('orgName') || '';

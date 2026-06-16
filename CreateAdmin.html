@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Super Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0', 300: '#86efac', 400: '#4ade80', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 800: '#166534', 900: '#14532d', 950: '#052e16' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); }
+        .glass { background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(22px); border: 1px solid rgba(255, 255, 255, 0.65); }
+        .btn-primary { background: linear-gradient(180deg, #16a34a 0%, #15803d 100%); color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+    <div class="glass w-full max-w-md rounded-3xl p-8">
+        <h2 class="text-2xl font-bold text-brand-900 mb-4">Create System Admin</h2>
+        <p class="text-sm text-brand-600 mb-4">This creates an admin with super_admin role (bypasses approval)</p>
+        <form id="createAdminForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-brand-700">College/Organization Name</label>
+                <input type="text" id="collegeName" required class="w-full px-4 py-2 rounded-lg border border-brand-200 mt-1" placeholder="e.g., CITE">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-brand-700">Email</label>
+                <input type="email" id="email" required class="w-full px-4 py-2 rounded-lg border border-brand-200 mt-1">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-brand-700">Password</label>
+                <input type="password" id="password" required class="w-full px-4 py-2 rounded-lg border border-brand-200 mt-1">
+            </div>
+            <button type="submit" class="w-full btn-primary py-2 rounded-lg font-semibold">Create Admin</button>
+        </form>
+        <div id="result" class="mt-4 text-sm hidden"></div>
+    </div>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
+            authDomain: "ipprc-certificate-verification.firebaseapp.com",
+            projectId: "ipprc-certificate-verification",
+            appId: "1:1056133117009:web:a1fcd175977a76d27c7470"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        document.getElementById('createAdminForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const collegeName = document.getElementById('collegeName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, 'Admin', cred.user.uid), {
+                    collegeName, email, role: 'super_admin', status: 'approved', createdAt: new Date()
+                });
+                document.getElementById('result').innerHTML = `<p class="text-green-600">Created! Email: ${email}</p>`;
+            } catch (err) {
+                document.getElementById('result').innerHTML = `<p class="text-red-600">${err.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -28,41 +28,23 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     
     const adminDoc = await getDoc(doc(db, 'Admin', userCredential.user.uid));
-    if (!adminDoc.exists()) {
+    if (adminDoc.exists() && adminDoc.data().role === 'super_admin') {
+      sessionStorage.setItem('superAdminLoggedIn', 'true');
       hideLoading('login');
-      showAlert('Account not found', { type: 'error' });
-      await auth.signOut();
-      return;
-    }
-    
-    const adminData = adminDoc.data();
-    
-    if (adminData.status === 'pending') {
+      showToast('Login successful!');
+      window.location.href = '../SuperAdminDashboard/SuperAdminDashboard.html';
+    } else {
       hideLoading('login');
-      showAlert('Account pending approval. Please wait for the System Admin to approve your account.', { type: 'warning' });
+      showAlert('Unauthorized access. Super Admin only.', { type: 'error' });
       await auth.signOut();
-      return;
     }
-    
-    if (adminData.role === 'super_admin') {
-      hideLoading('login');
-      showAlert('Please use the Super Admin Login page', { type: 'info' });
-      await auth.signOut();
-      return;
-    }
-    
-    sessionStorage.setItem('adminLoggedIn', 'true');
-    localStorage.setItem('orgName', adminData.collegeName || 'Information Unit');
+  } catch (error) {
     hideLoading('login');
-     showToast('Login successful!');
-     window.location.href = '../EventCRUD/EventCRUD.html';
-   } catch (error) {
-    hideLoading('login');
-     console.error('Error:', error);
-     if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-       showAlert('Invalid email or password', { type: 'error' });
-     } else {
-       showAlert('Login failed: ' + error.message, { type: 'error' });
-     }
-   }
+    console.error('Error:', error);
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      showAlert('Invalid email or password', { type: 'error' });
+    } else {
+      showAlert('Login failed: ' + error.message, { type: 'error' });
+    }
+  }
 });
