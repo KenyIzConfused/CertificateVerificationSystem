@@ -1,7 +1,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
+const OCR_API_URL = 'https://us-central1-ipprc-certificate-verification.cloudfunctions.net/ocrTextDetection';
+
 
 // Generate a unique 6-character uppercase alphanumeric certificate ID
 function generateShortId() {
@@ -28,6 +29,141 @@ async function generateUniqueCertificateId(attendeesList) {
     attempts++;
   }
   return id;
+}
+
+function getTodayDateString() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function parseOcrText(rawText) {
+  const lines = rawText.split(/\r?\n/).filter(line => line.trim().length > 0);
+  const parsed = [];
+
+  for (const line of lines) {
+    let fullName = null;
+    let course = '';
+    let year = '';
+    let section = '';
+    let major = '';
+    let role = 'Student';
+
+    if (line.includes(',') || line.includes('\t')) {
+      const parts = line.split(/[,\t]/).map(p => p.trim()).filter(p => p.length > 0);
+      if (parts.length >= 1) fullName = parts[0];
+      if (parts.length >= 2) course = parts[1];
+      if (parts.length >= 3) year = parts[2];
+      if (parts.length >= 4) section = parts[3];
+      if (parts.length >= 5) major = parts[4];
+      if (parts.length >= 6) role = parts[5];
+    } else {
+      const kvPattern = /(Full Name|Name)\s*:\s*(.+)/i;
+      const coursePattern = /(Course)\s*:\s*(.+)/i;
+      const yearPattern = /(Year)\s*:\s*(.+)/i;
+      const sectionPattern = /(Section)\s*:\s*(.+)/i;
+      const majorPattern = /(Major)\s*:\s*(.+)/i;
+      const rolePattern = /(Role)\s*:\s*(.+)/i;
+
+      const kvMatch = line.match(kvPattern);
+      const courseMatch = line.match(coursePattern);
+      const yearMatch = line.match(yearPattern);
+      const sectionMatch = line.match(sectionPattern);
+      const majorMatch = line.match(majorPattern);
+      const roleMatch = line.match(rolePattern);
+
+      if (kvMatch) fullName = kvMatch[2].trim();
+      if (courseMatch) course = courseMatch[2].trim();
+      if (yearMatch) year = yearMatch[2].trim();
+      if (sectionMatch) section = sectionMatch[2].trim();
+      if (majorMatch) major = majorMatch[2].trim();
+      if (roleMatch) role = roleMatch[2].trim();
+    }
+
+    if (!fullName) continue;
+
+    const yearNum = year.match(/\d+/);
+    const cleanedYear = yearNum ? yearNum[0] : year;
+
+    parsed.push({
+      fullName,
+      course,
+      year: cleanedYear,
+      section,
+      major,
+      role,
+      dateAttended: getTodayDateString(),
+      session: 'morning',
+      status: 'present'
+    });
+  }
+
+  return parsed;
+}
+
+function renderOcrParsedList(parsedAttendees) {
+  const listEl = document.getElementById('ocrParsedList');
+  listEl.innerHTML = parsedAttendees.map((a, idx) => `
+    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-green-100">
+      <div class="flex-1 grid grid-cols-2 gap-2 text-sm text-gray-700">
+        <span><strong>Name:</strong> ${escapeHtml(a.fullName)}</span>
+        <span><strong>Course:</strong> ${escapeHtml(a.course || '-')}</span>
+        <span><strong>Year:</strong> ${escapeHtml(a.year || '-')}</span>
+        <span><strong>Section:</strong> ${escapeHtml(a.section || '-')}</span>
+        <span><strong>Major:</strong> ${escapeHtml(a.major || '-')}</span>
+        <span><strong>Role:</strong> ${escapeHtml(a.role || '-')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function saveOcrAttendees(parsedAttendees) {
+  if (!currentEventId || !currentEvent) {
+    showAlert('Event not found', { type: 'warning' });
+    return;
+  }
+
+  if (parsedAttendees.length === 0) {
+    showAlert('No attendees to save', { type: 'warning' });
+    return;
+  }
+
+  try {
+    const batch = writeBatch(db);
+
+    for (const attendee of parsedAttendees) {
+      const certificateId = await generateUniqueCertificateId(allAttendees);
+      const ref = doc(collection(db, 'Events', currentEventId, 'Attendees'));
+      batch.set(ref, {
+        fullName: attendee.fullName,
+        course: attendee.course,
+        year: attendee.year,
+        section: attendee.section,
+        major: attendee.major,
+        role: attendee.role,
+        dateAttended: attendee.dateAttended,
+        session: attendee.session,
+        status: attendee.status,
+        certificateId,
+        createdAt: serverTimestamp()
+      });
+      allAttendees.push({
+        id: ref.id,
+        ...attendee,
+        certificateId
+      });
+    }
+
+    await batch.commit();
+    showToast(`Successfully saved ${parsedAttendees.length} attendee(s)`);
+    document.getElementById('ocrParsedSection').classList.add('hidden');
+    document.getElementById('ocrSection').classList.add('hidden');
+    document.getElementById('ocrRawText').classList.add('hidden');
+    document.getElementById('ocrPreview').classList.add('hidden');
+    document.getElementById('ocrFileInput').value = '';
+    renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
+  } catch (error) {
+    console.error('Error saving OCR attendees:', error);
+    showAlert('Failed to save attendees', { type: 'error' });
+  }
 }
 
 const firebaseConfig = {
@@ -57,7 +193,6 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   }
   
   const attendeeName = document.getElementById('attendeeName').value;
-  const idNumber = document.getElementById('idNumber').value;
   const course = document.getElementById('course').value;
   const role = document.getElementById('role').value;
   const dateAttended = document.getElementById('dateAttended').value;
@@ -70,7 +205,6 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     const certificateId = await generateUniqueCertificateId(allAttendees);
     const docRef = await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
       fullName: attendeeName,
-      idNumber: idNumber,
       course: course,
       year: year,
       section: section,
@@ -86,7 +220,6 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     const newAttendee = {
       id: docRef.id,
       fullName: attendeeName,
-      idNumber: idNumber,
       course: course,
       year: year,
       section: section,
@@ -129,7 +262,6 @@ function filterAttendees(attendeesList, searchTerm) {
   const term = searchTerm.toLowerCase();
   return attendeesList.filter(a => 
     (a.fullName || '').toLowerCase().includes(term) ||
-    (a.idNumber || '').toLowerCase().includes(term) ||
     (a.course || '').toLowerCase().includes(term) ||
     (a.year || '').toLowerCase().includes(term) ||
     (a.section || '').toLowerCase().includes(term) ||
@@ -158,7 +290,6 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
       <td class="py-4 px-4">
         <span class="font-medium text-gray-800">${escapeHtml(attendee.fullName)}</span>
       </td>
-      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.idNumber)}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.course)}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.year)}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.section)}</td>
@@ -257,7 +388,6 @@ window.editAttendee = async (attendeeId) => {
   
   document.getElementById('editAttendeeId').value = attendee.id;
   document.getElementById('editName').value = attendee.fullName || '';
-  document.getElementById('editIdNumber').value = attendee.idNumber || '';
   document.getElementById('editCourse').value = attendee.course || '';
   document.getElementById('editYear').value = attendee.year || '';
   document.getElementById('editSection').value = attendee.section || '';
@@ -281,7 +411,6 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   
   const attendeeId = document.getElementById('editAttendeeId').value;
   const fullName = document.getElementById('editName').value;
-  const idNumber = document.getElementById('editIdNumber').value;
   const course = document.getElementById('editCourse').value;
   const year = document.getElementById('editYear').value;
   const section = document.getElementById('editSection').value;
@@ -294,7 +423,6 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       fullName,
-      idNumber,
       course,
       year,
       section,
@@ -341,10 +469,9 @@ window.copyMorningToAfternoon = async () => {
     
 morningAttendees.forEach(attendee => {
        const ref = doc(collection(db, 'Events', currentEventId, 'Attendees'));
-       batch.set(ref, {
-         fullName: attendee.fullName,
-         idNumber: attendee.idNumber,
-         year: attendee.year,
+        batch.set(ref, {
+          fullName: attendee.fullName,
+          year: attendee.year,
          section: attendee.section,
          major: attendee.major,
          course: attendee.course,
@@ -411,7 +538,6 @@ window.exportAttendeesToExcel = async () => {
   // Derive headers required by the spec
   const headers = [
     'Attendee Name',
-    'ID Number',
     'Course, Year, Section, Major',
     'Role',
     'Date Attended',
@@ -437,7 +563,6 @@ window.exportAttendeesToExcel = async () => {
       // Columns definition: name and width only
       worksheet.columns = [
         { header: 'Attendee Name', key: 'fullName', width: 28 },
-        { header: 'ID Number', key: 'idNumber', width: 18 },
         { header: 'Course, Year, Section, Major', key: 'academicInfo', width: 45 },
         { header: 'Role', key: 'role', width: 18 },
         { header: 'Date Attended', key: 'dateAttended', width: 18 },
@@ -465,7 +590,6 @@ window.exportAttendeesToExcel = async () => {
 
         row.values = [
           attendee.fullName || '',
-          attendee.idNumber || '',
           `${attendee.course || ''} ${attendee.year || ''} ${attendee.section || ''} ${attendee.major || ''}`.trim(),
           attendee.role || '',
           attendee.dateAttended || '',
@@ -562,3 +686,108 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = '../EventCRUD/EventCRUD.html';
   }
 });
+
+const uploadAttendanceBtn = document.getElementById('uploadAttendanceBtn');
+const ocrSection = document.getElementById('ocrSection');
+const ocrFileInput = document.getElementById('ocrFileInput');
+const ocrPreview = document.getElementById('ocrPreview');
+const ocrImage = document.getElementById('ocrImage');
+const runOcrBtn = document.getElementById('runOcrBtn');
+const ocrStatus = document.getElementById('ocrStatus');
+const ocrRawText = document.getElementById('ocrRawText');
+const ocrTextarea = document.getElementById('ocrTextarea');
+const ocrParsedSection = document.getElementById('ocrParsedSection');
+const ocrParsedList = document.getElementById('ocrParsedList');
+const saveOcrAttendeesBtn = document.getElementById('saveOcrAttendeesBtn');
+const cancelOcrBtn = document.getElementById('cancelOcrBtn');
+
+let currentOcrParsedAttendees = [];
+
+if (uploadAttendanceBtn) {
+  uploadAttendanceBtn.addEventListener('click', () => {
+    if (!ocrSection) return;
+    ocrSection.classList.toggle('hidden');
+    if (!ocrSection.classList.contains('hidden')) {
+      ocrSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+}
+
+if (ocrFileInput) {
+  ocrFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      ocrImage.src = event.target.result;
+      ocrPreview.classList.remove('hidden');
+      ocrRawText.classList.add('hidden');
+      ocrParsedSection.classList.add('hidden');
+      ocrStatus.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+if (runOcrBtn) {
+  runOcrBtn.addEventListener('click', async () => {
+    if (!ocrImage.src || ocrImage.src === window.location.href) {
+      showAlert('Please select an image first', { type: 'warning' });
+      return;
+    }
+
+    ocrStatus.classList.remove('hidden');
+    ocrStatus.textContent = 'Uploading and processing...';
+    runOcrBtn.disabled = true;
+
+    try {
+      const base64 = ocrImage.src.split(',')[1];
+
+      const response = await fetch(OCR_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64 })
+      });
+
+      const data = await response.json();
+      const rawText = (data.fullText || '').trim();
+      ocrTextarea.value = rawText;
+      ocrRawText.classList.remove('hidden');
+      ocrStatus.textContent = 'OCR complete';
+
+      currentOcrParsedAttendees = parseOcrText(rawText);
+      if (currentOcrParsedAttendees.length > 0) {
+        renderOcrParsedList(currentOcrParsedAttendees);
+        ocrParsedSection.classList.remove('hidden');
+      } else {
+        showAlert('No valid attendee entries detected.', { type: 'warning', title: 'Parsing Issue' });
+        ocrParsedSection.classList.add('hidden');
+      }
+    } catch (error) {
+      console.error('OCR error:', error);
+      showAlert('Failed to process image.', { type: 'error' });
+      ocrStatus.textContent = 'OCR failed';
+    } finally {
+      runOcrBtn.disabled = false;
+    }
+  });
+}
+
+if (saveOcrAttendeesBtn) {
+  saveOcrAttendeesBtn.addEventListener('click', () => {
+    saveOcrAttendees(currentOcrParsedAttendees);
+  });
+}
+
+if (cancelOcrBtn) {
+  cancelOcrBtn.addEventListener('click', () => {
+    ocrSection.classList.add('hidden');
+    ocrPreview.classList.add('hidden');
+    ocrRawText.classList.add('hidden');
+    ocrParsedSection.classList.add('hidden');
+    ocrStatus.classList.add('hidden');
+    ocrFileInput.value = '';
+    currentOcrParsedAttendees = [];
+  });
+}

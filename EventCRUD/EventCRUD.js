@@ -41,53 +41,81 @@ window.handleEventUpdate = (events) => {
   
   noEvents.style.display = 'none';
   
-  eventsStack.innerHTML = events.map(event => `
-    <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
-      <div class="flex justify-between items-start">
-        <div class="flex-1">
-          <h3 class="text-xl font-bold text-gray-800">${escapeHtml(event.title)}</h3>
-          <p class="text-gray-600 mt-1">${escapeHtml(event.description)}</p>
-          <div class="flex flex-wrap gap-4 mt-3 text-sm text-gray-500">
-            <span>📅 ${event.date}</span>
-            <span>⏰ ${event.time}</span>
-            ${event.duration ? `<span>⏱️ ${event.duration} hrs</span>` : ''}
-            <span>📍 ${escapeHtml(event.location)}</span>
-          </div>
-          <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-medium ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-            ${event.status.toUpperCase()}
+  eventsStack.innerHTML = events.map(event => {
+    const statusClass = event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+    const statusLabel = (event.status || 'active').toUpperCase();
+
+    return `
+      <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+        <div>
+          <h3 class="text-2xl font-bold text-gray-900">${escapeHtml(event.title)}</h3>
+          <p class="text-gray-600 mt-2 leading-relaxed">${escapeHtml(event.description)}</p>
+
+          <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-5 text-sm">
+            <div>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Date</dt>
+              <dd class="mt-1 text-gray-800">${escapeHtml(event.date || '')}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Time</dt>
+              <dd class="mt-1 text-gray-800">${escapeHtml(event.time || '')}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Venue</dt>
+              <dd class="mt-1 text-gray-800">${escapeHtml(event.location || '')}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Duration</dt>
+              <dd class="mt-1 text-gray-800">${event.duration ? `${escapeHtml(event.duration)} hrs` : 'Not specified'}</dd>
+            </div>
+            ${event.department ? `
+            <div class="sm:col-span-2">
+              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Department</dt>
+              <dd class="mt-1 text-gray-800">${escapeHtml(event.department)}</dd>
+            </div>
+            ` : ''}
+            ${event.speaker ? `
+            <div class="sm:col-span-2">
+              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Speaker</dt>
+              <dd class="mt-1 text-gray-800">${escapeHtml(event.speaker)}</dd>
+            </div>
+            ` : ''}
+          </dl>
+
+          <span class="inline-block mt-5 px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">
+            Status: ${statusLabel}
           </span>
         </div>
-        <div class="flex gap-2 ml-4">
-          <button onclick="window.editEvent('${event.id}')" 
-            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
-            Edit
-          </button>
-          <button onclick="window.generateCertificates('${event.id}')" 
-            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-            Generate Certificates
-          </button>
-          <button onclick="window.manageAttendees('${event.id}')" 
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-            Manage Attendees
-          </button>
-          <button onclick="window.exportSingleEvent('${event.id}', '${escapeHtml(event.title)}')" 
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Export to Excel
-          </button>
-          ${event.status === 'active' ? `
-          <button onclick="window.closeEvent('${event.id}')" 
-            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-            Close Event
-          </button>
-          ` : ''}
-          <button onclick="window.deleteEvent('${event.id}')" 
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-            Delete
-          </button>
+
+        <div class="mt-6 pt-5 border-t border-green-100">
+          <div class="flex flex-wrap gap-3">
+            <button onclick="window.editEvent('${event.id}')" 
+              class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-semibold">
+              Edit
+            </button>
+            <button onclick="window.manageAttendees('${event.id}')" 
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold">
+              Manage Attendees
+            </button>
+            <button onclick="window.exportSingleEvent('${event.id}', '${escapeHtml(event.title)}')" 
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold">
+              Export to Excel
+            </button>
+            ${event.status === 'active' ? `
+            <button onclick="window.closeEvent('${event.id}')" 
+              class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold">
+              Close Event
+            </button>
+            ` : ''}
+            <button onclick="window.deleteEvent('${event.id}')" 
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-semibold">
+              Delete
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 };
 
 document.getElementById('createEventForm').addEventListener('submit', async (e) => {
@@ -117,7 +145,8 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
         time: eventTime,
         location: eventLocation,
         duration: eventDuration ? parseInt(eventDuration) : null,
-        department: department
+        department: department,
+        speaker: document.getElementById('speaker').value || ''
       });
       showToast('Event updated successfully!');
       delete e.target.dataset.editId;
@@ -134,6 +163,7 @@ document.getElementById('createEventForm').addEventListener('submit', async (e) 
         location: eventLocation,
         duration: eventDuration ? parseInt(eventDuration) : null,
         department: department,
+        speaker: document.getElementById('speaker').value || '',
         status: 'active',
         createdAt: new Date()
       });
@@ -273,6 +303,7 @@ window.editEvent = async (eventId) => {
   document.getElementById('eventLocation').value = event.location || '';
   document.getElementById('eventDuration').value = event.duration || '';
   document.getElementById('department').value = event.department || '';
+  document.getElementById('speaker').value = event.speaker || '';
   
   const form = document.getElementById('createEventForm');
   form.dataset.editId = eventId;
@@ -297,7 +328,11 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
-    const adminName = adminDoc.exists() ? adminDoc.data().adminName : user.email;
+    const adminData = adminDoc.exists() ? adminDoc.data() : {};
+    const adminName = adminData.adminName || user.email;
+    const departmentName = adminData.departmentName || adminData.department || 'Information Unit';
+    document.getElementById('departmentName').textContent = departmentName;
+    document.title = `${departmentName}: Event CRUD`;
     document.getElementById('adminName').textContent = `Admin: ${adminName}`;
     
     const q = query(collection(db, 'Events'), where('adminId', '==', user.uid));

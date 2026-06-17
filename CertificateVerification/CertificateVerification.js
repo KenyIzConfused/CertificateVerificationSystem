@@ -41,7 +41,6 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
         const attendee = docSnap.data();
         if ((attendee.certificateId || '').toUpperCase() === certificateId) {
           document.getElementById('certName').textContent = attendee.fullName || '';
-          document.getElementById('certIdNumber').textContent = attendee.idNumber || '';
           document.getElementById('certCourse').textContent = attendee.course || '';
           document.getElementById('certYear').textContent = attendee.year || '';
           document.getElementById('certSection').textContent = attendee.section || '';

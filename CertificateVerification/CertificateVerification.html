@@ -23,7 +23,7 @@
     <a href="../logIn/LogInAdmin.html" class="absolute top-6 left-6 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium">Back to Login</a>
     <div class="w-full max-w-md">
         <form id="verifyForm" class="bg-white rounded-2xl shadow-xl p-8 space-y-6">
-            <h2 class="text-3xl font-bold text-center bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">Verify Certificate</h2>
+            <h2 class="text-3xl font-bold text-center text-green-600">Verify Certificate</h2>
             <div class="space-y-2">
                 <label for="certificateId" class="block text-sm font-semibold text-gray-700">Certificate ID</label>
                 <input type="text" id="certificateId" name="certificateId" required maxlength="6"
@@ -31,20 +31,16 @@
                     placeholder="Enter 6-character Certificate ID">
             </div>
             <button type="submit" 
-                class="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold py-3 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-green-200">
+                class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors">
                 Verify
             </button>
         </form>
         <div id="result" class="hidden bg-white rounded-2xl shadow-xl p-8 mt-6">
-            <h2 class="text-2xl font-bold text-center bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent mb-2">Certificate: Verified</h2>
+            <h2 class="text-2xl font-bold text-center text-green-600 mb-2">Certificate: Verified</h2>
             <div class="space-y-4 mt-4">
                 <div>
                     <span class="text-sm font-semibold text-green-600">Attendee Name</span>
                     <p id="certName" class="text-lg font-medium text-gray-800"></p>
-                </div>
-                <div>
-                    <span class="text-sm font-semibold text-green-600">ID Number</span>
-                    <p id="certIdNumber" class="text-lg font-medium text-gray-800"></p>
                 </div>
                 <div>
                     <span class="text-sm font-semibold text-green-600">Course</span>

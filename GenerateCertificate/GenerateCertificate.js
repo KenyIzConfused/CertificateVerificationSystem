@@ -74,7 +74,6 @@ async function exportToExcel() {
 
   const headers = [
     'Attendee Name',
-    'ID Number',
     'Course, Year, Section, Major',
     'Role',
     'Date Attended',
@@ -95,7 +94,6 @@ async function exportToExcel() {
       const ws = workbook.addWorksheet(sessionName);
       ws.columns = [
         { header: 'Attendee Name', key: 'fullName', width: 28 },
-        { header: 'ID Number', key: 'idNumber', width: 18 },
         { header: 'Course, Year, Section, Major', key: 'academicInfo', width: 45 },
         { header: 'Role', key: 'role', width: 18 },
         { header: 'Date Attended', key: 'dateAttended', width: 18 },
@@ -116,7 +114,6 @@ async function exportToExcel() {
         row.height = 18;
         row.values = [
           a.fullName || '',
-          a.idNumber || '',
           `${a.course || ''} ${a.year || ''} ${a.section || ''} ${a.major || ''}`.trim(),
           a.role || '',
           a.dateAttended || '',

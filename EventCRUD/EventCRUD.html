@@ -20,18 +20,36 @@
     </script>
 </head>
 <body class="bg-gradient-to-br from-green-50 to-green-100 min-h-screen p-6">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">Information Unit</h1>
-                <p id="adminName" class="text-gray-600 mt-1"></p>
+    <div class="max-w-5xl mx-auto">
+        <header class="relative mb-8 min-h-[5rem]">
+            <a href="./Settings.html" 
+                class="absolute left-0 top-0 inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 z-10"
+                aria-label="Settings">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.54.167 3.54 1.962 0 1.097.573 2.063 1.49 2.535 1.64.847 1.64 3.185 0 4.032a2.718 2.718 0 00-1.49 2.535c0 1.795-1.997 2.902-3.54 1.962a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.54-.167-3.54-1.962 0-1.097-.573-2.063-1.49-2.535-1.64-.847-1.64-3.185 0-4.032a2.718 2.718 0 001.49-2.535c0-1.795 1.997-2.902 3.54-1.962a1.724 1.724 0 002.573-1.066z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span class="hidden sm:inline">Settings</span>
+            </a>
+
+
+            <div class="absolute inset-x-0 top-0 flex h-full items-center justify-center px-4 sm:px-8">
+                <div class="text-center">
+                    <h1 id="departmentName" class="text-4xl md:text-5xl font-bold text-green-600">Information Unit</h1>
+                    <p id="adminName" class="text-gray-700 mt-2 text-base md:text-lg font-semibold"></p>
+                </div>
             </div>
-            <div>
-                <a href="../SignUp/SignUpAdmin.html" class="text-green-600 hover:text-green-700 font-medium mr-4">Sign Up New Account</a>
-                <a href="../logIn/LogInAdmin.html" class="text-green-600 hover:text-green-700 font-medium">Logout</a>
+
+            <div class="absolute right-0 top-0 hidden sm:flex items-center gap-4">
+                <a href="../SignUp/SignUpAdmin.html" class="text-green-700 hover:text-green-800 font-medium">Sign Up New Account</a>
+                <a href="../logIn/LogInAdmin.html" class="text-green-700 hover:text-green-800 font-medium">Logout</a>
             </div>
         </header>
+
+        <div class="sm:hidden flex justify-center gap-4 mb-6">
+            <a href="../SignUp/SignUpAdmin.html" class="text-green-700 hover:text-green-800 font-medium">Sign Up New Account</a>
+            <a href="../logIn/LogInAdmin.html" class="text-green-700 hover:text-green-800 font-medium">Logout</a>
+        </div>
 
         <!-- Events Counter Panel -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
@@ -39,8 +57,8 @@
                 <h2 class="text-2xl font-bold text-gray-800">Events:</h2>
                 <span id="eventCount" class="text-4xl font-bold text-green-600">0</span>
             </div>
-            <button id="showCreateFormBtn" 
-                class="mt-4 w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold py-3 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-green-200 flex items-center justify-center gap-2">
+                <button id="showCreateFormBtn" 
+                    class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg flex items-center justify-center gap-2">
                 <span class="text-2xl">+</span> Create New Event
             </button>
         </div>
@@ -91,13 +109,19 @@
                         class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
                         placeholder="e.g., Information Unit, Computer Science Society">
                 </div>
+                <div class="space-y-2">
+                    <label for="speaker" class="block text-sm font-semibold text-gray-700">Speaker</label>
+                    <input type="text" id="speaker" name="speaker" 
+                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
+                        placeholder="e.g., Dr. Juan Dela Cruz">
+                </div>
                 <div class="flex gap-2">
                     <button type="button" onclick="window.cancelEdit()" 
                         class="hidden px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors" id="cancelEditBtn">
                         Cancel
                     </button>
                     <button type="submit" 
-                        class="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold py-3 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-green-200">
+                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg">
                         Create Event
                     </button>
                 </div>
