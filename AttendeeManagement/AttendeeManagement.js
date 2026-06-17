@@ -1,14 +1,10 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-<<<<<<< Updated upstream
-import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
 const OCR_API_URL = 'https://us-central1-ipprc-certificate-verification.cloudfunctions.net/ocrTextDetection';
-=======
-import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
->>>>>>> Stashed changes
 
 
-// Generate a unique 6-character uppercase alphanumeric certificate ID
 function generateShortId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let id = '';
@@ -18,12 +14,12 @@ function generateShortId() {
   return id;
 }
 
-// Check if a generated certificate ID already exists among attendees
+
 async function isIdUnique(attendeesList, candidateId) {
   return !attendeesList.some(a => a.certificateId === candidateId);
 }
 
-// Keep generating IDs until a unique one is found
+
 async function generateUniqueCertificateId(attendeesList) {
   let id = generateShortId();
   let attempts = 0;
@@ -194,38 +190,11 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function showToast(message, type = 'success') {
-  const container = document.createElement('div');
-  container.className = 'toast-container';
-
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.textContent = message;
-
-  container.appendChild(toast);
-  document.body.appendChild(container);
-
-  setTimeout(() => {
-    toast.style.animation = 'slideOut 0.3s ease-in forwards';
-    setTimeout(() => {
-      container.remove();
-    }, 300);
-  }, 3000);
-}
-
-function showSuccessModal(message, callback = null) {
-  showToast(message, 'success');
-}
-
 document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   if (!currentEvent) {
-<<<<<<< Updated upstream
-    showAlert('Event not found', { type: 'warning' });
-=======
     showToast('Event not found', 'error');
->>>>>>> Stashed changes
     return;
   }
 
@@ -238,59 +207,39 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   const course = document.getElementById('course').value;
   const role = document.getElementById('role').value;
   const dateAttended = document.getElementById('dateAttended').value;
-<<<<<<< Updated upstream
-  const session = document.getElementById('session').value;
-  const year = document.getElementById('year').value;
-  const section = document.getElementById('section').value;
-  const major = document.getElementById('major').value;
-  
+
   try {
     const certificateId = await generateUniqueCertificateId(allAttendees);
     const docRef = await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
-=======
-
-  try {
-    const attendeeUuid = generateUUID();
-
-    await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
->>>>>>> Stashed changes
       fullName: attendeeName,
       course: course,
-      year: year,
-      section: section,
-      major: major,
+      year: document.getElementById('year').value,
+      section: document.getElementById('section').value,
+      major: document.getElementById('major').value,
       role: role,
       dateAttended: dateAttended,
-<<<<<<< Updated upstream
-      session: session,
+      session: document.getElementById('session').value,
       status: 'present',
       certificateId: certificateId,
       createdAt: serverTimestamp()
     });
-    
+
     const newAttendee = {
       id: docRef.id,
       fullName: attendeeName,
       course: course,
-      year: year,
-      section: section,
-      major: major,
+      year: document.getElementById('year').value,
+      section: document.getElementById('section').value,
+      major: document.getElementById('major').value,
       role: role,
       dateAttended: dateAttended,
-      session: session,
+      session: document.getElementById('session').value,
       status: 'present',
       certificateId: certificateId
     };
     allAttendees.push(newAttendee);
     renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
-    
-=======
-      status: 'active',
-      uuid: attendeeUuid,
-      createdAt: serverTimestamp()
-    });
 
->>>>>>> Stashed changes
     console.log('Attendee added successfully');
     document.getElementById('addAttendeeForm').reset();
     showSuccessModal('Attendee added successfully!', () => {
@@ -298,23 +247,22 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     });
   } catch (error) {
     console.error('Error adding attendee:', error);
-<<<<<<< Updated upstream
-    showAlert('Failed to add attendee', { type: 'error' });
+    showSuccessModal('Failed to add attendee.', null);
   }
 });
 
 function renderAttendees(attendeesList, morningSearchTerm = '', afternoonSearchTerm = '') {
   const morningList = attendeesList.filter(a => a.session === 'morning');
   const afternoonList = attendeesList.filter(a => a.session === 'afternoon');
-  
+
   const filteredMorning = filterAttendees(morningList, morningSearchTerm);
   const filteredAfternoon = filterAttendees(afternoonList, afternoonSearchTerm);
-  
+
   console.log('Rendering attendees, morning:', filteredMorning.length, 'afternoon:', filteredAfternoon.length);
   document.getElementById('attendeeCount').textContent = attendeesList.length;
   document.getElementById('morningCount').textContent = filteredMorning.length;
   document.getElementById('afternoonCount').textContent = filteredAfternoon.length;
-  
+
   renderTable(filteredMorning, 'morningTableBody', 'noMorning');
   renderTable(filteredAfternoon, 'afternoonTableBody', 'noAfternoon');
 }
@@ -322,7 +270,7 @@ function renderAttendees(attendeesList, morningSearchTerm = '', afternoonSearchT
 function filterAttendees(attendeesList, searchTerm) {
   if (!searchTerm) return attendeesList;
   const term = searchTerm.toLowerCase();
-  return attendeesList.filter(a => 
+  return attendeesList.filter(a =>
     (a.fullName || '').toLowerCase().includes(term) ||
     (a.course || '').toLowerCase().includes(term) ||
     (a.year || '').toLowerCase().includes(term) ||
@@ -338,38 +286,15 @@ function filterAttendees(attendeesList, searchTerm) {
 function renderTable(attendeesList, tableBodyId, noDataId) {
   const tableBody = document.getElementById(tableBodyId);
   const noData = document.getElementById(noDataId);
-  
-=======
-    showSuccessModal('Failed to add attendee.', null);
-  }
-});
 
-function renderAttendees(attendeesList) {
-  const attendeesTableBody = document.getElementById('attendeesTableBody');
-  const attendeeCount = document.getElementById('attendeeCount');
-  const noAttendees = document.getElementById('noAttendees');
-  const addAttendeeForm = document.getElementById('addAttendeeForm');
-  const isEventClosed = currentEvent && currentEvent.status === 'closed';
-
-  console.log('Rendering attendees, count:', attendeesList.length);
-  attendeeCount.textContent = attendeesList.length;
-
-  if (isEventClosed) {
-    if (addAttendeeForm) {
-      addAttendeeForm.style.display = 'none';
-    }
-  }
-
->>>>>>> Stashed changes
   if (attendeesList.length === 0) {
     noData.style.display = 'block';
     tableBody.innerHTML = '';
     return;
   }
-<<<<<<< Updated upstream
-  
+
   noData.style.display = 'none';
-  
+
   tableBody.innerHTML = attendeesList.map(attendee => `
     <tr class="border-b border-gray-100 hover:bg-green-50 transition-colors">
       <td class="py-4 px-4">
@@ -396,23 +321,23 @@ function renderAttendees(attendeesList) {
           <span class="text-gray-400 text-xs italic">Locked</span>
         ` : `
           <div class="flex gap-1 flex-wrap">
-            <button onclick="window.markPresent('${attendee.id}')" 
+            <button onclick="window.markPresent('${attendee.id}')"
               class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs">
               Present
             </button>
-            <button onclick="window.markAbsent('${attendee.id}')" 
+            <button onclick="window.markAbsent('${attendee.id}')"
               class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs">
               Absent
             </button>
-            <button onclick="window.markLate('${attendee.id}')" 
+            <button onclick="window.markLate('${attendee.id}')"
               class="px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-xs">
               Late
             </button>
-            <button onclick="window.editAttendee('${attendee.id}')" 
+            <button onclick="window.editAttendee('${attendee.id}')"
               class="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs">
               Edit
             </button>
-            <button onclick="window.deleteAttendee('${attendee.id}')" 
+            <button onclick="window.deleteAttendee('${attendee.id}')"
               class="px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-xs">
               Delete
             </button>
@@ -422,56 +347,16 @@ function renderAttendees(attendeesList) {
     </tr>
   `).join('');
 }
-=======
->>>>>>> Stashed changes
-
-  noAttendees.style.display = 'none';
-
-  attendeesTableBody.innerHTML = attendeesList.map(attendee => {
-    const statusClass = attendee.status === 'completed' ? 'bg-green-100 text-green-800' :
-                       attendee.status === 'absent' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
-
-    return `
-      <tr class="border-b border-gray-100 hover:bg-gray-50">
-        <td class="py-3 px-4 text-sm text-gray-800">${escapeHtml(attendee.fullName)}</td>
-        <td class="py-3 px-4 text-sm text-gray-800">${escapeHtml(attendee.course)}</td>
-        <td class="py-3 px-4 text-sm text-gray-800">${escapeHtml(attendee.role)}</td>
-        <td class="py-3 px-4 text-sm text-gray-800">${attendee.dateAttended || 'N/A'}</td>
-        <td class="py-3 px-4">
-          <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusClass}">
-            ${escapeHtml(attendee.status)}
-          </span>
-        </td>
-        <td class="py-3 px-4">
-          <button onclick="markCompleted('${attendee.id}')" class="text-green-600 hover:text-green-700 font-medium mr-2">Complete</button>
-          <button onclick="markAbsent('${attendee.id}')" class="text-red-600 hover:text-red-700 font-medium mr-2">Absent</button>
-          <button onclick="deleteAttendee('${attendee.id}')" class="text-gray-400 hover:text-gray-600 font-medium">Delete</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-
-  console.log('Table rows updated');
-}
-
-
 
 window.markPresent = async (attendeeId) => {
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'present'
     });
-<<<<<<< Updated upstream
-    console.log('Marked as present');
-  } catch (error) {
-    console.error('Error updating status:', error);
-    showAlert('Failed to update status', { type: 'error' });
-=======
-    showSuccessModal('Attendee marked as completed!', null);
+    showSuccessModal('Attendee marked as present!', null);
   } catch (error) {
     console.error('Error updating status:', error);
     showSuccessModal('Failed to update status.', null);
->>>>>>> Stashed changes
   }
 };
 
@@ -483,11 +368,7 @@ window.markAbsent = async (attendeeId) => {
     showSuccessModal('Attendee marked as absent.', null);
   } catch (error) {
     console.error('Error updating status:', error);
-<<<<<<< Updated upstream
-    showAlert('Failed to update status', { type: 'error' });
-=======
     showSuccessModal('Failed to update status.', null);
->>>>>>> Stashed changes
   }
 };
 
@@ -506,7 +387,7 @@ window.markLate = async (attendeeId) => {
 window.editAttendee = async (attendeeId) => {
   const attendee = allAttendees.find(a => a.id === attendeeId);
   if (!attendee) return;
-  
+
   document.getElementById('editAttendeeId').value = attendee.id;
   document.getElementById('editName').value = attendee.fullName || '';
   document.getElementById('editCourse').value = attendee.course || '';
@@ -517,7 +398,7 @@ window.editAttendee = async (attendeeId) => {
   document.getElementById('editDateAttended').value = attendee.dateAttended || '';
   document.getElementById('editSession').value = attendee.session || 'morning';
   document.getElementById('editStatus').value = attendee.status || 'present';
-  
+
   document.getElementById('editModal').classList.remove('hidden');
   document.getElementById('editModal').classList.add('flex');
 };
@@ -529,7 +410,7 @@ window.closeEditModal = () => {
 
 document.getElementById('editAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
+
   const attendeeId = document.getElementById('editAttendeeId').value;
   const fullName = document.getElementById('editName').value;
   const course = document.getElementById('editCourse').value;
@@ -540,7 +421,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   const dateAttended = document.getElementById('editDateAttended').value;
   const session = document.getElementById('editSession').value;
   const status = document.getElementById('editStatus').value;
-  
+
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       fullName,
@@ -562,58 +443,52 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
 });
 
 window.deleteAttendee = async (attendeeId) => {
-<<<<<<< Updated upstream
   const confirmed = await showConfirm('Are you sure you want to delete this attendee?');
   if (confirmed !== 1) return;
-  
-=======
-  if (!confirm('Are you sure you want to delete this attendee?')) return;
 
->>>>>>> Stashed changes
   try {
     await deleteDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId));
     showSuccessModal('Attendee deleted.', null);
   } catch (error) {
     console.error('Error deleting attendee:', error);
-<<<<<<< Updated upstream
     showAlert('Failed to delete attendee', { type: 'error' });
   }
 };
 
 window.copyMorningToAfternoon = async () => {
   const morningAttendees = allAttendees.filter(a => a.session === 'morning' && !a.locked);
-  
+
   if (morningAttendees.length === 0) {
     showAlert('No new morning attendees to save', { type: 'info' });
     return;
   }
-  
+
   const confirmed = await showConfirm(`Save ${morningAttendees.length} new morning attendee(s) to afternoon?\nStatus will be reset to Present.`);
   if (confirmed !== 1) return;
-  
+
   try {
     const batch = writeBatch(db);
-    
-morningAttendees.forEach(attendee => {
-       const ref = doc(collection(db, 'Events', currentEventId, 'Attendees'));
-        batch.set(ref, {
-          fullName: attendee.fullName,
-          year: attendee.year,
-         section: attendee.section,
-         major: attendee.major,
-         course: attendee.course,
-         role: attendee.role,
-         dateAttended: attendee.dateAttended,
-         session: 'afternoon',
-         status: 'present',
-         certificateId: generateShortId(),
-         createdAt: serverTimestamp()
-       });
-       batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
-         locked: true
-       });
-     });
-    
+
+    morningAttendees.forEach(attendee => {
+      const ref = doc(collection(db, 'Events', currentEventId, 'Attendees'));
+      batch.set(ref, {
+        fullName: attendee.fullName,
+        year: attendee.year,
+        section: attendee.section,
+        major: attendee.major,
+        course: attendee.course,
+        role: attendee.role,
+        dateAttended: attendee.dateAttended,
+        session: 'afternoon',
+        status: 'present',
+        certificateId: generateShortId(),
+        createdAt: serverTimestamp()
+      });
+      batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
+        locked: true
+      });
+    });
+
     await batch.commit();
     showToast(`Successfully saved ${morningAttendees.length} attendee(s) to afternoon`, 'success');
     console.log('Morning attendees saved to afternoon');
@@ -625,15 +500,15 @@ morningAttendees.forEach(attendee => {
 
 window.lockAfternoon = async () => {
   const afternoonAttendees = allAttendees.filter(a => a.session === 'afternoon');
-  
+
   if (afternoonAttendees.length === 0) {
     showAlert('No afternoon attendees to lock', { type: 'warning' });
     return;
   }
-  
+
   const confirmed = await showConfirm(`Lock all ${afternoonAttendees.length} afternoon attendee(s)?\nThis will remove all action buttons.`);
   if (confirmed !== 1) return;
-  
+
   try {
     const batch = writeBatch(db);
     afternoonAttendees.forEach(attendee => {
@@ -641,7 +516,7 @@ window.lockAfternoon = async () => {
         locked: true
       });
     });
-    
+
     await batch.commit();
     showToast(`Successfully locked ${afternoonAttendees.length} afternoon attendee(s)`, 'success');
     console.log('Afternoon attendees locked');
@@ -651,18 +526,15 @@ window.lockAfternoon = async () => {
   }
 };
 
-// Build and export attendance data to a real .xlsx workbook using ExcelJS
 window.exportAttendeesToExcel = async () => {
   if (!currentEvent || allAttendees.length === 0) {
     showAlert('No attendees to export', { type: 'warning' });
     return;
   }
 
-  // Segregate attendees by session
   const morningAttendees = allAttendees.filter(a => a.session === 'morning');
   const afternoonAttendees = allAttendees.filter(a => a.session === 'afternoon');
 
-  // Derive headers required by the spec
   const headers = [
     'Attendee Name',
     'Course, Year, Section, Major',
@@ -673,7 +545,6 @@ window.exportAttendeesToExcel = async () => {
     'Certificate ID'
   ];
 
-  // Workbook + worksheet header styling constants
   const headerFillColor = 'FF92D050';
   const headerFontColor = 'FFFFFFFF';
   const headerFontBold = true;
@@ -683,11 +554,9 @@ window.exportAttendeesToExcel = async () => {
     workbook.creator = 'Information Unit';
     workbook.created = new Date();
 
-    // Helper: build a worksheet for a given session
     const buildWorksheet = (sessionName, attendeesList) => {
       const worksheet = workbook.addWorksheet(sessionName);
 
-      // Columns definition: name and width only
       worksheet.columns = [
         { header: 'Attendee Name', key: 'fullName', width: 28 },
         { header: 'Course, Year, Section, Major', key: 'academicInfo', width: 45 },
@@ -698,7 +567,6 @@ window.exportAttendeesToExcel = async () => {
         { header: 'Certificate ID', key: 'certificateId', width: 18 }
       ];
 
-      // Row 1 = headers, apply styling
       const headerRow = worksheet.getRow(1);
       headerRow.values = headers;
       headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -710,7 +578,6 @@ window.exportAttendeesToExcel = async () => {
       };
       headerRow.height = 22;
 
-      // Populate data rows
       attendeesList.forEach((attendee, index) => {
         const row = worksheet.getRow(index + 2);
         row.height = 18;
@@ -726,15 +593,12 @@ window.exportAttendeesToExcel = async () => {
         ];
       });
 
-      // Freeze header for easier navigation
       worksheet.views = [{ state: 'frozen', ySplit: 1 }];
     };
 
-    // Build both session worksheets
     buildWorksheet('Morning Session', morningAttendees);
     buildWorksheet('Afternoon Session', afternoonAttendees);
 
-    // Trigger browser download
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
@@ -772,18 +636,9 @@ const initSearch = () => {
 
 onAuthStateChanged(auth, async (user) => {
   console.log('Auth state changed:', user ? 'logged in' : 'logged out');
-  
+
   initSearch();
-  
-=======
-    showSuccessModal('Failed to delete attendee.', null);
-  }
-};
 
-onAuthStateChanged(auth, async (user) => {
-  console.log('Auth state changed:', user ? 'logged in' : 'logged out');
-
->>>>>>> Stashed changes
   if (!user) {
     window.location.href = '../logIn/LogInAdmin.html';
     return;
@@ -798,11 +653,7 @@ onAuthStateChanged(auth, async (user) => {
   try {
     const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
     if (!eventDoc.exists()) {
-<<<<<<< Updated upstream
-      showAlert('Event not found', { type: 'warning' });
-=======
       showToast('Event not found', 'error');
->>>>>>> Stashed changes
       window.location.href = '../EventCRUD/EventCRUD.html';
       return;
     }
@@ -826,7 +677,6 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = '../EventCRUD/EventCRUD.html';
   }
 });
-<<<<<<< Updated upstream
 
 const uploadAttendanceBtn = document.getElementById('uploadAttendanceBtn');
 const ocrSection = document.getElementById('ocrSection');
@@ -932,5 +782,3 @@ if (cancelOcrBtn) {
     currentOcrParsedAttendees = [];
   });
 }
-=======
->>>>>>> Stashed changes
