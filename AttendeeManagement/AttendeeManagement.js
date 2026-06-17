@@ -1,7 +1,11 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+<<<<<<< Updated upstream
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 const OCR_API_URL = 'https://us-central1-ipprc-certificate-verification.cloudfunctions.net/ocrTextDetection';
+=======
+import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+>>>>>>> Stashed changes
 
 
 // Generate a unique 6-character uppercase alphanumeric certificate ID
@@ -184,18 +188,57 @@ let currentEventId = localStorage.getItem('currentEventId');
 let currentEvent = null;
 let allAttendees = [];
 
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showToast(message, type = 'success') {
+  const container = document.createElement('div');
+  container.className = 'toast-container';
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+
+  container.appendChild(toast);
+  document.body.appendChild(container);
+
+  setTimeout(() => {
+    toast.style.animation = 'slideOut 0.3s ease-in forwards';
+    setTimeout(() => {
+      container.remove();
+    }, 300);
+  }, 3000);
+}
+
+function showSuccessModal(message, callback = null) {
+  showToast(message, 'success');
+}
+
 document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
+
   if (!currentEvent) {
+<<<<<<< Updated upstream
     showAlert('Event not found', { type: 'warning' });
+=======
+    showToast('Event not found', 'error');
+>>>>>>> Stashed changes
     return;
   }
-  
+
+  if (currentEvent.status === 'closed') {
+    showToast('This event is closed. Attendees can no longer be added.', 'error');
+    return;
+  }
+
   const attendeeName = document.getElementById('attendeeName').value;
   const course = document.getElementById('course').value;
   const role = document.getElementById('role').value;
   const dateAttended = document.getElementById('dateAttended').value;
+<<<<<<< Updated upstream
   const session = document.getElementById('session').value;
   const year = document.getElementById('year').value;
   const section = document.getElementById('section').value;
@@ -204,6 +247,13 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   try {
     const certificateId = await generateUniqueCertificateId(allAttendees);
     const docRef = await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
+=======
+
+  try {
+    const attendeeUuid = generateUUID();
+
+    await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
+>>>>>>> Stashed changes
       fullName: attendeeName,
       course: course,
       year: year,
@@ -211,6 +261,7 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
       major: major,
       role: role,
       dateAttended: dateAttended,
+<<<<<<< Updated upstream
       session: session,
       status: 'present',
       certificateId: certificateId,
@@ -233,10 +284,21 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     allAttendees.push(newAttendee);
     renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
     
+=======
+      status: 'active',
+      uuid: attendeeUuid,
+      createdAt: serverTimestamp()
+    });
+
+>>>>>>> Stashed changes
     console.log('Attendee added successfully');
     document.getElementById('addAttendeeForm').reset();
+    showSuccessModal('Attendee added successfully!', () => {
+      document.getElementById('attendeeName').focus();
+    });
   } catch (error) {
     console.error('Error adding attendee:', error);
+<<<<<<< Updated upstream
     showAlert('Failed to add attendee', { type: 'error' });
   }
 });
@@ -277,11 +339,34 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
   const tableBody = document.getElementById(tableBodyId);
   const noData = document.getElementById(noDataId);
   
+=======
+    showSuccessModal('Failed to add attendee.', null);
+  }
+});
+
+function renderAttendees(attendeesList) {
+  const attendeesTableBody = document.getElementById('attendeesTableBody');
+  const attendeeCount = document.getElementById('attendeeCount');
+  const noAttendees = document.getElementById('noAttendees');
+  const addAttendeeForm = document.getElementById('addAttendeeForm');
+  const isEventClosed = currentEvent && currentEvent.status === 'closed';
+
+  console.log('Rendering attendees, count:', attendeesList.length);
+  attendeeCount.textContent = attendeesList.length;
+
+  if (isEventClosed) {
+    if (addAttendeeForm) {
+      addAttendeeForm.style.display = 'none';
+    }
+  }
+
+>>>>>>> Stashed changes
   if (attendeesList.length === 0) {
     noData.style.display = 'block';
     tableBody.innerHTML = '';
     return;
   }
+<<<<<<< Updated upstream
   
   noData.style.display = 'none';
   
@@ -337,11 +422,36 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
     </tr>
   `).join('');
 }
+=======
+>>>>>>> Stashed changes
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+  noAttendees.style.display = 'none';
+
+  attendeesTableBody.innerHTML = attendeesList.map(attendee => {
+    const statusClass = attendee.status === 'completed' ? 'bg-green-100 text-green-800' :
+                       attendee.status === 'absent' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800';
+
+    return `
+      <tr class="border-b border-gray-100 hover:bg-gray-50">
+        <td class="py-3 px-4 text-sm text-gray-800">${escapeHtml(attendee.fullName)}</td>
+        <td class="py-3 px-4 text-sm text-gray-800">${escapeHtml(attendee.course)}</td>
+        <td class="py-3 px-4 text-sm text-gray-800">${escapeHtml(attendee.role)}</td>
+        <td class="py-3 px-4 text-sm text-gray-800">${attendee.dateAttended || 'N/A'}</td>
+        <td class="py-3 px-4">
+          <span class="px-2 py-1 rounded-full text-xs font-semibold ${statusClass}">
+            ${escapeHtml(attendee.status)}
+          </span>
+        </td>
+        <td class="py-3 px-4">
+          <button onclick="markCompleted('${attendee.id}')" class="text-green-600 hover:text-green-700 font-medium mr-2">Complete</button>
+          <button onclick="markAbsent('${attendee.id}')" class="text-red-600 hover:text-red-700 font-medium mr-2">Absent</button>
+          <button onclick="deleteAttendee('${attendee.id}')" class="text-gray-400 hover:text-gray-600 font-medium">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  console.log('Table rows updated');
 }
 
 
@@ -351,10 +461,17 @@ window.markPresent = async (attendeeId) => {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'present'
     });
+<<<<<<< Updated upstream
     console.log('Marked as present');
   } catch (error) {
     console.error('Error updating status:', error);
     showAlert('Failed to update status', { type: 'error' });
+=======
+    showSuccessModal('Attendee marked as completed!', null);
+  } catch (error) {
+    console.error('Error updating status:', error);
+    showSuccessModal('Failed to update status.', null);
+>>>>>>> Stashed changes
   }
 };
 
@@ -363,10 +480,14 @@ window.markAbsent = async (attendeeId) => {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'absent'
     });
-    console.log('Marked as absent');
+    showSuccessModal('Attendee marked as absent.', null);
   } catch (error) {
     console.error('Error updating status:', error);
+<<<<<<< Updated upstream
     showAlert('Failed to update status', { type: 'error' });
+=======
+    showSuccessModal('Failed to update status.', null);
+>>>>>>> Stashed changes
   }
 };
 
@@ -441,14 +562,20 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
 });
 
 window.deleteAttendee = async (attendeeId) => {
+<<<<<<< Updated upstream
   const confirmed = await showConfirm('Are you sure you want to delete this attendee?');
   if (confirmed !== 1) return;
   
+=======
+  if (!confirm('Are you sure you want to delete this attendee?')) return;
+
+>>>>>>> Stashed changes
   try {
     await deleteDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId));
-    console.log('Attendee deleted');
+    showSuccessModal('Attendee deleted.', null);
   } catch (error) {
     console.error('Error deleting attendee:', error);
+<<<<<<< Updated upstream
     showAlert('Failed to delete attendee', { type: 'error' });
   }
 };
@@ -648,28 +775,41 @@ onAuthStateChanged(auth, async (user) => {
   
   initSearch();
   
+=======
+    showSuccessModal('Failed to delete attendee.', null);
+  }
+};
+
+onAuthStateChanged(auth, async (user) => {
+  console.log('Auth state changed:', user ? 'logged in' : 'logged out');
+
+>>>>>>> Stashed changes
   if (!user) {
     window.location.href = '../logIn/LogInAdmin.html';
     return;
   }
-  
+
   if (!currentEventId) {
     console.log('No event ID found, redirecting...');
     window.location.href = '../EventCRUD/EventCRUD.html';
     return;
   }
-  
+
   try {
     const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
     if (!eventDoc.exists()) {
+<<<<<<< Updated upstream
       showAlert('Event not found', { type: 'warning' });
+=======
+      showToast('Event not found', 'error');
+>>>>>>> Stashed changes
       window.location.href = '../EventCRUD/EventCRUD.html';
       return;
     }
-    
+
     currentEvent = { id: eventDoc.id, ...eventDoc.data() };
     document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
-    
+
     console.log('Setting up listener for eventId:', currentEventId);
     const q = query(collection(db, 'Events', currentEventId, 'Attendees'));
     onSnapshot(q, (snapshot) => {
@@ -680,12 +820,13 @@ onAuthStateChanged(auth, async (user) => {
       });
       renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
     });
-    
+
   } catch (error) {
     console.error('Error loading event:', error);
     window.location.href = '../EventCRUD/EventCRUD.html';
   }
 });
+<<<<<<< Updated upstream
 
 const uploadAttendanceBtn = document.getElementById('uploadAttendanceBtn');
 const ocrSection = document.getElementById('ocrSection');
@@ -791,3 +932,5 @@ if (cancelOcrBtn) {
     currentOcrParsedAttendees = [];
   });
 }
+=======
+>>>>>>> Stashed changes

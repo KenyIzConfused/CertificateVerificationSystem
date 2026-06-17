@@ -21,7 +21,11 @@
   "dependencies": {
     "@google-cloud/vision": "^5.3.7",
     "docxtemplater": "^3.68.7",
+<<<<<<< Updated upstream
     "exceljs": "^4.4.0",
+=======
+    "firebase": "^12.14.0",
+>>>>>>> Stashed changes
     "pizzip": "^3.2.0",
     "qrcode": "^1.5.4",
     "uui": "^1.0.7"
