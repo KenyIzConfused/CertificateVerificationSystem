@@ -63,10 +63,11 @@
             </button>
         </div>
 
-        <!-- Create Event Form (Hidden by default) -->
+        <!-- Create/Edit Event Form (Hidden by default) -->
         <div id="createEventPanel" class="hidden bg-white rounded-2xl shadow-xl p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Create New Event</h2>
-            <form id="createEventForm" class="space-y-6">
+            <h2 id="formTitle" class="text-2xl font-bold text-gray-800 mb-6">Create New Event</h2>
+            <form id="eventForm" class="space-y-6">
+                <input type="hidden" id="editEventId">
                 <div class="space-y-2">
                     <label for="eventTitle" class="block text-sm font-semibold text-gray-700">Event Title</label>
                     <input type="text" id="eventTitle" name="eventTitle" required 
@@ -103,28 +104,10 @@
                         class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
                         placeholder="e.g., 8">
                 </div>
-                <div class="space-y-2">
-                    <label for="department" class="block text-sm font-semibold text-gray-700">Department / Office</label>
-                    <input type="text" id="department" name="department" 
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                        placeholder="e.g., Information Unit, Computer Science Society">
-                </div>
-                <div class="space-y-2">
-                    <label for="speaker" class="block text-sm font-semibold text-gray-700">Speaker</label>
-                    <input type="text" id="speaker" name="speaker" 
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                        placeholder="e.g., Dr. Juan Dela Cruz">
-                </div>
-                <div class="flex gap-2">
-                    <button type="button" onclick="window.cancelEdit()" 
-                        class="hidden px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors" id="cancelEditBtn">
-                        Cancel
-                    </button>
-                    <button type="submit" 
-                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg">
-                        Create Event
-                    </button>
-                </div>
+                <button type="submit" 
+                    class="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold py-3 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-green-200">
+                    Create Event
+                </button>
             </form>
         </div>
 
@@ -136,9 +119,6 @@
             </div>
         </div>
     </div>
-    <script type="module">
-        import '../PopupSystem.js';
-        import './EventCRUD.js';
-    </script>
+    <script type="module" src="EventCRUD.js"></script>
 </body>
 </html>
