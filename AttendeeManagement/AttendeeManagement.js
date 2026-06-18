@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const OCR_API_URL = 'https://us-central1-ipprc-certificate-verification.cloudfunctions.net/ocrTextDetection';
 
@@ -42,56 +42,34 @@ function parseOcrText(rawText) {
   for (const line of lines) {
     let fullName = null;
     let course = '';
-    let year = '';
-    let section = '';
-    let major = '';
     let role = 'Student';
 
     if (line.includes(',') || line.includes('\t')) {
       const parts = line.split(/[,\t]/).map(p => p.trim()).filter(p => p.length > 0);
       if (parts.length >= 1) fullName = parts[0];
       if (parts.length >= 2) course = parts[1];
-      if (parts.length >= 3) year = parts[2];
-      if (parts.length >= 4) section = parts[3];
-      if (parts.length >= 5) major = parts[4];
-      if (parts.length >= 6) role = parts[5];
+      if (parts.length >= 3) role = parts[2];
     } else {
       const kvPattern = /(Full Name|Name)\s*:\s*(.+)/i;
       const coursePattern = /(Course)\s*:\s*(.+)/i;
-      const yearPattern = /(Year)\s*:\s*(.+)/i;
-      const sectionPattern = /(Section)\s*:\s*(.+)/i;
-      const majorPattern = /(Major)\s*:\s*(.+)/i;
       const rolePattern = /(Role)\s*:\s*(.+)/i;
 
       const kvMatch = line.match(kvPattern);
       const courseMatch = line.match(coursePattern);
-      const yearMatch = line.match(yearPattern);
-      const sectionMatch = line.match(sectionPattern);
-      const majorMatch = line.match(majorPattern);
       const roleMatch = line.match(rolePattern);
 
       if (kvMatch) fullName = kvMatch[2].trim();
       if (courseMatch) course = courseMatch[2].trim();
-      if (yearMatch) year = yearMatch[2].trim();
-      if (sectionMatch) section = sectionMatch[2].trim();
-      if (majorMatch) major = majorMatch[2].trim();
       if (roleMatch) role = roleMatch[2].trim();
     }
 
     if (!fullName) continue;
 
-    const yearNum = year.match(/\d+/);
-    const cleanedYear = yearNum ? yearNum[0] : year;
-
     parsed.push({
       fullName,
       course,
-      year: cleanedYear,
-      section,
-      major,
       role,
       dateAttended: getTodayDateString(),
-      session: 'morning',
       status: 'present'
     });
   }
@@ -102,14 +80,11 @@ function parseOcrText(rawText) {
 function renderOcrParsedList(parsedAttendees) {
   const listEl = document.getElementById('ocrParsedList');
   listEl.innerHTML = parsedAttendees.map((a, idx) => `
-    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-green-100">
-      <div class="flex-1 grid grid-cols-2 gap-2 text-sm text-gray-700">
-        <span><strong>Name:</strong> ${escapeHtml(a.fullName)}</span>
-        <span><strong>Course:</strong> ${escapeHtml(a.course || '-')}</span>
-        <span><strong>Year:</strong> ${escapeHtml(a.year || '-')}</span>
-        <span><strong>Section:</strong> ${escapeHtml(a.section || '-')}</span>
-        <span><strong>Major:</strong> ${escapeHtml(a.major || '-')}</span>
-        <span><strong>Role:</strong> ${escapeHtml(a.role || '-')}</span>
+    <div class="flex items-center justify-between glass px-4 py-3 rounded-lg">
+      <div class="flex-1 grid grid-cols-2 gap-2 text-sm text-green-100">
+        <span><strong class="text-green-300/80">Name:</strong> ${escapeHtml(a.fullName)}</span>
+        <span><strong class="text-green-300/80">Course:</strong> ${escapeHtml(a.course || '-')}</span>
+        <span><strong class="text-green-300/80">Role:</strong> ${escapeHtml(a.role || '-')}</span>
       </div>
     </div>
   `).join('');
@@ -135,12 +110,8 @@ async function saveOcrAttendees(parsedAttendees) {
       batch.set(ref, {
         fullName: attendee.fullName,
         course: attendee.course,
-        year: attendee.year,
-        section: attendee.section,
-        major: attendee.major,
         role: attendee.role,
         dateAttended: attendee.dateAttended,
-        session: attendee.session,
         status: attendee.status,
         certificateId,
         createdAt: serverTimestamp()
@@ -159,7 +130,7 @@ async function saveOcrAttendees(parsedAttendees) {
     document.getElementById('ocrRawText').classList.add('hidden');
     document.getElementById('ocrPreview').classList.add('hidden');
     document.getElementById('ocrFileInput').value = '';
-    renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
+    renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
   } catch (error) {
     console.error('Error saving OCR attendees:', error);
     showAlert('Failed to save attendees', { type: 'error' });
@@ -213,12 +184,8 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     const docRef = await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
       fullName: attendeeName,
       course: course,
-      year: document.getElementById('year').value,
-      section: document.getElementById('section').value,
-      major: document.getElementById('major').value,
       role: role,
       dateAttended: dateAttended,
-      session: document.getElementById('session').value,
       status: 'present',
       certificateId: certificateId,
       createdAt: serverTimestamp()
@@ -228,17 +195,13 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
       id: docRef.id,
       fullName: attendeeName,
       course: course,
-      year: document.getElementById('year').value,
-      section: document.getElementById('section').value,
-      major: document.getElementById('major').value,
       role: role,
       dateAttended: dateAttended,
-      session: document.getElementById('session').value,
       status: 'present',
       certificateId: certificateId
     };
     allAttendees.push(newAttendee);
-    renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
+    renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
 
     console.log('Attendee added successfully');
     document.getElementById('addAttendeeForm').reset();
@@ -251,20 +214,13 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   }
 });
 
-function renderAttendees(attendeesList, morningSearchTerm = '', afternoonSearchTerm = '') {
-  const morningList = attendeesList.filter(a => a.session === 'morning');
-  const afternoonList = attendeesList.filter(a => a.session === 'afternoon');
+function renderAttendees(attendeesList, searchTerm = '') {
+  const filtered = filterAttendees(attendeesList, searchTerm);
 
-  const filteredMorning = filterAttendees(morningList, morningSearchTerm);
-  const filteredAfternoon = filterAttendees(afternoonList, afternoonSearchTerm);
-
-  console.log('Rendering attendees, morning:', filteredMorning.length, 'afternoon:', filteredAfternoon.length);
+  console.log('Rendering attendees, count:', filtered.length);
   document.getElementById('attendeeCount').textContent = attendeesList.length;
-  document.getElementById('morningCount').textContent = filteredMorning.length;
-  document.getElementById('afternoonCount').textContent = filteredAfternoon.length;
 
-  renderTable(filteredMorning, 'morningTableBody', 'noMorning');
-  renderTable(filteredAfternoon, 'afternoonTableBody', 'noAfternoon');
+  renderTable(filtered);
 }
 
 function filterAttendees(attendeesList, searchTerm) {
@@ -273,9 +229,6 @@ function filterAttendees(attendeesList, searchTerm) {
   return attendeesList.filter(a =>
     (a.fullName || '').toLowerCase().includes(term) ||
     (a.course || '').toLowerCase().includes(term) ||
-    (a.year || '').toLowerCase().includes(term) ||
-    (a.section || '').toLowerCase().includes(term) ||
-    (a.major || '').toLowerCase().includes(term) ||
     (a.role || '').toLowerCase().includes(term) ||
     (a.dateAttended || '').toLowerCase().includes(term) ||
     (a.status || '').toLowerCase().includes(term) ||
@@ -283,66 +236,68 @@ function filterAttendees(attendeesList, searchTerm) {
   );
 }
 
-function renderTable(attendeesList, tableBodyId, noDataId) {
-  const tableBody = document.getElementById(tableBodyId);
-  const noData = document.getElementById(noDataId);
+function renderTable(attendeesList) {
+  const tableBody = document.getElementById('attendeesTableBody');
+  const noAttendees = document.getElementById('noAttendees');
 
   if (attendeesList.length === 0) {
-    noData.style.display = 'block';
+    noAttendees.style.display = 'block';
     tableBody.innerHTML = '';
     return;
   }
 
-  noData.style.display = 'none';
+  noAttendees.style.display = 'none';
 
   tableBody.innerHTML = attendeesList.map(attendee => `
-    <tr class="border-b border-gray-100 hover:bg-green-50 transition-colors">
-      <td class="py-4 px-4">
-        <span class="font-medium text-gray-800">${escapeHtml(attendee.fullName)}</span>
+    <tr class="border-b border-green-400/20 hover:bg-green-400/10 transition-colors">
+      <td class="py-4 px-2">
+        <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
       </td>
-      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.course)}</td>
-      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.year)}</td>
-      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.section)}</td>
-      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.major)}</td>
-      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.role)}</td>
-      <td class="py-4 px-4 text-gray-600">${attendee.dateAttended}</td>
-      <td class="py-4 px-4">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${attendee.status === 'present' ? 'bg-green-100 text-green-800' : attendee.status === 'late' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}">
+      <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
+      <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
+      <td class="py-4 px-2 text-green-200/80">${attendee.dateAttended}</td>
+      <td class="py-4 px-2">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${attendee.status === 'present' ? 'bg-green-400/30 text-green-200' : attendee.status === 'late' ? 'bg-orange-400/30 text-orange-200' : 'bg-red-400/30 text-red-200'}">
           ${attendee.status.toUpperCase()}
         </span>
       </td>
-      <td class="py-4 px-4">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+      <td class="py-4 px-2">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-400/30 text-blue-200">
           ${escapeHtml(attendee.certificateId || '')}
         </span>
       </td>
-      <td class="py-4 px-4">
-        ${attendee.locked ? `
-          <span class="text-gray-400 text-xs italic">Locked</span>
-        ` : `
-          <div class="flex gap-1 flex-wrap">
-            <button onclick="window.markPresent('${attendee.id}')"
-              class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs">
-              Present
-            </button>
-            <button onclick="window.markAbsent('${attendee.id}')"
-              class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs">
-              Absent
-            </button>
-            <button onclick="window.markLate('${attendee.id}')"
-              class="px-2 py-1 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-xs">
-              Late
-            </button>
-            <button onclick="window.editAttendee('${attendee.id}')"
-              class="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs">
-              Edit
-            </button>
-            <button onclick="window.deleteAttendee('${attendee.id}')"
-              class="px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-xs">
-              Delete
-            </button>
-          </div>
-        `}
+      <td class="py-4 px-2">
+        <div class="flex gap-1 flex-wrap">
+          <button onclick="window.markPresent('${attendee.id}')"
+            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+            Present
+          </button>
+          <button onclick="window.markAbsent('${attendee.id}')"
+            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            <span class="w-2 h-2 bg-red-400 rounded-full"></span>
+            Absent
+          </button>
+          <button onclick="window.markLate('${attendee.id}')"
+            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            <span class="w-2 h-2 bg-yellow-400 rounded-full"></span>
+            Late
+          </button>
+          <button onclick="window.editAttendee('${attendee.id}')"
+            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Edit
+          </button>
+          <button onclick="window.deleteAttendee('${attendee.id}')"
+            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            Delete
+          </button>
+        </div>
       </td>
     </tr>
   `).join('');
@@ -391,21 +346,19 @@ window.editAttendee = async (attendeeId) => {
   document.getElementById('editAttendeeId').value = attendee.id;
   document.getElementById('editName').value = attendee.fullName || '';
   document.getElementById('editCourse').value = attendee.course || '';
-  document.getElementById('editYear').value = attendee.year || '';
-  document.getElementById('editSection').value = attendee.section || '';
-  document.getElementById('editMajor').value = attendee.major || '';
   document.getElementById('editRole').value = attendee.role || '';
   document.getElementById('editDateAttended').value = attendee.dateAttended || '';
-  document.getElementById('editSession').value = attendee.session || 'morning';
   document.getElementById('editStatus').value = attendee.status || 'present';
 
-  document.getElementById('editModal').classList.remove('hidden');
-  document.getElementById('editModal').classList.add('flex');
+  const modal = document.getElementById('editModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
 };
 
 window.closeEditModal = () => {
-  document.getElementById('editModal').classList.add('hidden');
-  document.getElementById('editModal').classList.remove('flex');
+  const modal = document.getElementById('editModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
 };
 
 document.getElementById('editAttendeeForm').addEventListener('submit', async (e) => {
@@ -414,24 +367,16 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   const attendeeId = document.getElementById('editAttendeeId').value;
   const fullName = document.getElementById('editName').value;
   const course = document.getElementById('editCourse').value;
-  const year = document.getElementById('editYear').value;
-  const section = document.getElementById('editSection').value;
-  const major = document.getElementById('editMajor').value;
   const role = document.getElementById('editRole').value;
   const dateAttended = document.getElementById('editDateAttended').value;
-  const session = document.getElementById('editSession').value;
   const status = document.getElementById('editStatus').value;
 
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       fullName,
       course,
-      year,
-      section,
-      major,
       role,
       dateAttended,
-      session,
       status
     });
     console.log('Attendee updated');
@@ -455,92 +400,17 @@ window.deleteAttendee = async (attendeeId) => {
   }
 };
 
-window.copyMorningToAfternoon = async () => {
-  const morningAttendees = allAttendees.filter(a => a.session === 'morning' && !a.locked);
-
-  if (morningAttendees.length === 0) {
-    showAlert('No new morning attendees to save', { type: 'info' });
-    return;
-  }
-
-  const confirmed = await showConfirm(`Save ${morningAttendees.length} new morning attendee(s) to afternoon?\nStatus will be reset to Present.`);
-  if (confirmed !== 1) return;
-
-  try {
-    const batch = writeBatch(db);
-
-    morningAttendees.forEach(attendee => {
-      const ref = doc(collection(db, 'Events', currentEventId, 'Attendees'));
-      batch.set(ref, {
-        fullName: attendee.fullName,
-        year: attendee.year,
-        section: attendee.section,
-        major: attendee.major,
-        course: attendee.course,
-        role: attendee.role,
-        dateAttended: attendee.dateAttended,
-        session: 'afternoon',
-        status: 'present',
-        certificateId: generateShortId(),
-        createdAt: serverTimestamp()
-      });
-      batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
-        locked: true
-      });
-    });
-
-    await batch.commit();
-    showToast(`Successfully saved ${morningAttendees.length} attendee(s) to afternoon`, 'success');
-    console.log('Morning attendees saved to afternoon');
-  } catch (error) {
-    console.error('Error saving attendees:', error);
-    showAlert('Failed to save attendees', { type: 'error' });
-  }
-};
-
-window.lockAfternoon = async () => {
-  const afternoonAttendees = allAttendees.filter(a => a.session === 'afternoon');
-
-  if (afternoonAttendees.length === 0) {
-    showAlert('No afternoon attendees to lock', { type: 'warning' });
-    return;
-  }
-
-  const confirmed = await showConfirm(`Lock all ${afternoonAttendees.length} afternoon attendee(s)?\nThis will remove all action buttons.`);
-  if (confirmed !== 1) return;
-
-  try {
-    const batch = writeBatch(db);
-    afternoonAttendees.forEach(attendee => {
-      batch.update(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
-        locked: true
-      });
-    });
-
-    await batch.commit();
-    showToast(`Successfully locked ${afternoonAttendees.length} afternoon attendee(s)`, 'success');
-    console.log('Afternoon attendees locked');
-  } catch (error) {
-    console.error('Error locking attendees:', error);
-    showAlert('Failed to lock attendees', { type: 'error' });
-  }
-};
-
 window.exportAttendeesToExcel = async () => {
   if (!currentEvent || allAttendees.length === 0) {
     showAlert('No attendees to export', { type: 'warning' });
     return;
   }
 
-  const morningAttendees = allAttendees.filter(a => a.session === 'morning');
-  const afternoonAttendees = allAttendees.filter(a => a.session === 'afternoon');
-
   const headers = [
     'Attendee Name',
-    'Course, Year, Section, Major',
+    'Course',
     'Role',
     'Date Attended',
-    'Session',
     'Status',
     'Certificate ID'
   ];
@@ -554,50 +424,41 @@ window.exportAttendeesToExcel = async () => {
     workbook.creator = 'Information Unit';
     workbook.created = new Date();
 
-    const buildWorksheet = (sessionName, attendeesList) => {
-      const worksheet = workbook.addWorksheet(sessionName);
+    const worksheet = workbook.addWorksheet('Attendees');
+    worksheet.columns = [
+      { header: 'Attendee Name', key: 'fullName', width: 28 },
+      { header: 'Course', key: 'course', width: 20 },
+      { header: 'Role', key: 'role', width: 18 },
+      { header: 'Date Attended', key: 'dateAttended', width: 18 },
+      { header: 'Status', key: 'status', width: 14 },
+      { header: 'Certificate ID', key: 'certificateId', width: 18 }
+    ];
 
-      worksheet.columns = [
-        { header: 'Attendee Name', key: 'fullName', width: 28 },
-        { header: 'Course, Year, Section, Major', key: 'academicInfo', width: 45 },
-        { header: 'Role', key: 'role', width: 18 },
-        { header: 'Date Attended', key: 'dateAttended', width: 18 },
-        { header: 'Session', key: 'session', width: 14 },
-        { header: 'Status', key: 'status', width: 14 },
-        { header: 'Certificate ID', key: 'certificateId', width: 18 }
-      ];
-
-      const headerRow = worksheet.getRow(1);
-      headerRow.values = headers;
-      headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
-      headerRow.font = { bold: headerFontBold, color: { argb: headerFontColor } };
-      headerRow.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: headerFillColor }
-      };
-      headerRow.height = 22;
-
-      attendeesList.forEach((attendee, index) => {
-        const row = worksheet.getRow(index + 2);
-        row.height = 18;
-
-        row.values = [
-          attendee.fullName || '',
-          `${attendee.course || ''} ${attendee.year || ''} ${attendee.section || ''} ${attendee.major || ''}`.trim(),
-          attendee.role || '',
-          attendee.dateAttended || '',
-          attendee.session || '',
-          attendee.status || '',
-          attendee.certificateId || ''
-        ];
-      });
-
-      worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+    const headerRow = worksheet.getRow(1);
+    headerRow.values = headers;
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    headerRow.font = { bold: headerFontBold, color: { argb: headerFontColor } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: headerFillColor }
     };
+    headerRow.height = 22;
 
-    buildWorksheet('Morning Session', morningAttendees);
-    buildWorksheet('Afternoon Session', afternoonAttendees);
+    allAttendees.forEach((attendee, index) => {
+      const row = worksheet.getRow(index + 2);
+      row.height = 18;
+      row.values = [
+        attendee.fullName || '',
+        attendee.course || '',
+        attendee.role || '',
+        attendee.dateAttended || '',
+        attendee.status || '',
+        attendee.certificateId || ''
+      ];
+    });
+
+    worksheet.views = [{ state: 'frozen', ySplit: 1 }];
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -619,25 +480,12 @@ window.exportAttendeesToExcel = async () => {
 
 document.getElementById('exportAttendeesBtn').addEventListener('click', window.exportAttendeesToExcel);
 
-const initSearch = () => {
-  const morningSearch = document.getElementById('morningSearch');
-  const afternoonSearch = document.getElementById('afternoonSearch');
-  if (morningSearch) {
-    morningSearch.addEventListener('input', () => {
-      renderAttendees(allAttendees, morningSearch.value, afternoonSearch?.value || '');
-    });
-  }
-  if (afternoonSearch) {
-    afternoonSearch.addEventListener('input', () => {
-      renderAttendees(allAttendees, morningSearch?.value || '', afternoonSearch.value);
-    });
-  }
-};
+document.getElementById('attendeesSearch').addEventListener('input', (e) => {
+  renderAttendees(allAttendees, e.target.value);
+});
 
 onAuthStateChanged(auth, async (user) => {
   console.log('Auth state changed:', user ? 'logged in' : 'logged out');
-
-  initSearch();
 
   if (!user) {
     window.location.href = '../logIn/LogInAdmin.html';
@@ -669,7 +517,7 @@ onAuthStateChanged(auth, async (user) => {
       snapshot.forEach((docSnap) => {
         allAttendees.push({ id: docSnap.id, ...docSnap.data() });
       });
-      renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
+      renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
     });
 
   } catch (error) {
@@ -686,7 +534,6 @@ const ocrImage = document.getElementById('ocrImage');
 const runOcrBtn = document.getElementById('runOcrBtn');
 const ocrStatus = document.getElementById('ocrStatus');
 const ocrRawText = document.getElementById('ocrRawText');
-const ocrTextarea = document.getElementById('ocrTextarea');
 const ocrParsedSection = document.getElementById('ocrParsedSection');
 const ocrParsedList = document.getElementById('ocrParsedList');
 const saveOcrAttendeesBtn = document.getElementById('saveOcrAttendeesBtn');
@@ -742,6 +589,11 @@ if (runOcrBtn) {
       });
 
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'OCR request failed');
+      }
+
       const rawText = (data.fullText || '').trim();
       ocrTextarea.value = rawText;
       ocrRawText.classList.remove('hidden');

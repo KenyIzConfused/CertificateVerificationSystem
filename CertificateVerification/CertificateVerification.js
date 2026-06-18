@@ -42,11 +42,8 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
         if ((attendee.certificateId || '').toUpperCase() === certificateId) {
           document.getElementById('certName').textContent = attendee.fullName || '';
           document.getElementById('certCourse').textContent = attendee.course || '';
-          document.getElementById('certYear').textContent = attendee.year || '';
-          document.getElementById('certSection').textContent = attendee.section || '';
-          document.getElementById('certMajor').textContent = attendee.major || '';
           document.getElementById('certRole').textContent = attendee.role || '';
-          document.getElementById('certSession').textContent = attendee.session === 'morning' ? 'Morning Session' : 'Afternoon Session';
+          document.getElementById('certDateAttended').textContent = attendee.dateAttended || '';
           document.getElementById('certStatus').textContent = attendee.status ? attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1) : '';
           document.getElementById('certId').textContent = attendee.certificateId || '';
           document.getElementById('certEvent').textContent = eventDoc.data().title || '';
