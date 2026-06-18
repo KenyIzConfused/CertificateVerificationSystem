@@ -3,13 +3,13 @@ import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com
 import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
-  authDomain: "ipprc-certificate-verification.firebaseapp.com",
-  projectId: "ipprc-certificate-verification",
-  storageBucket: "ipprc-certificate-verification.firebasestorage.app",
-  messagingSenderId: "1056133117009",
-  appId: "1:1056133117009:web:a1fcd175977a76d27c7470",
-  measurementId: "G-R7PDE8B834"
+  apiKey: "AIzaSyCKuHUI87RMQK70Cvxm4YO2Jl1UDdoeAfw",
+  authDomain: "certificateverification-8ef83.firebaseapp.com",
+  projectId: "certificateverification-8ef83",
+  storageBucket: "certificateverification-8ef83.firebasestorage.app",
+  messagingSenderId: "797766748638",
+  appId: "1:797766748638:web:2b716ec9e7c6f64c27b54f",
+  measurementId: "G-19BFPGEFEK"
 };
 
 const app = initializeApp(firebaseConfig);

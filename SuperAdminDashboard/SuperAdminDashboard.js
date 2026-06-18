@@ -4,13 +4,13 @@ import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDoc
 import { showAlert, showToast, showConfirm, showLoading, hideLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
-  authDomain: "ipprc-certificate-verification.firebaseapp.com",
-  projectId: "ipprc-certificate-verification",
-  storageBucket: "ipprc-certificate-verification.firebasestorage.app",
-  messagingSenderId: "1056133117009",
-  appId: "1:1056133117009:web:a1fcd175977a76d27c7470",
-  measurementId: "G-R7PDE8B834"
+  apiKey: "AIzaSyCKuHUI87RMQK70Cvxm4YO2Jl1UDdoeAfw",
+  authDomain: "certificateverification-8ef83.firebaseapp.com",
+  projectId: "certificateverification-8ef83",
+  storageBucket: "certificateverification-8ef83.firebasestorage.app",
+  messagingSenderId: "797766748638",
+  appId: "1:797766748638:web:2b716ec9e7c6f64c27b54f",
+  measurementId: "G-19BFPGEFEK"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -40,18 +40,34 @@ window.approveAdmin = async (adminId, collegeName) => {
 };
 
 window.rejectAdmin = async (adminId, collegeName) => {
-  const confirmed = await showConfirm(`Reject ${collegeName}? This will delete the account.`);
-  if (confirmed !== 1) return;
+  const reason = prompt(`Reject ${collegeName}?\n\nEnter rejection reason:`);
+  if (reason === null) return;
 
   try {
     showLoading('reject');
-    await deleteDoc(doc(db, 'Admin', adminId));
+    await updateDoc(doc(db, 'Admin', adminId), {
+      status: 'rejected',
+      rejectedAt: new Date(),
+      reason: reason || 'Rejected by System Admin'
+    });
     hideLoading('reject');
     showToast('Admin rejected');
   } catch (error) {
     hideLoading('reject');
     console.error('Error rejecting admin:', error);
     showAlert('Failed to reject admin', { type: 'error' });
+  }
+};
+
+const formatDate = (dateValue) => {
+  if (!dateValue) return 'N/A';
+  try {
+    if (typeof dateValue.toDate === 'function') {
+      return dateValue.toDate().toLocaleString();
+    }
+    return new Date(dateValue).toLocaleString();
+  } catch {
+    return 'N/A';
   }
 };
 
@@ -70,7 +86,8 @@ const renderPendingAdmins = (admins) => {
       <div>
         <h3 class="font-semibold text-brand-900">${escapeHtml(admin.collegeName)}</h3>
         <p class="text-sm text-brand-600">${escapeHtml(admin.email)}</p>
-        <p class="text-xs text-brand-500 mt-1">Created: ${admin.createdAt ? new Date(admin.createdAt.toDate()).toLocaleDateString() : 'N/A'}</p>
+        <p class="text-xs text-brand-500 mt-1">Created: ${formatDate(admin.createdAt)}</p>
+      <p class="text-xs text-brand-500 mt-1">Updated: ${formatDate(admin.updatedAt)}</p>
       </div>
       <div class="flex gap-2">
         <button onclick="window.approveAdmin('${admin.id}', '${escapeHtml(admin.collegeName)}')" 
@@ -84,6 +101,50 @@ const renderPendingAdmins = (admins) => {
       </div>
     </div>
   `).join('');
+};
+
+const renderHistory = (admins) => {
+  const container = document.getElementById('historyContainer');
+  
+  const historyAdmins = admins.filter(a => a.status === 'approved' || a.status === 'rejected');
+  
+  if (historyAdmins.length === 0) {
+    container.innerHTML = '<p class="text-brand-400 text-center py-8">No history yet.</p>';
+    return;
+  }
+  
+  const sorted = [...historyAdmins].sort((a, b) => {
+    const dateA = a.approvedAt || a.rejectedAt || a.createdAt;
+    const dateB = b.approvedAt || b.rejectedAt || b.createdAt;
+    return new Date(dateB) - new Date(dateA);
+  });
+  
+  container.innerHTML = sorted.map(admin => {
+    const isApproved = admin.status === 'approved';
+    const date = isApproved 
+      ? (admin.approvedAt ? new Date(admin.approvedAt.toDate()).toLocaleString() : 'N/A')
+      : (admin.rejectedAt ? new Date(admin.rejectedAt.toDate()).toLocaleString() : 'N/A');
+    const actionText = isApproved ? 'Approved' : 'Rejected';
+    const badgeClass = isApproved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+    
+    return `
+      <div class="border border-gray-200 rounded-lg p-4">
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <h3 class="font-semibold text-gray-800">${escapeHtml(admin.collegeName)}</h3>
+            <p class="text-sm text-gray-600">${escapeHtml(admin.email)}</p>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-medium ${badgeClass}">
+            ${actionText}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-xs text-gray-500">
+          <span>${date}</span>
+          ${admin.reason ? `<span>Reason: ${escapeHtml(admin.reason)}</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 };
 
 onAuthStateChanged(auth, async (user) => {
@@ -109,5 +170,6 @@ onAuthStateChanged(auth, async (user) => {
       }
     });
     renderPendingAdmins(admins);
+    renderHistory(admins);
   });
 });

@@ -4,13 +4,13 @@ import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, delete
 import { showAlert, showConfirm, showToast, showLoading, hideLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
-  authDomain: "ipprc-certificate-verification.firebaseapp.com",
-  projectId: "ipprc-certificate-verification",
-  storageBucket: "ipprc-certificate-verification.firebasestorage.app",
-  messagingSenderId: "1056133117009",
-  appId: "1:1056133117009:web:a1fcd175977a76d27c7470",
-  measurementId: "G-R7PDE8B834"
+  apiKey: "AIzaSyCKuHUI87RMQK70Cvxm4YO2Jl1UDdoeAfw",
+  authDomain: "certificateverification-8ef83.firebaseapp.com",
+  projectId: "certificateverification-8ef83",
+  storageBucket: "certificateverification-8ef83.firebasestorage.app",
+  messagingSenderId: "797766748638",
+  appId: "1:797766748638:web:2b716ec9e7c6f64c27b54f",
+  measurementId: "G-19BFPGEFEK"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -400,7 +400,6 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     initAutoFormat();
     initTimeFormat();
-    updateOrgDisplay();
     
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
@@ -409,7 +408,9 @@ onAuthStateChanged(auth, async (user) => {
     
     if (adminData.collegeName) {
       localStorage.setItem('orgName', adminData.collegeName);
-      document.getElementById('orgNameDisplay').textContent = adminData.collegeName;
+      updateOrgDisplay(adminData.collegeName);
+    } else {
+      updateOrgDisplay(localStorage.getItem('orgName'));
     }
     
     const q = query(collection(db, 'Events'), where('adminId', '==', user.uid));
@@ -426,23 +427,32 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 window.openSettings = () => {
-  document.getElementById('settingsModal').classList.remove('hidden');
-  document.getElementById('settingsModal').classList.add('flex');
+  showAlert('Settings - Coming Soon!', 'info');
 };
-  document.getElementById('settingsModal').classList.remove('hidden');
-  document.getElementById('settingsModal').classList.add('flex');
+
+window.handleLogout = async () => {
+  try {
+    await auth.signOut();
+    sessionStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('orgName');
+    window.location.href = '../logIn/LogInAdmin.html';
+  } catch (error) {
+    showAlert('Logout failed', { type: 'error' });
+  }
 };
 
 window.closeSettings = () => {
-  document.getElementById('settingsModal').classList.add('hidden');
-  document.getElementById('settingsModal').classList.remove('flex');
+  const modal = document.getElementById('settingsModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
 };
 
-const updateOrgDisplay = () => {
-  const orgName = localStorage.getItem('orgName') || '';
+const updateOrgDisplay = (collegeName) => {
   const display = document.getElementById('orgNameDisplay');
-  if (display) {
-    display.textContent = orgName || 'Information Unit';
+  if (display && collegeName) {
+    display.textContent = collegeName;
   }
 };
 

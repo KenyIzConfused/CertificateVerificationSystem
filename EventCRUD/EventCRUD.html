@@ -102,7 +102,7 @@
                 </svg>
             </button>
             <div id="menuDropdown" class="hidden absolute top-10 left-0 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50">
-                <a href="../logIn/LogInAdmin.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Logout</a>
+                <button onclick="window.handleLogout()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Logout</button>
                 <button onclick="window.openSettings()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Settings</button>
             </div>
         </div>
@@ -129,7 +129,7 @@
 
         <!-- Create Event Form (Hidden by default) -->
         <div id="createEventPanel" class="hidden glass-strong rounded-3xl p-6 mb-8">
-            <h2 class="text-2xl font-bold text-brand-900 mb-6">Create New Event</h2>
+            <h2 class="text-2xl font-bold text-brand-900 mb-6">Create Event</h2>
             <form id="createEventForm" class="space-y-6">
                 <div class="space-y-2">
                     <label for="eventTitle" class="block text-sm font-semibold text-brand-700">Event Title</label>
@@ -191,7 +191,7 @@
                     </button>
                     <button type="submit"
                         class="flex-1 btn-primary font-semibold py-3 rounded-xl transition-all shadow-lg">
-                        Create Event
+                        Create Events
                     </button>
                 </div>
             </form>
@@ -199,7 +199,7 @@
 
         <!-- Events Stack -->
         <div>
-            <h2 class="text-2xl font-bold text-brand-900 mb-6">NVSU Events</h2>
+            <h2 class="text-2xl font-bold text-brand-900 mb-6">Create Event</h2>
             <div id="eventsStack" class="space-y-4">
                 <p id="noEvents" class="text-brand-400 text-center py-8">No events created yet.</p>
             </div>
@@ -212,9 +212,9 @@
         </div>
     </div>
     <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
-            <p class="text-gray-600 mb-4">Organization name is set during signup and managed by your College Admin account.</p>
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 text-center">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Settings</h2>
+            <p class="text-gray-600 mb-6">Coming Soon!</p>
             <button type="button" onclick="window.closeSettings()" 
                 class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg">
                 Close
