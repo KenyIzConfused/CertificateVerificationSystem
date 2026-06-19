@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-const OCR_API_URL = 'https://us-central1-ipprc-certificate-verification.cloudfunctions.net/ocrTextDetection';
+const OCR_API_URL = 'https://us-central1-ipprc-certificate-verification.cloudfunctions.net/mistralOCR';
 
 
 function generateShortId() {
@@ -39,16 +39,20 @@ function parseOcrText(rawText) {
   const lines = rawText.split(/\r?\n/).filter(line => line.trim().length > 0);
   const parsed = [];
 
+  // Get bulk defaults from UI
+  const defaultCourse = document.getElementById('bulkCourse')?.value?.trim() || '';
+  const defaultRole = document.getElementById('bulkRole')?.value?.trim() || 'Student';
+
   for (const line of lines) {
     let fullName = null;
-    let course = '';
-    let role = 'Student';
+    let course = defaultCourse;
+    let role = defaultRole;
 
     if (line.includes(',') || line.includes('\t')) {
       const parts = line.split(/[,\t]/).map(p => p.trim()).filter(p => p.length > 0);
       if (parts.length >= 1) fullName = parts[0];
-      if (parts.length >= 2) course = parts[1];
-      if (parts.length >= 3) role = parts[2];
+      if (parts.length >= 2 && !defaultCourse) course = parts[1];
+      if (parts.length >= 3 && !defaultRole) role = parts[2];
     } else {
       const kvPattern = /(Full Name|Name)\s*:\s*(.+)/i;
       const coursePattern = /(Course)\s*:\s*(.+)/i;
@@ -59,8 +63,8 @@ function parseOcrText(rawText) {
       const roleMatch = line.match(rolePattern);
 
       if (kvMatch) fullName = kvMatch[2].trim();
-      if (courseMatch) course = courseMatch[2].trim();
-      if (roleMatch) role = roleMatch[2].trim();
+      if (courseMatch && !defaultCourse) course = courseMatch[2].trim();
+      if (roleMatch && !defaultRole) role = roleMatch[2].trim();
     }
 
     if (!fullName) continue;
@@ -80,11 +84,11 @@ function parseOcrText(rawText) {
 function renderOcrParsedList(parsedAttendees) {
   const listEl = document.getElementById('ocrParsedList');
   listEl.innerHTML = parsedAttendees.map((a, idx) => `
-    <div class="flex items-center justify-between glass px-4 py-3 rounded-lg">
+    <div class="flex items-center justify-between px-4 py-3 rounded-lg bg-white/10 border border-green-400/20">
       <div class="flex-1 grid grid-cols-2 gap-2 text-sm text-green-100">
-        <span><strong class="text-green-300/80">Name:</strong> ${escapeHtml(a.fullName)}</span>
-        <span><strong class="text-green-300/80">Course:</strong> ${escapeHtml(a.course || '-')}</span>
-        <span><strong class="text-green-300/80">Role:</strong> ${escapeHtml(a.role || '-')}</span>
+        <span><strong class="text-green-200/80">Name:</strong> ${escapeHtml(a.fullName)}</span>
+        <span><strong class="text-green-200/80">Course:</strong> ${escapeHtml(a.course || '-')}</span>
+        <span><strong class="text-green-200/80">Role:</strong> ${escapeHtml(a.role || '-')}</span>
       </div>
     </div>
   `).join('');
@@ -205,12 +209,10 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
 
     console.log('Attendee added successfully');
     document.getElementById('addAttendeeForm').reset();
-    showSuccessModal('Attendee added successfully!', () => {
-      document.getElementById('attendeeName').focus();
-    });
+    showToast('Attendee added successfully!');
   } catch (error) {
     console.error('Error adding attendee:', error);
-    showSuccessModal('Failed to add attendee.', null);
+    showToast('Failed to add attendee.', 'error');
   }
 });
 
@@ -249,7 +251,7 @@ function renderTable(attendeesList) {
   noAttendees.style.display = 'none';
 
   tableBody.innerHTML = attendeesList.map(attendee => `
-    <tr class="border-b border-green-400/20 hover:bg-green-400/10 transition-colors">
+    <tr class="border-b border-green-400/20 hover:bg-white/10 transition-colors">
       <td class="py-4 px-2">
         <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
       </td>
@@ -269,29 +271,29 @@ function renderTable(attendeesList) {
       <td class="py-4 px-2">
         <div class="flex gap-1 flex-wrap">
           <button onclick="window.markPresent('${attendee.id}')"
-            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            class="action-item px-2 py-1 text-xs flex items-center gap-1">
             <span class="w-2 h-2 bg-green-400 rounded-full"></span>
             Present
           </button>
           <button onclick="window.markAbsent('${attendee.id}')"
-            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            class="action-item px-2 py-1 text-xs flex items-center gap-1">
             <span class="w-2 h-2 bg-red-400 rounded-full"></span>
             Absent
           </button>
           <button onclick="window.markLate('${attendee.id}')"
-            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            class="action-item px-2 py-1 text-xs flex items-center gap-1">
             <span class="w-2 h-2 bg-yellow-400 rounded-full"></span>
             Late
           </button>
           <button onclick="window.editAttendee('${attendee.id}')"
-            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            class="action-item px-2 py-1 text-xs flex items-center gap-1">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
             Edit
           </button>
           <button onclick="window.deleteAttendee('${attendee.id}')"
-            class="action-btn px-2 py-1 text-xs flex items-center gap-1">
+            class="action-item px-2 py-1 text-xs flex items-center gap-1">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
@@ -308,10 +310,10 @@ window.markPresent = async (attendeeId) => {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'present'
     });
-    showSuccessModal('Attendee marked as present!', null);
+    showToast('Attendee marked as present');
   } catch (error) {
     console.error('Error updating status:', error);
-    showSuccessModal('Failed to update status.', null);
+    showToast('Failed to update status', 'error');
   }
 };
 
@@ -320,10 +322,10 @@ window.markAbsent = async (attendeeId) => {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'absent'
     });
-    showSuccessModal('Attendee marked as absent.', null);
+    showToast('Attendee marked as absent');
   } catch (error) {
     console.error('Error updating status:', error);
-    showSuccessModal('Failed to update status.', null);
+    showToast('Failed to update status', 'error');
   }
 };
 
@@ -332,7 +334,7 @@ window.markLate = async (attendeeId) => {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       status: 'late'
     });
-    console.log('Marked as late');
+    showToast('Attendee marked as late');
   } catch (error) {
     console.error('Error updating status:', error);
     showAlert('Failed to update status', { type: 'error' });
@@ -381,6 +383,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
     });
     console.log('Attendee updated');
     window.closeEditModal();
+    showToast('Attendee updated');
   } catch (error) {
     console.error('Error updating attendee:', error);
     showAlert('Failed to update attendee', { type: 'error' });
@@ -393,7 +396,9 @@ window.deleteAttendee = async (attendeeId) => {
 
   try {
     await deleteDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId));
-    showSuccessModal('Attendee deleted.', null);
+    showToast('Attendee deleted');
+    allAttendees = allAttendees.filter(a => a.id !== attendeeId);
+    renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
   } catch (error) {
     console.error('Error deleting attendee:', error);
     showAlert('Failed to delete attendee', { type: 'error' });

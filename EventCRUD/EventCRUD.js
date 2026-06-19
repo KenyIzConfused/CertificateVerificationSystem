@@ -42,42 +42,42 @@ window.handleEventUpdate = (events) => {
   noEvents.style.display = 'none';
   
   eventsStack.innerHTML = events.map(event => {
-    const statusClass = event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+    const statusClass = event.status === 'active' ? 'bg-green-400/30 text-green-200' : 'bg-gray-400/30 text-gray-200';
     const statusLabel = (event.status || 'active').toUpperCase();
 
     return `
-      <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+      <div class="liquid-panel p-6 border-l-4 border-green-400/50">
         <div>
-          <h3 class="text-2xl font-bold text-gray-900">${escapeHtml(event.title)}</h3>
-          <p class="text-gray-600 mt-2 leading-relaxed">${escapeHtml(event.description)}</p>
+          <h3 class="text-2xl font-bold text-green-100">${escapeHtml(event.title)}</h3>
+          <p class="text-green-200/70 mt-2 leading-relaxed">${escapeHtml(event.description)}</p>
 
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-5 text-sm">
             <div>
-              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Date</dt>
-              <dd class="mt-1 text-gray-800">${escapeHtml(event.date || '')}</dd>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Date</dt>
+              <dd class="mt-1 text-green-200">${escapeHtml(event.date || '')}</dd>
             </div>
             <div>
-              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Time</dt>
-              <dd class="mt-1 text-gray-800">${escapeHtml(event.time || '')}</dd>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Time</dt>
+              <dd class="mt-1 text-green-200">${escapeHtml(event.time || '')}</dd>
             </div>
             <div>
-              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Venue</dt>
-              <dd class="mt-1 text-gray-800">${escapeHtml(event.location || '')}</dd>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Venue</dt>
+              <dd class="mt-1 text-green-200">${escapeHtml(event.location || '')}</dd>
             </div>
             <div>
-              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Duration</dt>
-              <dd class="mt-1 text-gray-800">${event.duration ? `${escapeHtml(event.duration)} hrs` : 'Not specified'}</dd>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Duration</dt>
+              <dd class="mt-1 text-green-200">${event.duration ? `${escapeHtml(event.duration)} hrs` : 'Not specified'}</dd>
             </div>
             ${event.department ? `
             <div class="sm:col-span-2">
-              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Department</dt>
-              <dd class="mt-1 text-gray-800">${escapeHtml(event.department)}</dd>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Department</dt>
+              <dd class="mt-1 text-green-200">${escapeHtml(event.department)}</dd>
             </div>
             ` : ''}
             ${event.speaker ? `
             <div class="sm:col-span-2">
-              <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Speaker</dt>
-              <dd class="mt-1 text-gray-800">${escapeHtml(event.speaker)}</dd>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Speaker</dt>
+              <dd class="mt-1 text-green-200">${escapeHtml(event.speaker)}</dd>
             </div>
             ` : ''}
           </dl>
@@ -87,28 +87,43 @@ window.handleEventUpdate = (events) => {
           </span>
         </div>
 
-        <div class="mt-6 pt-5 border-t border-green-100">
+        <div class="mt-6 pt-5 border-t border-green-400/20">
           <div class="flex flex-wrap gap-3">
             <button onclick="window.editEvent('${event.id}')" 
-              class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-semibold">
+              class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
               Edit
             </button>
             <button onclick="window.manageAttendees('${event.id}')" 
-              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold">
+              class="btn-3d text-white px-4 py-2 text-sm font-semibold flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
               Manage Attendees
             </button>
-            <button onclick="window.exportSingleEvent('${event.id}', '${escapeHtml(event.title)}')" 
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold">
-              Export to Excel
+            <button onclick="window.generateCertificates('${event.id}')" 
+              class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.018a7 7 0 11-11.235 0A7 7 0 0115.618 8.382z"></path>
+              </svg>
+              Generate Certificates
             </button>
             ${event.status === 'active' ? `
             <button onclick="window.closeEvent('${event.id}')" 
-              class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-semibold">
+              class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
               Close Event
             </button>
             ` : ''}
             <button onclick="window.deleteEvent('${event.id}')" 
-              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-semibold">
+              class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
               Delete
             </button>
           </div>

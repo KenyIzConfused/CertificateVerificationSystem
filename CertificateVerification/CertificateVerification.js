@@ -31,7 +31,6 @@ document.getElementById('verifyForm').addEventListener('submit', async (e) => {
     let found = false;
     
     for (const eventDoc of eventsSnapshot.docs) {
-      // Query using case-insensitive comparison by fetching all and filtering
       const attendeesQuery = query(
         collection(db, 'Events', eventDoc.id, 'Attendees')
       );
