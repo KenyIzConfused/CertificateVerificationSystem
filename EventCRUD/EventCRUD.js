@@ -103,14 +103,6 @@ window.handleEventUpdate = (events) => {
               </svg>
               Manage Attendees
             </button>
-            <button onclick="window.generateCertificates('${event.id}')" 
-              class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.018a7 7 0 11-11.235 0A7 7 0 0115.618 8.382z"></path>
-              </svg>
-              Generate Certificates
-            </button>
-            ${event.status === 'active' ? `
             <button onclick="window.closeEvent('${event.id}')" 
               class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,7 +110,6 @@ window.handleEventUpdate = (events) => {
               </svg>
               Close Event
             </button>
-            ` : ''}
             <button onclick="window.deleteEvent('${event.id}')" 
               class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +157,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
       showToast('Event updated successfully!');
       delete e.target.dataset.editId;
       document.getElementById('createEventPanel').classList.add('hidden');
-      document.querySelector('#createEventForm button[type="submit"]').textContent = 'Create Event';
+      document.querySelector('#eventForm button[type="submit"]').textContent = 'Create Event';
       document.getElementById('cancelEditBtn').classList.add('hidden');
     } else {
       await addDoc(collection(db, 'Events'), {
@@ -234,28 +225,8 @@ window.exportSingleEvent = async (eventId, eventTitle) => {
   }
 };
 
-window.generateCertificates = async (eventId) => {
-  try {
-    const eventDoc = await getDoc(doc(db, 'Events', eventId));
-    if (!eventDoc.exists()) {
-      showAlert('Event not found', { type: 'error' });
-      return;
-    }
-    const event = eventDoc.data();
-    const attendeesSnapshot = await getDocs(collection(db, 'Events', eventId, 'Attendees'));
-    const attendees = attendeesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (attendees.length === 0) {
-      showAlert('No attendees to generate certificates for', { type: 'warning' });
-      return;
-    }
-    localStorage.setItem('certEventData', JSON.stringify({ id: eventId, event, attendees }));
-    window.open('GenerateCertificate.html', '_blank');
-  } catch (error) {
-    console.error('Error generating certificates:', error);
-    showAlert('Failed to generate certificates', { type: 'error' });
-  }
+window.generateCertificates = () => {
 };
-
 window.deleteEvent = async (eventId) => {
   const confirmed = await showConfirm('Are you sure you want to delete this event?');
   if (confirmed !== 1) return;
