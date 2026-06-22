@@ -1,8 +1,9 @@
 let popupContainer = null;
 
-// Inject styles
-const style = document.createElement('style');
-style.textContent = `
+function injectStyles() {
+    if (document.head) {
+        const style = document.createElement('style');
+        style.textContent = `
 /* Popup styles matching app theme */
 .liquid-popup {
     background: rgba(22, 163, 74, 0.12);
@@ -58,7 +59,15 @@ style.textContent = `
     box-shadow: 0 3px 0 #dc2626;
 }
 `;
-document.head.appendChild(style);
+        document.head.appendChild(style);
+    }
+}
+
+if (document.head) {
+    injectStyles();
+} else {
+    document.addEventListener('DOMContentLoaded', injectStyles);
+}
 
 function ensurePopupContainer() {
   if (!popupContainer) {

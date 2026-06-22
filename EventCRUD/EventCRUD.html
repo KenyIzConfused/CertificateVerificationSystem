@@ -137,15 +137,37 @@
 <body class="bg-gradient-to-br from-green-600 to-green-800 min-h-screen p-6">
     <div class="max-w-5xl mx-auto">
         <header class="relative mb-8 min-h-[5rem]">
-            <a href="./Settings.html" 
-                class="absolute left-0 top-0 btn-glass px-4 py-2.5 font-medium flex items-center gap-2 z-10"
-                aria-label="Settings">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.54.167 3.54 1.962 0 1.097.573 2.063 1.49 2.535 1.64.847 1.64 3.185 0 4.032a2.718 2.718 0 00-1.49 2.535c0 1.795-1.997 2.902-3.54 1.962a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.54-.167-3.54-1.962 0-1.097-.573-2.063-1.49-2.535-1.64-.847-1.64-3.185 0-4.032a2.718 2.718 0 001.49-2.535c0-1.795 1.997-2.902 3.54-1.962a1.724 1.724 0 002.573-1.066z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                Settings
-            </a>
+            <!-- Hamburger Menu -->
+            <div class="absolute left-0 top-0 z-20">
+                <button id="menuBtn" class="btn-glass p-3 rounded-xl flex items-center justify-center" aria-label="Menu">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div id="menuDropdown" class="hidden absolute left-0 mt-2 w-48 liquid-panel rounded-xl p-2 shadow-lg">
+                    <a href="./Settings.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.54.167 3.54 1.962 0 1.097.573 2.063 1.49 2.535 1.64.847 1.64 3.185 0 4.032a2.718 2.718 0 00-1.49 2.535c0 1.795-1.997 2.902-3.54 1.962a1.724 1.724 0 00-2.573-1.066z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Settings
+                    </a>
+                    <a href="../SignUp/SignUpAdmin.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m5-12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        Sign Up
+                    </a>
+                    <a href="../logIn/LogInAdmin.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4h3V8h2v4h3l-4 4z"></path>
+                        </svg>
+                        Logout
+                    </a>
+                </div>
+            </div>
 
             <div class="absolute inset-x-0 top-0 flex h-full items-center justify-center px-4 sm:px-8">
                 <div class="text-center">
@@ -153,27 +175,7 @@
                     <p id="adminName" class="text-green-200/70 mt-2 text-base md:text-lg font-semibold"></p>
                 </div>
             </div>
-
-            <div class="absolute right-0 top-0 hidden sm:flex items-center gap-4">
-                <a href="../SignUp/SignUpAdmin.html" class="btn-glass px-4 py-2.5 font-medium flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m5-12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                    </svg>
-                    Sign Up
-                </a>
-                <a href="../logIn/LogInAdmin.html" class="btn-glass px-4 py-2.5 font-medium flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4h3V8h2v4h3l-4 4z"></path>
-                    </svg>
-                    Logout
-                </a>
-            </div>
         </header>
-
-        <div class="sm:hidden flex justify-center gap-4 mb-6">
-            <a href="../SignUp/SignUpAdmin.html" class="btn-glass px-4 py-2.5 font-medium">Sign Up</a>
-            <a href="../logIn/LogInAdmin.html" class="btn-glass px-4 py-2.5 font-medium">Logout</a>
-        </div>
 
         <!-- Events Counter Panel -->
         <div class="liquid-panel p-6 mb-8 liquid-glow">

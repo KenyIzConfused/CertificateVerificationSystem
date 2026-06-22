@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin collection - users can read/write their own admin document
+    match /Admin/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Events collection - admins can CRUD their own events
+    // Public can read for certificate verification
+    match /Events/{eventId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (resource.data.adminId == request.auth.uid || request.resource.data.adminId == request.auth.uid);
+      allow create: if request.auth != null;
+      
+      // Attendees subcollection - public can read for verification
+      match /Attendees/{attendeeId} {
+        allow read: if true;
+        allow write: if request.auth != null && 
+          get(/databases/$(database)/documents/Events/$(eventId)).data.adminId == request.auth.uid;
+      }
+    }
+  }
+}

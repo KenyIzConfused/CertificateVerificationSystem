@@ -4,13 +4,13 @@ import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, delete
 import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
-  authDomain: "ipprc-certificate-verification.firebaseapp.com",
-  projectId: "ipprc-certificate-verification",
-  storageBucket: "ipprc-certificate-verification.firebasestorage.app",
-  messagingSenderId: "1056133117009",
-  appId: "1:1056133117009:web:a1fcd175977a76d27c7470",
-  measurementId: "G-R7PDE8B834"
+    apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
+    authDomain: "ipprc-certificate-verification.firebaseapp.com",
+    projectId: "ipprc-certificate-verification",
+    storageBucket: "ipprc-certificate-verification.firebasestorage.app",
+    messagingSenderId: "1056133117009",
+    appId: "1:1056133117009:web:a1fcd175977a76d27c7470",
+    measurementId: "G-R7PDE8B834"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -18,6 +18,19 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
+
+document.getElementById('menuBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dropdown = document.getElementById('menuDropdown');
+    dropdown.classList.toggle('hidden');
+});
+
+document.addEventListener('click', () => {
+    const dropdown = document.getElementById('menuDropdown');
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+    }
+});
 
 function escapeHtml(text) {
   const div = document.createElement('div');
