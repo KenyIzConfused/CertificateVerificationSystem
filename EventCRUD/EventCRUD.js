@@ -3,6 +3,65 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
 
+const themes = {
+  green: {
+    primary: '#22c55e',
+    dark: '#16a34a',
+    gradient: 'linear-gradient(135deg, #16a34a, #15803d, #166534)'
+  },
+  blue: {
+    primary: '#3b82f6',
+    dark: '#2563eb',
+    gradient: 'linear-gradient(135deg, #2563eb, #1d4ed8, #1e40af)'
+  },
+  red: {
+    primary: '#ef4444',
+    dark: '#dc2626',
+    gradient: 'linear-gradient(135deg, #dc2626, #b91c1c, #991b1b)'
+  },
+  orange: {
+    primary: '#f97316',
+    dark: '#ea580c',
+    gradient: 'linear-gradient(135deg, #ea580c, #c2410c, #9f330c)'
+  },
+  khaki: {
+    primary: '#ca8a04',
+    dark: '#a16207',
+    gradient: 'linear-gradient(135deg, #a16207, #854d0e, #713f12)'
+  },
+  white: {
+    primary: '#e5e7eb',
+    dark: '#9ca3af',
+    gradient: 'linear-gradient(135deg, #e5e7eb, #d1d5e7, #cbd5e1)'
+  },
+  dark: {
+    primary: '#1f2937',
+    dark: '#111827',
+    gradient: 'linear-gradient(135deg, #111827, #0f172a, #020617)'
+  },
+  purple: {
+    primary: '#a855f7',
+    dark: '#9333ea',
+    gradient: 'linear-gradient(135deg, #9333ea, #7e22ce, #6b21a8)'
+  }
+};
+
+function applyTheme(themeName) {
+  const theme = themes[themeName] || themes.green;
+  const root = document.documentElement;
+  root.style.setProperty('--theme-primary', theme.primary);
+  root.style.setProperty('--theme-dark', theme.dark);
+  root.style.setProperty('--theme-gradient', theme.gradient);
+  localStorage.setItem('selectedTheme', themeName);
+}
+
+function loadTheme() {
+  const savedTheme = localStorage.getItem('selectedTheme');
+  if (savedTheme && themes[savedTheme]) {
+    applyTheme(savedTheme);
+  }
+}
+
 const firebaseConfig = {
     apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
     authDomain: "ipprc-certificate-verification.firebaseapp.com",
@@ -30,6 +89,72 @@ document.addEventListener('click', () => {
     if (dropdown) {
         dropdown.classList.add('hidden');
     }
+});
+
+loadTheme();
+
+document.getElementById('eventForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  if (!currentUser) {
+    showAlert('Please log in first', { type: 'warning' });
+    return;
+  }
+  
+  const eventTitle = document.getElementById('eventTitle').value;
+  const eventDescription = document.getElementById('eventDescription').value;
+  const eventDate = document.getElementById('eventDate').value;
+  const eventTime = document.getElementById('eventTime').value;
+  const eventLocation = document.getElementById('eventLocation').value;
+  const eventDuration = document.getElementById('eventDuration').value;
+  const department = document.getElementById('department').value;
+  
+  const editId = e.target.dataset.editId;
+  
+  try {
+    if (editId) {
+      await updateDoc(doc(db, 'Events', editId), {
+        title: eventTitle,
+        description: eventDescription,
+        date: eventDate,
+        time: eventTime,
+        location: eventLocation,
+        duration: eventDuration ? parseInt(eventDuration) : null,
+        department: department,
+        speaker: document.getElementById('speaker').value || ''
+      });
+      showToast('Event updated successfully!');
+      delete e.target.dataset.editId;
+      document.getElementById('createEventPanel').classList.add('hidden');
+      document.querySelector('#eventForm button[type="submit"]').textContent = 'Create Event';
+      document.getElementById('cancelEditBtn').classList.add('hidden');
+    } else {
+      await addDoc(collection(db, 'Events'), {
+        adminId: currentUser.uid,
+        title: eventTitle,
+        description: eventDescription,
+        date: eventDate,
+        time: eventTime,
+        location: eventLocation,
+        duration: eventDuration ? parseInt(eventDuration) : null,
+        department: department,
+        speaker: document.getElementById('speaker').value || '',
+        status: 'active',
+        createdAt: new Date()
+      });
+      showToast('Event created successfully!');
+      document.getElementById('createEventForm').reset();
+      document.getElementById('createEventPanel').classList.add('hidden');
+    }
+  } catch (error) {
+    console.error('Error saving event:', error);
+    showAlert(editId ? 'Failed to update event' : 'Failed to create event', { type: 'error' });
+  }
+});
+
+document.getElementById('showCreateFormBtn').addEventListener('click', () => {
+  document.getElementById('createEventPanel').classList.remove('hidden');
+  document.getElementById('createEventPanel').scrollIntoView({ behavior: 'smooth' });
 });
 
 function escapeHtml(text) {
@@ -136,70 +261,6 @@ window.handleEventUpdate = (events) => {
     `;
   }).join('');
 };
-
-document.getElementById('eventForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  if (!currentUser) {
-    showAlert('Please log in first', { type: 'warning' });
-    return;
-  }
-  
-  const eventTitle = document.getElementById('eventTitle').value;
-  const eventDescription = document.getElementById('eventDescription').value;
-  const eventDate = document.getElementById('eventDate').value;
-  const eventTime = document.getElementById('eventTime').value;
-  const eventLocation = document.getElementById('eventLocation').value;
-  const eventDuration = document.getElementById('eventDuration').value;
-  const department = document.getElementById('department').value;
-  
-  const editId = e.target.dataset.editId;
-  
-  try {
-    if (editId) {
-      await updateDoc(doc(db, 'Events', editId), {
-        title: eventTitle,
-        description: eventDescription,
-        date: eventDate,
-        time: eventTime,
-        location: eventLocation,
-        duration: eventDuration ? parseInt(eventDuration) : null,
-        department: department,
-        speaker: document.getElementById('speaker').value || ''
-      });
-      showToast('Event updated successfully!');
-      delete e.target.dataset.editId;
-      document.getElementById('createEventPanel').classList.add('hidden');
-      document.querySelector('#eventForm button[type="submit"]').textContent = 'Create Event';
-      document.getElementById('cancelEditBtn').classList.add('hidden');
-    } else {
-      await addDoc(collection(db, 'Events'), {
-        adminId: currentUser.uid,
-        title: eventTitle,
-        description: eventDescription,
-        date: eventDate,
-        time: eventTime,
-        location: eventLocation,
-        duration: eventDuration ? parseInt(eventDuration) : null,
-        department: department,
-        speaker: document.getElementById('speaker').value || '',
-        status: 'active',
-        createdAt: new Date()
-      });
-      showToast('Event created successfully!');
-      document.getElementById('createEventForm').reset();
-      document.getElementById('createEventPanel').classList.add('hidden');
-    }
-  } catch (error) {
-    console.error('Error saving event:', error);
-    showAlert(editId ? 'Failed to update event' : 'Failed to create event', { type: 'error' });
-  }
-});
-
-document.getElementById('showCreateFormBtn').addEventListener('click', () => {
-  document.getElementById('createEventPanel').classList.remove('hidden');
-  document.getElementById('createEventPanel').scrollIntoView({ behavior: 'smooth' });
-});
 
 window.exportSingleEvent = async (eventId, eventTitle) => {
   try {
@@ -333,6 +394,10 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('departmentName').textContent = departmentName;
     document.title = `${departmentName}: Event CRUD`;
     document.getElementById('adminName').textContent = `Admin: ${adminName}`;
+    
+    if (adminData.selectedTheme) {
+      applyTheme(adminData.selectedTheme);
+    }
     
     const q = query(collection(db, 'Events'), where('adminId', '==', user.uid));
     onSnapshot(q, (snapshot) => {

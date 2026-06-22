@@ -6,38 +6,38 @@ function injectStyles() {
         style.textContent = `
 /* Popup styles matching app theme */
 .liquid-popup {
-    background: rgba(22, 163, 74, 0.12);
+    background: color-mix(in srgb, var(--theme-primary, #22c55e) 12%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(34, 197, 94, 0.25);
+    border: 1px solid color-mix(in srgb, var(--theme-primary, #22c55e) 25%, transparent);
     border-radius: 1.25rem;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .btn-popup-primary {
-    background: linear-gradient(145deg, #34d399, #22c55e, #16a34a);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary, #22c55e) 50%, white), var(--theme-primary, #22c55e), var(--theme-dark, #16a34a));
     border: none;
     border-radius: 0.5rem;
     color: white;
     font-weight: 500;
     transition: all 0.2s ease;
     box-shadow: 
-        0 3px 0 #16a34a,
-        0 6px 12px rgba(34, 197, 94, 0.25);
+        0 3px 0 var(--theme-dark, #16a34a),
+        0 6px 12px color-mix(in srgb, var(--theme-primary, #22c55e) 25%, transparent);
 }
 
 .btn-popup-primary:hover {
     transform: translateY(-1px);
     box-shadow: 
-        0 4px 0 #16a34a,
-        0 8px 15px rgba(34, 197, 94, 0.35);
+        0 4px 0 var(--theme-dark, #16a34a),
+        0 8px 15px color-mix(in srgb, var(--theme-primary, #22c55e) 35%, transparent);
 }
 
 .btn-popup-secondary {
-    background: rgba(22, 163, 74, 0.15);
+    background: color-mix(in srgb, var(--theme-primary, #22c55e) 15%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 1px solid color-mix(in srgb, var(--theme-primary, #22c55e) 30%, transparent);
     border-radius: 0.5rem;
     color: #e0f2fe;
     font-weight: 500;
@@ -45,7 +45,7 @@ function injectStyles() {
 }
 
 .btn-popup-secondary:hover {
-    background: rgba(22, 163, 74, 0.25);
+    background: color-mix(in srgb, var(--theme-primary, #22c55e) 25%, transparent);
     transform: translateY(-1px);
 }
 

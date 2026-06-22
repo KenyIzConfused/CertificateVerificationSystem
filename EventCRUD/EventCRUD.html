@@ -23,13 +23,19 @@
         }
     </script>
     <style>
+        :root {
+            --theme-primary: #22c55e;
+            --theme-dark: #16a34a;
+            --theme-gradient: linear-gradient(135deg, #16a34a, #15803d, #166534);
+        }
+
         /* Solid Dark Green Background */
         body::before {
             content: '';
             position: fixed;
             inset: 0;
             z-index: -1;
-            background: linear-gradient(135deg, #16a34a, #15803d, #166534);
+            background: var(--theme-gradient);
         }
 
         /* Floating Liquid Shapes for Depth */
@@ -39,9 +45,9 @@
             inset: 0;
             z-index: -1;
             background: 
-                radial-gradient(ellipse at 15% 20%, rgba(34, 197, 94, 0.15) 0%, transparent 40%),
-                radial-gradient(ellipse at 85% 80%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 50%, rgba(13, 148, 136, 0.08) 0%, transparent 50%);
+                radial-gradient(ellipse at 15% 20%, color-mix(in srgb, var(--theme-primary) 15%, transparent) 0%, transparent 40%),
+                radial-gradient(ellipse at 85% 80%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--theme-primary) 8%, transparent) 0%, transparent 50%);
             filter: blur(80px);
             animation: float 30s ease-in-out infinite;
         }
@@ -54,83 +60,97 @@
 
         /* Liquid Glass Panel - Translucent */
         .liquid-panel {
-            background: rgba(22, 163, 74, 0.12);
+            background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(34, 197, 94, 0.25);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 25%, transparent);
             border-radius: 1.5rem;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
             transition: all 0.3s ease;
         }
 
-        /* Solid 3D Green Button */
+        /* Solid 3D Button */
         .btn-3d {
-            background: linear-gradient(145deg, #34d399, #22c55e, #16a34a);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 50%, white), var(--theme-primary), var(--theme-dark));
             border: none;
             border-radius: 0.75rem;
             color: white;
             font-weight: 600;
             transition: all 0.2s ease;
             box-shadow: 
-                0 4px 0 #16a34a,
-                0 8px 15px rgba(34, 197, 94, 0.3);
+                0 4px 0 var(--theme-dark),
+                0 8px 15px color-mix(in srgb, var(--theme-primary) 30%, transparent);
             transform: translateY(0);
         }
 
         .btn-3d:hover {
             transform: translateY(-2px);
             box-shadow: 
-                0 6px 0 #16a34a,
-                0 12px 20px rgba(34, 197, 94, 0.4);
+                0 6px 0 var(--theme-dark),
+                0 12px 20px color-mix(in srgb, var(--theme-primary) 40%, transparent);
         }
 
         .btn-3d:active {
             transform: translateY(1px);
             box-shadow: 
-                0 2px 0 #16a34a,
-                0 4px 8px rgba(34, 197, 94, 0.3);
+                0 2px 0 var(--theme-dark),
+                0 4px 8px color-mix(in srgb, var(--theme-primary) 30%, transparent);
         }
 
         /* Secondary Button Style */
         .btn-glass {
-            background: rgba(22, 163, 74, 0.15);
+            background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
             border-radius: 0.75rem;
             color: #e0f2fe;
             transition: all 0.2s ease;
         }
 
         .btn-glass:hover {
-            background: rgba(22, 163, 74, 0.25);
+            background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
             transform: translateY(-1px);
         }
 
         /* Input Fields */
         .liquid-input {
-            background: rgba(22, 163, 74, 0.15);
+            background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
             border-radius: 0.75rem;
             color: #f0fdf4;
             transition: all 0.3s ease;
         }
 
         .liquid-input::placeholder {
-            color: #a7f3d0;
+            color: color-mix(in srgb, var(--theme-primary) 60%, white);
         }
 
         .liquid-input:focus {
-            background: rgba(22, 163, 74, 0.25);
-            border-color: rgba(34, 197, 94, 0.6);
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+            background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 30%, transparent);
             color: #ffffff;
         }
 
         .liquid-glow {
-            box-shadow: 0 0 30px rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 30px color-mix(in srgb, var(--theme-primary) 20%, transparent);
+        }
+
+        /* Dropdown Menu */
+        #menuDropdown {
+            background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+            border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent);
+        }
+
+        #menuDropdown .hover\:bg-green-400\/20:hover {
+            background: color-mix(in srgb, var(--theme-primary) 20%, transparent);
+        }
+
+        #menuDropdown .border-green-400\/20 {
+            border-color: color-mix(in srgb, var(--theme-primary) 20%, transparent);
         }
     </style>
 </head>
@@ -146,23 +166,27 @@
                 </button>
                 
                 <!-- Dropdown Menu -->
-                <div id="menuDropdown" class="hidden absolute left-0 mt-2 w-48 liquid-panel rounded-xl p-2 shadow-lg">
-                    <a href="./Settings.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.54.167 3.54 1.962 0 1.097.573 2.063 1.49 2.535 1.64.847 1.64 3.185 0 4.032a2.718 2.718 0 00-1.49 2.535c0 1.795-1.997 2.902-3.54 1.962a1.724 1.724 0 00-2.573-1.066z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <div id="menuDropdown" class="hidden absolute left-0 mt-2 w-56 liquid-panel rounded-xl p-2 shadow-lg border border-green-400/30">
+                    <a href="./Settings.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors font-medium">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                         </svg>
                         Settings
                     </a>
-                    <a href="../SignUp/SignUpAdmin.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m5-12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    <div class="border-t border-green-400/20 my-1"></div>
+                    <a href="../SignUp/SignUpAdmin.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors font-medium">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <line x1="19" y1="8" x2="19" y2="14"></line>
+                            <line x1="22" y1="11" x2="16" y2="11"></line>
                         </svg>
                         Sign Up
                     </a>
-                    <a href="../logIn/LogInAdmin.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors">
+                    <a href="../logIn/LogInAdmin.html" class="flex items-center gap-3 px-4 py-3 text-green-100 hover:bg-green-400/20 rounded-lg transition-colors font-medium">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4h3V8h2v4h3l-4 4z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
                         Logout
                     </a>
@@ -173,6 +197,7 @@
                 <div class="text-center">
                     <h1 id="departmentName" class="text-4xl md:text-5xl font-bold text-green-100">Information Unit</h1>
                     <p id="adminName" class="text-green-200/70 mt-2 text-base md:text-lg font-semibold"></p>
+                    <p class="text-green-200/50 text-xs mt-1">Manage your events and attendee records</p>
                 </div>
             </div>
         </header>
