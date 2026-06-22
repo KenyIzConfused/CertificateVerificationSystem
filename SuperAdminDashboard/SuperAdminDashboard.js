@@ -77,29 +77,29 @@ const renderPendingAdmins = (admins) => {
   const pendingAdmins = admins.filter(a => a.status === 'pending');
   
   if (pendingAdmins.length === 0) {
-    container.innerHTML = '<p class="text-brand-400 text-center py-8">No pending approvals.</p>';
+    container.innerHTML = '<p class="dashboard-empty-state">No pending approvals.</p>';
     return;
   }
   
   container.innerHTML = pendingAdmins.map(admin => `
-    <div class="border border-brand-200 rounded-lg p-4 flex justify-between items-center">
-      <div>
-        <h3 class="font-semibold text-brand-900">${escapeHtml(admin.collegeName)}</h3>
-        <p class="text-sm text-brand-600">${escapeHtml(admin.email)}</p>
-        <p class="text-xs text-brand-500 mt-1">Created: ${formatDate(admin.createdAt)}</p>
-      <p class="text-xs text-brand-500 mt-1">Updated: ${formatDate(admin.updatedAt)}</p>
+    <article class="approval-request">
+      <div class="approval-request__body">
+        <h3 class="approval-request__title">${escapeHtml(admin.collegeName)}</h3>
+        <p class="approval-request__meta">${escapeHtml(admin.email)}</p>
+        <p class="approval-request__meta approval-request__meta--muted">Created: ${formatDate(admin.createdAt)}</p>
+        <p class="approval-request__meta approval-request__meta--muted">Updated: ${formatDate(admin.updatedAt)}</p>
       </div>
-      <div class="flex gap-2">
+      <div class="approval-request__actions">
         <button onclick="window.approveAdmin('${admin.id}', '${escapeHtml(admin.collegeName)}')" 
-          class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+          class="approval-action approval-action--approve">
           Approve
         </button>
         <button onclick="window.rejectAdmin('${admin.id}', '${escapeHtml(admin.collegeName)}')" 
-          class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+          class="approval-action approval-action--reject">
           Reject
         </button>
       </div>
-    </div>
+    </article>
   `).join('');
 };
 
@@ -109,7 +109,7 @@ const renderHistory = (admins) => {
   const historyAdmins = admins.filter(a => a.status === 'approved' || a.status === 'rejected');
   
   if (historyAdmins.length === 0) {
-    container.innerHTML = '<p class="text-brand-400 text-center py-8">No history yet.</p>';
+    container.innerHTML = '<p class="dashboard-empty-state">No history yet.</p>';
     return;
   }
   
@@ -125,24 +125,23 @@ const renderHistory = (admins) => {
       ? (admin.approvedAt ? new Date(admin.approvedAt.toDate()).toLocaleString() : 'N/A')
       : (admin.rejectedAt ? new Date(admin.rejectedAt.toDate()).toLocaleString() : 'N/A');
     const actionText = isApproved ? 'Approved' : 'Rejected';
-    const badgeClass = isApproved ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
     
     return `
-      <div class="border border-gray-200 rounded-lg p-4">
-        <div class="flex justify-between items-start mb-2">
-          <div>
-            <h3 class="font-semibold text-gray-800">${escapeHtml(admin.collegeName)}</h3>
-            <p class="text-sm text-gray-600">${escapeHtml(admin.email)}</p>
+      <article class="history-entry">
+        <div class="history-entry__top">
+          <div class="history-entry__body">
+            <h3>${escapeHtml(admin.collegeName)}</h3>
+            <p>${escapeHtml(admin.email)}</p>
           </div>
-          <span class="px-3 py-1 rounded-full text-xs font-medium ${badgeClass}">
+          <span class="history-badge ${isApproved ? 'history-badge--approved' : 'history-badge--rejected'}">
             ${actionText}
           </span>
         </div>
-        <div class="flex justify-between items-center text-xs text-gray-500">
+        <div class="history-entry__footer">
           <span>${date}</span>
           ${admin.reason ? `<span>Reason: ${escapeHtml(admin.reason)}</span>` : ''}
         </div>
-      </div>
+      </article>
     `;
   }).join('');
 };

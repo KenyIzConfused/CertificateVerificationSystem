@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
+    <title>System Admin Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -79,22 +79,25 @@
         }
         .btn-secondary:hover { background: rgba(255,255,255,0.75); }
     </style>
-    <link rel="stylesheet" href="../styles.css">
+  <script type="module" crossorigin src="/assets/signupSuperAdmin-DZ_ani7K.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/ui-enhancements-oqjii0IA.js">
+  <link rel="modulepreload" crossorigin href="/assets/PopupSystem-C6gwMGe4.js">
+  <link rel="stylesheet" crossorigin href="/assets/ui-enhancements-DaU9ojh6.css">
 </head>
 <body class="auth-page min-h-screen p-6 text-brand-900 antialiased">
     <div class="glass w-full max-w-md rounded-3xl p-8">
         <div class="mb-2 text-center">
-            <div class="mx-auto h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-xl shadow-lg mb-4">CV</div>
-            <h2 class="text-3xl font-bold tracking-tight text-brand-950">Create College Admin Account</h2>
-            <p class="mt-2 text-sm text-brand-500">Have an account? <a href="../logIn/LogInAdmin.html" class="text-brand-600 hover:text-brand-700 font-medium">College Admin Login</a></p>
-            <p class="mt-1 text-xs text-brand-500">System Admin? <a href="../logIn/LogInSuperAdmin.html" class="text-brand-600 hover:text-brand-700 font-medium">Super Admin Login</a></p>
+            <div class="mx-auto h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-xl shadow-lg mb-4">SA</div>
+            <h2 class="text-3xl font-bold tracking-tight text-brand-950">Create System Admin Account</h2>
+            <p class="mt-2 text-sm text-brand-500">Already have an account? <a href="../logIn/LogInSuperAdmin.html" class="text-brand-600 hover:text-brand-700 font-medium">Login here</a></p>
+            <p class="mt-1 text-xs text-brand-500">College Admin? <a href="../logIn/LogInAdmin.html" class="text-brand-600 hover:text-brand-700 font-medium">College Admin Login</a></p>
         </div>
         <form id="signupForm" class="mt-8 space-y-5">
             <div class="space-y-2">
-                <label for="collegeName" class="block text-sm font-semibold text-brand-700">College Name</label>
-                <input type="text" id="collegeName" name="collegeName" required
+                <label for="fullName" class="block text-sm font-semibold text-brand-700">Full Name</label>
+                <input type="text" id="fullName" name="fullName" required
                     class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400"
-                    placeholder="e.g., CITE(College of Information Technology Education)">
+                    placeholder="e.g., Juan Dela Cruz">
             </div>
             <div class="space-y-2">
                 <label for="email" class="block text-sm font-semibold text-brand-700">Email</label>
@@ -154,11 +157,6 @@
                 eyeOff.classList.add('hidden');
             }
         }
-    </script>
-    <script type="module" src="../ui-enhancements.js"></script>
-    <script type="module">
-        import '../PopupSystem.js';
-        import './SignUpAdmin.js';
     </script>
 </body>
 </html>

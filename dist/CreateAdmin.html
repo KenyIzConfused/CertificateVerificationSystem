@@ -21,7 +21,9 @@
         .glass { background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(22px); border: 1px solid rgba(255, 255, 255, 0.65); }
         .btn-primary { background: linear-gradient(180deg, #16a34a 0%, #15803d 100%); color: white; }
     </style>
-    <link rel="stylesheet" href="styles.css">
+  <script type="module" crossorigin src="/assets/createAdmin-Cotz-eYO.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/ui-enhancements-oqjii0IA.js">
+  <link rel="stylesheet" crossorigin href="/assets/ui-enhancements-DaU9ojh6.css">
 </head>
 <body class="auth-page min-h-screen p-6 text-brand-900 antialiased">
     <div class="glass w-full max-w-md rounded-3xl p-8">
@@ -48,7 +50,6 @@
         </form>
         <div id="result" class="mt-4 text-sm hidden"></div>
     </div>
-    <script type="module" src="ui-enhancements.js"></script>
         <script>
             window.togglePassword = function(fieldId, btn) {
                 const input = document.getElementById(fieldId);
@@ -65,41 +66,5 @@
                 }
             };
         </script>
-        <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCKuHUI87RMQK70Cvxm4YO2Jl1UDdoeAfw",
-            authDomain: "certificateverification-8ef83.firebaseapp.com",
-            projectId: "certificateverification-8ef83",
-            storageBucket: "certificateverification-8ef83.firebasestorage.app",
-            messagingSenderId: "797766748638",
-            appId: "1:797766748638:web:2b716ec9e7c6f64c27b54f",
-            measurementId: "G-19BFPGEFEK"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        document.getElementById('createAdminForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const collegeName = document.getElementById('collegeName').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            try {
-                const cred = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, 'Admin', cred.user.uid), {
-                    collegeName, email, role: 'super_admin', status: 'approved', createdAt: new Date()
-                });
-                document.getElementById('result').innerHTML = `<p class="text-green-600">Created! Email: ${email}</p>`;
-            } catch (err) {
-                document.getElementById('result').innerHTML = `<p class="text-red-600">${err.message}</p>`;
-            }
-        });
-    </script>
 </body>
 </html>

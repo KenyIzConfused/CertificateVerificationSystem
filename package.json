@@ -17,7 +17,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "bugs": {
     "url": "https://github.com/KenyIzConfused/CertificateVerificationSystem/issues"
   },
@@ -28,6 +27,4 @@
   "devDependencies": {
     "vite": "^5.4.0"
   }
-}
-}
 }
