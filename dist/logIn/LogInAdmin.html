@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -48,13 +51,6 @@
             border: 1px solid rgba(255, 255, 255, 0.65);
             box-shadow: 0 18px 45px -12px rgba(30, 37, 60, 0.18), inset 0 1px 0 rgba(255,255,255,0.9);
         }
-        .glass-strong {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(28px) saturate(160%);
-            -webkit-backdrop-filter: blur(28px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 22px 55px -14px rgba(30, 37, 60, 0.22), inset 0 1px 0 rgba(255,255,255,0.95);
-        }
         .input-glass {
             background: rgba(255,255,255,0.55);
             border: 1px solid rgba(34, 197, 94, 0.25);
@@ -72,67 +68,242 @@
             border: 1px solid rgba(255,255,255,0.12);
         }
         .btn-primary:hover { transform: translateY(-1px); }
-        .btn-secondary {
-            background: rgba(255,255,255,0.55);
-            border: 1px solid rgba(34, 197, 94, 0.25);
-            color: #16a34a;
+        .admin-form { display: none; }
+        .admin-form.active { display: block; }
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        .auth-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
-        .btn-secondary:hover { background: rgba(255,255,255,0.75); }
+        .app-header {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(22px);
+        }
+        .app-header__inner {
+            max-width: 56rem;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand {
+            text-decoration: none;
+            color: inherit;
+        }
+        .header-link {
+            background: none;
+            border: none;
+            text-decoration: none;
+            color: #15803d;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        .header-link:hover {
+            background: rgba(34, 197, 94, 0.1);
+            color: #166534;
+        }
     </style>
-  <script type="module" crossorigin src="/assets/loginAdmin-C4gJG5yf.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/ui-enhancements-oqjii0IA.js">
+  <script type="module" crossorigin src="/assets/loginAdmin-CWEToeKf.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/ui-enhancements-DoQeswjl.js">
   <link rel="modulepreload" crossorigin href="/assets/PopupSystem-C6gwMGe4.js">
   <link rel="stylesheet" crossorigin href="/assets/ui-enhancements-DaU9ojh6.css">
 </head>
-<body class="auth-page min-h-screen p-6 text-brand-900 antialiased">
-    <div class="glass w-full max-w-md rounded-3xl p-8">
-        <div class="mb-2 text-center">
-            <div class="mx-auto h-12 w-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-xl shadow-lg mb-4">CV</div>
-            <h2 class="text-3xl font-bold tracking-tight text-brand-950">College Admin Login</h2>
-            <p class="mt-2 text-sm text-brand-500">Don't have an account? <a href="../SignUp/SignUpAdmin.html" class="text-brand-600 hover:text-brand-700 font-medium">Sign Up</a></p>
-            <p class="mt-1 text-xs text-brand-500">System Admin? <a href="LogInSuperAdmin.html" class="text-brand-600 hover:text-brand-700 font-medium">Login here</a></p>
+<body class="auth-page min-h-screen p-6 text-brand-900 antialiased flex flex-col items-center justify-center">
+    <header class="w-full max-w-4xl app-header">
+        <div class="app-header__inner">
+            <a href="#" class="brand">
+                <span class="brand-title" style="font-size: 1.5rem; font-weight: 700;">Welcome to Event Manager</span>
+            </a>
+            <div class="app-header__actions">
+                <button id="adminToggleBtn" class="header-link" data-view="college">System Admin</button>
+            </div>
         </div>
-        <form id="loginForm" class="mt-8 space-y-5">
-            <div class="space-y-2">
-                <label for="email" class="block text-sm font-semibold text-brand-700">Email</label>
-                <input type="email" id="email" name="email" required
-                    class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
-            </div>
-            <div class="space-y-2 relative">
-                <label for="password" class="block text-sm font-semibold text-brand-700">Password</label>
-                <input type="password" id="password" name="password" required
-                    class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400 pr-12">
-                <button type="button" onclick="togglePassword('password', this)" class="absolute right-3 top-8 text-brand-500 hover:text-brand-700">
-                    <svg id="eye-password" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <svg id="eye-off-password" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l-3.293-3.293m0 0a3 3 0 104.243-4.243l3.293 3.293m-3.293-3.293l3.293 3.293M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                </button>
-            </div>
-            <button type="submit"
-                class="w-full btn-primary font-semibold py-3 rounded-xl transition-all shadow-lg">
-                Login
+    </header>
+    <div class="glass w-full max-w-md rounded-3xl p-8 page-content">
+        <div class="mb-4 text-center">
+            <div class="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-2xl shadow-lg mb-3" id="formBadge">CA</div>
+            <h2 id="formTitle" class="text-2xl font-bold tracking-tight text-brand-950">College Admin Login</h2>
+        </div>
+        
+        <div class="form-section active" id="collegeAdminSection">
+            <div id="collegeLoginForm" class="admin-form active">
+                <form id="collegeLoginFormElement" class="mt-8 space-y-5">
+                    <div class="space-y-2">
+                        <label for="collegeEmail" class="block text-sm font-semibold text-brand-700">Email</label>
+                        <input type="email" id="collegeEmail" name="email" required
+                            class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                    </div>
+<div class="space-y-2 relative">
+            <label for="collegePassword" class="block text-sm font-semibold text-brand-700">Password</label>
+            <input type="password" id="collegePassword" name="password" required
+                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400 pr-12">
+            <button type="button" onclick="togglePasswordVisibility('collegePassword', this)" class="absolute right-3 top-8 text-brand-500 hover:text-brand-700">
+                <svg id="eye-collegePassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.457 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-collegePassword-off" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l-3.293-3.293m0 0a3 3 0 104.243-4.243l3.293 3.293m-3.293-3.293l3.293 3.293M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
             </button>
-        </form>
+        </div>
+                    <button type="submit"
+                        class="w-full btn-primary font-semibold py-3 rounded-xl transition-all shadow-lg">
+                        Login
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button type="button" onclick="switchToSignUp('college')" class="text-sm text-brand-600 hover:text-brand-700">Sign Up</button>
+                </div>
+            </div>
+            
+            <div id="collegeSignUpForm" class="admin-form">
+                <form id="collegeSignUpFormElement" class="mt-8 space-y-5">
+                    <div class="space-y-2">
+                        <label for="collegeName" class="block text-sm font-semibold text-brand-700">College Name</label>
+                        <input type="text" id="collegeName" name="collegeName" required
+                            class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400"
+                            placeholder="e.g., CITE(College of Information Technology Education)">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="collegeSignUpEmail" class="block text-sm font-semibold text-brand-700">Email</label>
+                        <input type="email" id="collegeSignUpEmail" name="email" required
+                            class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                    </div>
+<div class="space-y-2 relative">
+            <label for="collegeSignUpPassword" class="block text-sm font-semibold text-brand-700">Password</label>
+            <input type="password" id="collegeSignUpPassword" name="password" required
+                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400 pr-12">
+            <button type="button" onclick="togglePasswordVisibility('collegeSignUpPassword', this)" class="absolute right-3 top-8 text-brand-500 hover:text-brand-700">
+                <svg id="eye-collegeSignUpPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-collegeSignUpPassword-off" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l-3.293-3.293m0 0a3 3 0 104.243-4.243l3.293 3.293m-3.293-3.293l3.293 3.293M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+            </button>
+        </div>
+        <div class="space-y-2 relative">
+            <label for="collegeSignUpConfirmPassword" class="block text-sm font-semibold text-brand-700">Confirm Password</label>
+            <input type="password" id="collegeSignUpConfirmPassword" name="confirmPassword" required
+                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400 pr-12">
+            <button type="button" onclick="togglePasswordVisibility('collegeSignUpConfirmPassword', this)" class="absolute right-3 top-8 text-brand-500 hover:text-brand-700">
+                <svg id="eye-collegeSignUpConfirmPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-collegeSignUpConfirmPassword-off" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l-3.293-3.293m0 0a3 3 0 104.243-4.243l3.293 3.293m-3.293-3.293l3.293 3.293M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+            </button>
+        </div>
+                    <button type="submit"
+                        class="w-full btn-primary font-semibold py-3 rounded-xl transition-all shadow-lg">
+                        Sign Up
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button type="button" onclick="switchToLogin('college')" class="text-sm text-brand-600 hover:text-brand-700">Back to Login</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section" id="systemAdminSection">
+            <div id="systemLoginForm" class="admin-form">
+                <form id="systemLoginFormElement" class="mt-8 space-y-5">
+                    <div class="space-y-2">
+                        <label for="systemEmail" class="block text-sm font-semibold text-brand-700">Email</label>
+                        <input type="email" id="systemEmail" name="email" required
+                            class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                    </div>
+<div class="space-y-2 relative">
+            <label for="systemPassword" class="block text-sm font-semibold text-brand-700">Password</label>
+            <input type="password" id="systemPassword" name="password" required
+                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400 pr-12">
+            <button type="button" onclick="togglePasswordVisibility('systemPassword', this)" class="absolute right-3 top-8 text-brand-500 hover:text-brand-700">
+                <svg id="eye-systemPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-systemPassword-off" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l-3.293-3.293m0 0a3 3 0 104.243-4.243l3.293 3.293m-3.293-3.293l3.293 3.293M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+            </button>
+        </div>
+                    <button type="submit"
+                        class="w-full btn-primary font-semibold py-3 rounded-xl transition-all shadow-lg">
+                        Login
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button type="button" onclick="switchToSignUp('system')" class="text-sm text-brand-600 hover:text-brand-700">Sign Up</button>
+                </div>
+            </div>
+            
+            <div id="systemSignUpForm" class="admin-form">
+                <form id="systemSignUpFormElement" class="mt-8 space-y-5">
+                    <div class="space-y-2">
+                        <label for="systemFullName" class="block text-sm font-semibold text-brand-700">Full Name</label>
+                        <input type="text" id="systemFullName" name="fullName" required
+                            class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400"
+                            placeholder="Full Name">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="systemSignUpEmail" class="block text-sm font-semibold text-brand-700">Email</label>
+                        <input type="email" id="systemSignUpEmail" name="email" required
+                            class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400">
+                    </div>
+<div class="space-y-2 relative">
+            <label for="systemSignUpPassword" class="block text-sm font-semibold text-brand-700">Password</label>
+            <input type="password" id="systemSignUpPassword" name="password" required
+                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400 pr-12">
+            <button type="button" onclick="togglePasswordVisibility('systemSignUpPassword', this)" class="absolute right-3 top-8 text-brand-500 hover:text-brand-700">
+                <svg id="eye-systemSignUpPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-systemSignUpPassword-off" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l-3.293-3.293m0 0a3 3 0 104.243-4.243l3.293 3.293m-3.293-3.293l3.293 3.293M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+            </button>
+        </div>
+        <div class="space-y-2 relative">
+            <label for="systemSignUpConfirmPassword" class="block text-sm font-semibold text-brand-700">Confirm Password</label>
+            <input type="password" id="systemSignUpConfirmPassword" name="confirmPassword" required
+                class="w-full px-4 py-3 rounded-xl input-glass text-brand-900 placeholder:text-brand-400 pr-12">
+            <button type="button" onclick="togglePasswordVisibility('systemSignUpConfirmPassword', this)" class="absolute right-3 top-8 text-brand-500 hover:text-brand-700">
+                <svg id="eye-systemSignUpConfirmPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <svg id="eye-systemSignUpConfirmPassword-off" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l-3.293-3.293m0 0a3 3 0 104.243-4.243l3.293 3.293m-3.293-3.293l3.293 3.293M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                </svg>
+            </button>
+        </div>
+                    <button type="submit"
+                        class="w-full btn-primary font-semibold py-3 rounded-xl transition-all shadow-lg">
+                        Sign Up
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button type="button" onclick="switchToLogin('system')" class="text-sm text-brand-600 hover:text-brand-700">Back to Login</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <script>
-        function togglePassword(fieldId, btn) {
-            const input = document.getElementById(fieldId);
-            const eyeOpen = btn.querySelector('[id^="eye-"]:not([id*="-off"])');
-            const eyeOff = btn.querySelector('[id*="-off"]');
-            if (input.type === 'password') {
-                input.type = 'text';
-                eyeOpen.classList.add('hidden');
-                eyeOff.classList.remove('hidden');
-            } else {
-                input.type = 'password';
-                eyeOpen.classList.remove('hidden');
-                eyeOff.classList.add('hidden');
-            }
-        }
-    </script>
 </body>
 </html>

@@ -17,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-document.querySelector('form').addEventListener('submit', async (e) => {
+document.getElementById('superAdminLoginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const email = document.getElementById('email').value;
@@ -41,10 +41,6 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   } catch (error) {
     hideLoading('login');
     console.error('Error:', error);
-    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-      showAlert('Invalid email or password', { type: 'error' });
-    } else {
-      showAlert('Login failed: ' + error.message, { type: 'error' });
-    }
+    showAlert('Invalid Input', { type: 'error' });
   }
 });

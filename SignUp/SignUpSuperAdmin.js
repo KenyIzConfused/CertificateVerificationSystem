@@ -73,10 +73,6 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   } catch (error) {
     hideLoading('signup');
     console.error('Error:', error);
-    if (error.code === 'auth/email-already-in-use') {
-      showAlert('This email is already in use by another account.', { type: 'error' });
-    } else {
-      showAlert('Sign up failed: ' + error.message, { type: 'error' });
-    }
+    showAlert('Invalid Input', { type: 'error' });
   }
 });

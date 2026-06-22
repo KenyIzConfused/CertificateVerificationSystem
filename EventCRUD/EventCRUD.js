@@ -435,10 +435,10 @@ window.handleLogout = async () => {
     await auth.signOut();
     sessionStorage.removeItem('adminLoggedIn');
     localStorage.removeItem('orgName');
-    window.location.href = '../logIn/LogInAdmin.html';
   } catch (error) {
-    showAlert('Logout failed', { type: 'error' });
+    console.error('Logout error:', error);
   }
+  window.location.href = '../logIn/LogInAdmin.html?v=' + Date.now();
 };
 
 window.closeSettings = () => {

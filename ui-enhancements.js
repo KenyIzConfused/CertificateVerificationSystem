@@ -1,17 +1,16 @@
 const pageMeta = [
   {
     match: (path) => path.endsWith('/logIn/LogInAdmin.html'),
-    title: 'College Admin',
-    subtitle: '',
+    title: 'Welcome to Event Manager',
+    brandMark: 'CA',
     hasToggle: true
   },
   {
     match: (path) => path.endsWith('/logIn/LogInSuperAdmin.html'),
-    title: 'System Admin Login',
-    subtitle: 'Certificate Verification System',
+    title: 'Welcome to Event Manager',
     links: [
       { label: 'College Admin Login', href: 'LogInAdmin.html' },
-      { label: 'System Admin Sign Up', href: '../SignUp/SignUpSuperAdmin.html' }
+      { label: 'College Admin Sign Up', href: '../SignUp/SignUpAdmin.html' }
     ]
   },
   {
@@ -50,9 +49,8 @@ const pageMeta = [
   },
   {
     match: (path) => path.endsWith('/SuperAdminDashboard/SuperAdminDashboard.html'),
-    title: 'Super Admin Dashboard',
-    subtitle: 'Manage college admin approvals',
-    links: [{ label: 'Logout', href: '../logIn/LogInSuperAdmin.html' }]
+    title: 'Schedule Manager',
+    subtitle: 'Super Admin Dashboard'
   }
 ];
 
@@ -80,23 +78,13 @@ function createHeader(meta) {
   brand.className = 'brand';
   brand.href = getHomeHref();
 
-  const mark = document.createElement('span');
-  mark.className = 'brand-mark';
-  mark.textContent = 'CV';
-
-  const brandText = document.createElement('span');
-  brandText.className = 'brand-text';
-
   const title = document.createElement('span');
   title.className = 'brand-title';
   title.textContent = meta.title;
+  title.style.fontSize = '1.5rem';
+  title.style.fontWeight = '700';
 
-  const subtitle = document.createElement('span');
-  subtitle.className = 'brand-subtitle';
-  subtitle.textContent = meta.subtitle;
-
-  brandText.append(title, subtitle);
-  brand.append(mark, brandText);
+  brand.append(title);
 
   const actions = document.createElement('div');
   actions.className = 'app-header__actions';
@@ -113,14 +101,10 @@ function createHeader(meta) {
         window.switchAdminView('system');
         this.setAttribute('data-view', 'system');
         this.textContent = 'College Admin';
-        const headerTitle = document.querySelector('.brand-title');
-        if (headerTitle) headerTitle.textContent = 'System Admin';
       } else {
         window.switchAdminView('college');
         this.setAttribute('data-view', 'college');
         this.textContent = 'System Admin';
-        const headerTitle = document.querySelector('.brand-title');
-        if (headerTitle) headerTitle.textContent = 'College Admin';
       }
     };
     actions.appendChild(toggleBtn);
