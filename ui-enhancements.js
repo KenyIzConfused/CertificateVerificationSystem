@@ -1,12 +1,9 @@
 const pageMeta = [
   {
     match: (path) => path.endsWith('/logIn/LogInAdmin.html'),
-    title: 'College Admin Login',
-    subtitle: 'Certificate Verification System',
-    links: [
-      { label: 'Sign Up', href: '../SignUp/SignUpAdmin.html' },
-      { label: 'System Admin Login', href: 'LogInSuperAdmin.html' }
-    ]
+    title: 'College Admin',
+    subtitle: '',
+    hasToggle: true
   },
   {
     match: (path) => path.endsWith('/logIn/LogInSuperAdmin.html'),
@@ -103,13 +100,39 @@ function createHeader(meta) {
 
   const actions = document.createElement('div');
   actions.className = 'app-header__actions';
-  meta.links.forEach((link) => {
-    const action = document.createElement('a');
-    action.className = 'header-link';
-    action.href = link.href;
-    action.textContent = link.label;
-    actions.appendChild(action);
-  });
+  
+  if (meta.hasToggle) {
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'header-link';
+    toggleBtn.id = 'adminToggleBtn';
+    toggleBtn.textContent = 'System Admin';
+    toggleBtn.setAttribute('data-view', 'college');
+    toggleBtn.onclick = function() {
+      const currentView = this.getAttribute('data-view');
+      if (currentView === 'college') {
+        window.switchAdminView('system');
+        this.setAttribute('data-view', 'system');
+        this.textContent = 'College Admin';
+        const headerTitle = document.querySelector('.brand-title');
+        if (headerTitle) headerTitle.textContent = 'System Admin';
+      } else {
+        window.switchAdminView('college');
+        this.setAttribute('data-view', 'college');
+        this.textContent = 'System Admin';
+        const headerTitle = document.querySelector('.brand-title');
+        if (headerTitle) headerTitle.textContent = 'College Admin';
+      }
+    };
+    actions.appendChild(toggleBtn);
+  } else {
+    meta.links.forEach((link) => {
+      const action = document.createElement('a');
+      action.className = 'header-link';
+      action.href = link.href;
+      action.textContent = link.label;
+      actions.appendChild(action);
+    });
+  }
 
   inner.append(brand, actions);
   header.appendChild(inner);
