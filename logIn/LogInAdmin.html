@@ -377,21 +377,27 @@
             e.preventDefault();
             const email = document.getElementById('systemEmail').value;
             const password = document.getElementById('systemPassword').value;
-            
+
             try {
                 showLoading('login');
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const adminDoc = await getDoc(doc(db, 'Admin', userCredential.user.uid));
-                if (adminDoc.exists() && adminDoc.data().role === 'super_admin') {
-                    sessionStorage.setItem('superAdminLoggedIn', 'true');
-                    hideLoading('login');
-                    showToast('Login successful!');
-                    window.location.href = '../SuperAdminDashboard/SuperAdminDashboard.html';
-                } else {
+                if (!adminDoc.exists() || adminDoc.data().role !== 'super_admin') {
                     hideLoading('login');
                     showAlert('Unauthorized access', { type: 'error' });
                     await auth.signOut();
+                    return;
                 }
+                if (adminDoc.data().status !== 'approved') {
+                    hideLoading('login');
+                    showAlert('Account pending approval', { type: 'warning' });
+                    await auth.signOut();
+                    return;
+                }
+                sessionStorage.setItem('superAdminLoggedIn', 'true');
+                hideLoading('login');
+                showToast('Login successful!');
+                window.location.href = '../SuperAdminDashboard/SuperAdminDashboard.html';
             } catch (error) {
                 hideLoading('login');
                 showAlert('Invalid Input', { type: 'error' });
