@@ -52,23 +52,19 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     );
     const existingSnapshot = await getDocs(existingSuperAdminQuery);
     
-    if (!existingSnapshot.empty) {
-      hideLoading('signup');
-      showAlert('A System Admin account already exists.', { type: 'error' });
-      return;
-    }
+    const status = existingSnapshot.empty ? 'approved' : 'pending';
     
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, 'Admin', userCredential.user.uid), {
       collegeName: fullName,
       email: email,
       role: 'super_admin',
-      status: 'pending',
+      status: status,
       createdAt: new Date()
     });
     await sendEmailVerification(userCredential.user);
     hideLoading('signup');
-    showToast('Account created! Pending approval by existing Super Admin.');
+    showToast(status === 'approved' ? 'Account created successfully! Please verify your email.' : 'Account created! Pending approval by existing System Admin.');
     window.location.href = '../logIn/LogInSuperAdmin.html';
   } catch (error) {
     hideLoading('signup');

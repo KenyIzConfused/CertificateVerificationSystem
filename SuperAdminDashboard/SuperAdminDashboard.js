@@ -81,26 +81,29 @@ const renderPendingAdmins = (admins) => {
     return;
   }
   
-  container.innerHTML = pendingAdmins.map(admin => `
-    <article class="approval-request">
-      <div class="approval-request__body">
-        <h3 class="approval-request__title">${escapeHtml(admin.collegeName)}</h3>
-        <p class="approval-request__meta">${escapeHtml(admin.email)}</p>
-        <p class="approval-request__meta approval-request__meta--muted">Created: ${formatDate(admin.createdAt)}</p>
-        <p class="approval-request__meta approval-request__meta--muted">Updated: ${formatDate(admin.updatedAt)}</p>
-      </div>
-      <div class="approval-request__actions">
-        <button onclick="window.approveAdmin('${admin.id}', '${escapeHtml(admin.collegeName)}')" 
-          class="approval-action approval-action--approve">
-          Approve
-        </button>
-        <button onclick="window.rejectAdmin('${admin.id}', '${escapeHtml(admin.collegeName)}')" 
-          class="approval-action approval-action--reject">
-          Reject
-        </button>
-      </div>
-    </article>
-  `).join('');
+  container.innerHTML = pendingAdmins.map(admin => {
+    const isAdminType = admin.role === 'super_admin' ? 'System Admin' : 'College Admin';
+    return `
+      <article class="approval-request">
+        <div class="approval-request__body">
+          <h3 class="approval-request__title">${escapeHtml(admin.collegeName)} <span class="admin-type-badge">(${isAdminType})</span></h3>
+          <p class="approval-request__meta">${escapeHtml(admin.email)}</p>
+          <p class="approval-request__meta approval-request__meta--muted">Created: ${formatDate(admin.createdAt)}</p>
+          <p class="approval-request__meta approval-request__meta--muted">Updated: ${formatDate(admin.updatedAt)}</p>
+        </div>
+        <div class="approval-request__actions">
+          <button onclick="window.approveAdmin('${admin.id}', '${escapeHtml(admin.collegeName)}')" 
+            class="approval-action approval-action--approve">
+            Approve
+          </button>
+          <button onclick="window.rejectAdmin('${admin.id}', '${escapeHtml(admin.collegeName)}')" 
+            class="approval-action approval-action--reject">
+            Reject
+          </button>
+        </div>
+      </article>
+    `;
+  }).join('');
 };
 
 const renderHistory = (admins) => {
@@ -169,13 +172,19 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = '../logIn/LogInAdmin.html';
     return;
   }
+  
+  if (adminDoc.data().status !== 'approved') {
+    await signOut(auth);
+    window.location.href = '../logIn/LogInAdmin.html';
+    return;
+  }
 
   const q = collection(db, 'Admin');
   onSnapshot(q, (snapshot) => {
     const admins = [];
     snapshot.forEach((doc) => {
       const data = doc.data();
-      if (data.role !== 'super_admin') {
+      if (data.role !== 'super_admin' || data.status === 'pending') {
         admins.push({ id: doc.id, ...data });
       }
     });

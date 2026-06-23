@@ -28,16 +28,26 @@ document.getElementById('superAdminLoginForm').addEventListener('submit', async 
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     
     const adminDoc = await getDoc(doc(db, 'Admin', userCredential.user.uid));
-    if (adminDoc.exists() && adminDoc.data().role === 'super_admin') {
-      sessionStorage.setItem('superAdminLoggedIn', 'true');
-      hideLoading('login');
-      showToast('Login successful!');
-      window.location.href = '../SuperAdminDashboard/SuperAdminDashboard.html';
-    } else {
+    const adminData = adminDoc.data();
+    
+    if (!adminDoc.exists() || !adminData || adminData.role !== 'super_admin') {
       hideLoading('login');
       showAlert('Unauthorized access. Super Admin only.', { type: 'error' });
       await auth.signOut();
+      return;
     }
+    
+    if (adminData.status !== 'approved') {
+      hideLoading('login');
+      showAlert('Account pending approval. Please wait for approval.', { type: 'warning' });
+      await auth.signOut();
+      return;
+    }
+    
+    sessionStorage.setItem('superAdminLoggedIn', 'true');
+    hideLoading('login');
+    showToast('Login successful!');
+    window.location.href = '../SuperAdminDashboard/SuperAdminDashboard.html';
   } catch (error) {
     hideLoading('login');
     console.error('Error:', error);
