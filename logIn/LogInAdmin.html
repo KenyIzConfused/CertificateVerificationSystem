@@ -125,7 +125,8 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-green-600 to-green-800 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-br from-green-600 to-green-800 min-h-screen flex flex-col p-4">
+    <div class="flex-grow flex items-center justify-center">
     <a href="../CertificateVerification/CertificateVerification.html" class="absolute top-6 left-6 btn-3d px-5 py-2.5 flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -136,6 +137,7 @@
         <div class="text-center mb-8">
             <h2 class="text-4xl font-bold text-green-100 mb-2">Admin Login</h2>
             <p class="text-green-200/70 text-lg">Welcome back to Certificate System</p>
+                <p class="text-green-200/50 text-sm mt-2">Not an admin? Go back to verify a certificate, or contact the Information Unit to request an account.</p>
         </div>
         <form class="space-y-6">
             <div class="space-y-2">
@@ -160,6 +162,8 @@
             </button>
         </form>
     </div>
+    </div>
+    <p class="text-center text-green-200/50 text-sm mt-4 pb-4">Information Unit @ 2025</p>
     <script type="module">
         import '../PopupSystem.js';
         import './LogInAdmin.js';
