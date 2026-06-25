@@ -19,17 +19,17 @@ const db = getFirestore(app);
 
 document.querySelector('form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
+   
   const adminName = document.getElementById('adminName').value;
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
-  
+   
   if (password !== confirmPassword) {
     showAlert('Passwords do not match', { type: 'warning' });
     return;
   }
-  
+   
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, 'Admin', userCredential.user.uid), {

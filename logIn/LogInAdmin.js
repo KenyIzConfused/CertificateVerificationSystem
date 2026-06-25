@@ -18,13 +18,13 @@ const auth = getAuth(app);
 
 document.querySelector('form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
+   
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
-  
+   
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-sessionStorage.setItem('adminLoggedIn', 'true');
+    sessionStorage.setItem('adminLoggedIn', 'true');
      showToast('Login successful!');
      window.location.href = '../EventCRUD/EventCRUD.html';
   } catch (error) {

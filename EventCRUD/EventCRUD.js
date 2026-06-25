@@ -223,6 +223,9 @@ window.handleEventUpdate = (events) => {
           <span class="inline-block mt-5 px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">
             Status: ${statusLabel}
           </span>
+          <span class="inline-block mt-5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-400/30 text-blue-200 ml-2">
+            Attendees: ${event.attendeeCount || 0}
+          </span>
         </div>
 
         <div class="mt-6 pt-5 border-t border-green-400/20">
@@ -400,12 +403,23 @@ onAuthStateChanged(auth, async (user) => {
     }
     
     const q = query(collection(db, 'Events'), where('adminId', '==', user.uid));
-    onSnapshot(q, (snapshot) => {
+    onSnapshot(q, async (snapshot) => {
       const events = [];
       snapshot.forEach((doc) => {
         events.push({ id: doc.id, ...doc.data() });
       });
-      window.handleEventUpdate(events);
+
+      const eventsWithCounts = await Promise.all(events.map(async (event) => {
+        try {
+          const attendeesSnapshot = await getDocs(collection(db, 'Events', event.id, 'Attendees'));
+          return { ...event, attendeeCount: attendeesSnapshot.size };
+        } catch (error) {
+          console.error('Error fetching attendee count for event', event.id, error);
+          return { ...event, attendeeCount: 0 };
+        }
+      }));
+
+      window.handleEventUpdate(eventsWithCounts);
     });
   } else {
     window.location.href = '../logIn/LogInAdmin.html';
