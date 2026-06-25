@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Admin Dashboard</title>
+    <title>System Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -47,35 +47,35 @@
     <link rel="stylesheet" href="../styles.css">
 </head>
 <body class="super-admin-page app-page min-h-screen p-0 text-brand-900 antialiased">
-    <!-- Full-width dashboard header -->
-    <div class="max-w-4xl mx-auto">
-        <header class="dashboard-page-header">
-            <div class="dashboard-header-copy">
-                <h1 class="text-3xl font-bold tracking-tight text-brand-950">Super Admin Dashboard</h1>
-                <p class="text-brand-500 mt-1">Manage admin approvals (College Admin & System Admin)</p>
+    <header class="w-full app-header">
+        <div class="app-header__inner">
+            <div class="brand-text">
+                <span class="brand-title">Welcome to Event Manager</span>
             </div>
-            <button onclick="window.handleLogout()" class="dashboard-logout-button header-button">Logout</button>
-        </header>
+            <div class="app-header__actions">
+                <button onclick="window.handleLogout()" class="header-button dashboard-logout-button">Logout</button>
+            </div>
+        </div>
+    </header>
 
-        <!-- Main dashboard workspace -->
-        <main class="dashboard-layout">
-            <!-- Smaller left panel for completed approval records -->
-            <section class="dashboard-card dashboard-history-card" aria-labelledby="approvalHistoryTitle">
-                <h2 id="approvalHistoryTitle" class="dashboard-card-title">Approval History</h2>
-                <div id="historyContainer" class="dashboard-history-list">
-                    <p class="dashboard-empty-state">No history yet.</p>
-                </div>
-            </section>
+    <!-- Main dashboard workspace -->
+    <main class="dashboard-layout">
+        <!-- Smaller left panel for completed approval records -->
+        <section class="dashboard-card dashboard-history-card" aria-labelledby="approvalHistoryTitle">
+            <h2 id="approvalHistoryTitle" class="dashboard-card-title">Approval History</h2>
+            <div id="historyContainer" class="dashboard-history-list">
+                <p class="dashboard-empty-state">No history yet.</p>
+            </div>
+        </section>
 
-            <!-- Larger right panel for active approval requests -->
-            <section class="dashboard-card dashboard-pending-card" aria-labelledby="pendingApprovalsTitle">
-                <h2 id="pendingApprovalsTitle" class="dashboard-card-title">Pending Approvals</h2>
-                <div id="pendingAdminsContainer" class="dashboard-pending-list">
-                    <p class="dashboard-empty-state">No pending approvals.</p>
-                </div>
-            </section>
-        </main>
-    </div>
+        <!-- Larger right panel for active approval requests -->
+        <section class="dashboard-card dashboard-pending-card" aria-labelledby="pendingApprovalsTitle">
+            <h2 id="pendingApprovalsTitle" class="dashboard-card-title">Pending Approvals</h2>
+            <div id="pendingAdminsContainer" class="dashboard-pending-list">
+                <p class="dashboard-empty-state">No pending approvals.</p>
+            </div>
+        </section>
+    </main>
     <script type="module" src="../ui-enhancements.js"></script>
     <script type="module">
         import '../PopupSystem.js';

@@ -403,8 +403,6 @@ onAuthStateChanged(auth, async (user) => {
     
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
-    const adminName = adminData.collegeName || user.email;
-    document.getElementById('adminName').textContent = `Admin: ${adminName}`;
     
     if (adminData.collegeName) {
       localStorage.setItem('orgName', adminData.collegeName);
@@ -450,9 +448,9 @@ window.closeSettings = () => {
 };
 
 const updateOrgDisplay = (collegeName) => {
-  const display = document.getElementById('orgNameDisplay');
-  if (display && collegeName) {
-    display.textContent = collegeName;
+  const headerDisplay = document.getElementById('headerOrgName');
+  if (headerDisplay && collegeName) {
+    headerDisplay.textContent = collegeName;
   }
 };
 
