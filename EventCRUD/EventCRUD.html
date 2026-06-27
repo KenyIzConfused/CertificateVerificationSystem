@@ -75,8 +75,8 @@
     <!-- Main Layout Container -->
     <div class="flex h-[calc(100vh-88px)] overflow-hidden">
         <!-- Left Sidebar Panel -->
-        <aside class="w-80 flex-shrink-0 flex flex-col">
-            <div class="px-4 py-6 space-y-6 min-w-0 flex-1 overflow-y-auto">
+        <aside class="w-80 flex-shrink-0 flex flex-col min-h-0">
+<div class="px-4 py-6 space-y-6 min-w-0 flex-1 overflow-y-auto pr-2 min-h-0">
                 <!-- Create Event Panel -->
                 <div id="createEventPanel" class="glass-strong rounded-2xl p-6">
                     <h2 class="text-xl font-bold text-brand-900 mb-4">Create Event</h2>
@@ -146,7 +146,7 @@
                         </div>
                     </form>
                 </div>
-
+ 
                 <!-- Accomplishment Report Card -->
                 <div class="glass rounded-2xl p-6">
                     <h2 class="text-lg font-bold text-brand-900 mb-2">Accomplishment Report</h2>
@@ -157,16 +157,16 @@
         </aside>
 
         <!-- Right Main Content - Events List -->
-        <main class="flex-1 flex flex-col">
+        <main class="flex-1 flex flex-col min-h-0">
             <div class="px-4 pt-6">
                 <div class="glass rounded-2xl p-4 mb-4 flex items-center justify-between">
                     <h2 class="text-xl font-bold text-brand-900">Created Events</h2>
                     <span id="eventCount" class="text-2xl font-bold text-brand-600">0</span>
                 </div>
             </div>
-            <div class="flex-1 flex flex-col px-4 pb-6">
-                <div class="glass-strong rounded-2xl p-4 flex flex-col flex-1">
-                    <div id="eventsStack" class="space-y-4 flex-1 overflow-y-auto pr-2">
+            <div class="px-4 pb-6 flex-1 min-h-0">
+                <div class="glass-strong rounded-2xl p-4 flex flex-col h-full">
+                    <div id="eventsStack" class="space-y-4 h-full overflow-y-auto pr-2">
                         <p id="noEvents" class="text-brand-400 text-center py-8">No events created yet.</p>
                     </div>
                 </div>

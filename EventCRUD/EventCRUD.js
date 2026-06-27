@@ -121,19 +121,19 @@ window.handleEventUpdate = (events) => {
   noEvents.style.display = 'none';
   
   eventsStack.innerHTML = events.map(event => `
-    <div class="event-card rounded-xl p-6 flex flex-col">
-      <h3 class="text-xl font-bold text-brand-950">${escapeHtml(event.title)}</h3>
-      <p class="text-brand-600 mt-1 mb-4">About events: ${escapeHtml(event.description)}</p>
-      <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-brand-700 mb-4">
+    <div class="event-card">
+      <h3>${escapeHtml(event.title)}</h3>
+      <p>About events: ${escapeHtml(event.description)}</p>
+      <div class="event-meta">
         <span>📅 Date: ${event.date}</span>
         ${event.morningTimeIn ? `<span>☀️ Morning Session: ${to12Hour(event.morningTimeIn)} - ${event.morningTimeOut ? to12Hour(event.morningTimeOut) : ''}</span>` : ''}
         ${event.afternoonTimeIn ? `<span>🌤️ Afternoon Session: ${to12Hour(event.afternoonTimeIn)} - ${event.afternoonTimeOut ? to12Hour(event.afternoonTimeOut) : ''}</span>` : ''}
         <span>📍 Location: ${escapeHtml(event.location)}</span>
       </div>
-      <span class="inline-block mb-4 px-3 py-1 rounded-full text-xs font-medium self-start ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+      <span class="inline-block event-status px-3 py-1 rounded-full text-xs font-medium self-start ${event.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
         ${event.status.toUpperCase()}
       </span>
-      <div class="flex flex-wrap gap-2 mt-auto">
+      <div class="event-actions">
         <button onclick="window.editEvent('${event.id}')" 
           class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
           Edit
