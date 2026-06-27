@@ -34,7 +34,7 @@
             }
         }
     </script>
-    <style>
+<style>
         body {
             background:
                 radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.22), transparent 55%),
@@ -42,53 +42,20 @@
                 radial-gradient(at 100% 100%, rgba(34, 197, 94, 0.18), transparent 55%),
                 linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
         }
-        .glass {
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(22px) saturate(140%);
-            -webkit-backdrop-filter: blur(22px) saturate(140%);
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            box-shadow: 0 18px 45px -12px rgba(30, 37, 60, 0.18), inset 0 1px 0 rgba(255,255,255,0.9);
+        
+        /* Custom scrollbar for independent scrolling */
+        .overflow-y-auto::-webkit-scrollbar {
+            width: 8px;
         }
-        .glass-strong {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(28px) saturate(160%);
-            -webkit-backdrop-filter: blur(28px) saturate(160%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 22px 55px -14px rgba(30, 37, 60, 0.22), inset 0 1px 0 rgba(255,255,255,0.95);
+        .overflow-y-auto::-webkit-scrollbar-track {
+            background: transparent;
         }
-        .input-glass {
-            background: rgba(255,255,255,0.55);
-            border: 1px solid rgba(34, 197, 94, 0.25);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
-            transition: all .2s ease;
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: rgba(34, 197, 94, 0.3);
+            border-radius: 4px;
         }
-        .input-glass:focus {
-            outline: none;
-            border-color: rgba(22, 163, 74, 0.6);
-            box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15), inset 0 1px 0 rgba(255,255,255,0.9);
-        }
-        .btn-primary {
-            background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.12);
-        }
-        .btn-primary:hover { transform: translateY(-1px); }
-        .btn-secondary {
-            background: rgba(255,255,255,0.55);
-            border: 1px solid rgba(34, 197, 94, 0.25);
-            color: #16a34a;
-        }
-        .btn-secondary:hover { background: rgba(255,255,255,0.75); }
-        .event-card {
-            background: rgba(255,255,255,0.78);
-            backdrop-filter: blur(18px) saturate(140%);
-            border: 1px solid rgba(255,255,255,0.7);
-            box-shadow: 0 14px 40px -10px rgba(30, 37, 60, 0.18), inset 0 1px 0 rgba(255,255,255,0.9);
-        }
-        .badge-glass {
-            background: rgba(255,255,255,0.65);
-            border: 1px solid rgba(34, 197, 94, 0.25);
-            backdrop-filter: blur(14px);
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 197, 94, 0.5);
         }
     </style>
     <link rel="stylesheet" href="../styles.css">
@@ -105,11 +72,11 @@
         </div>
     </header>
 
-    <div class="max-w-6xl mx-auto px-4 py-6">
-        <!-- Desktop Layout: Sidebar + Main Content -->
-        <div class="flex flex-col lg:flex-row gap-6">
-            <!-- Left Sidebar Panel (30%) -->
-            <aside class="w-full lg:w-[30%] flex flex-col gap-6">
+    <!-- Main Layout Container -->
+    <div class="flex h-[calc(100vh-88px)] overflow-hidden">
+        <!-- Left Sidebar Panel -->
+        <aside class="w-80 flex-shrink-0 flex flex-col">
+            <div class="px-4 py-6 space-y-6 min-w-0 flex-1 overflow-y-auto">
                 <!-- Create Event Panel -->
                 <div id="createEventPanel" class="glass-strong rounded-2xl p-6">
                     <h2 class="text-xl font-bold text-brand-900 mb-4">Create Event</h2>
@@ -186,19 +153,25 @@
                     <p class="text-brand-500 mb-3 text-xs">Generate a Word document report containing each event's title, description, duration, date, venue, and participant count.</p>
                     <button onclick="window.generateAccomplishmentReport()" class="w-full btn-primary font-semibold py-2 rounded-lg transition-all shadow-lg text-sm">Generate Report</button>
                 </div>
-            </aside>
+            </div>
+        </aside>
 
-            <!-- Right Main Content - Events List (70%) -->
-            <main class="w-full lg:w-[70%] flex flex-col">
+        <!-- Right Main Content - Events List -->
+        <main class="flex-1 flex flex-col">
+            <div class="px-4 pt-6">
                 <div class="glass rounded-2xl p-4 mb-4 flex items-center justify-between">
-                    <h2 class="text-xl font-bold text-brand-900">Events</h2>
+                    <h2 class="text-xl font-bold text-brand-900">Created Events</h2>
                     <span id="eventCount" class="text-2xl font-bold text-brand-600">0</span>
                 </div>
-                <div id="eventsStack" class="space-y-4 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
-                    <p id="noEvents" class="text-brand-400 text-center py-8">No events created yet.</p>
+            </div>
+            <div class="flex-1 flex flex-col px-4 pb-6">
+                <div class="glass-strong rounded-2xl p-4 flex flex-col flex-1">
+                    <div id="eventsStack" class="space-y-4 flex-1 overflow-y-auto pr-2">
+                        <p id="noEvents" class="text-brand-400 text-center py-8">No events created yet.</p>
+                    </div>
                 </div>
-            </main>
-        </div>
+            </div>
+        </main>
     </div>
 
     <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">

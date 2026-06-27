@@ -29,7 +29,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  padding: 0;
   overflow-x: hidden;
+  overflow-y: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   color: var(--ink);
   background:
@@ -736,7 +738,7 @@ tbody tr:last-child td {
   box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
   .app-header__inner {
     align-items: flex-start;
     flex-direction: column;
@@ -779,5 +781,19 @@ tbody tr:last-child td {
   .auth-page > .page-content.glass,
   .auth-page > .page-content.glass-strong {
     padding: 1.25rem;
+  }
+  
+  /* Stack layout on tablet/mobile */
+  aside.w-80 {
+    width: 100%;
+    max-height: 50vh;
+  }
+  
+  aside.w-80 > div {
+    overflow-y: auto;
+  }
+  
+  main.flex-1 {
+    min-height: 50vh;
   }
 }
