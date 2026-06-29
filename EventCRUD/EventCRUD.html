@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Information Unit: Event CRUD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'green-primary': '#22c55e',
+                        'green-dark': '#16a34a',
+                        'green-accent': '#10b981',
+                        'emerald': '#10b981',
+                        'mint': '#84cc95',
+                        'jade': '#22c55e',
+                        'teal': '#0d9488'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --theme-primary: #22c55e;
+            --theme-dark: #16a34a;
+            --theme-gradient: linear-gradient(135deg, #16a34a, #15803d, #166534);
+        }
+
+        /* Solid Dark Green Background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: var(--theme-gradient);
+        }
+
+        /* Floating Liquid Shapes for Depth */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 15% 20%, color-mix(in srgb, var(--theme-primary) 15%, transparent) 0%, transparent 40%),
+                radial-gradient(ellipse at 85% 80%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--theme-primary) 8%, transparent) 0%, transparent 50%);
+            filter: blur(80px);
+            animation: float 30s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            33% { transform: translateY(-30px) scale(1.05); }
+            66% { transform: translateY(20px) scale(0.95); }
+        }
+
+        /* Liquid Glass Panel - Translucent */
+        .liquid-panel {
+            background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        /* Solid 3D Button */
+        .btn-3d {
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 50%, white), var(--theme-primary), var(--theme-dark));
+            border: none;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 
+                0 4px 0 var(--theme-dark),
+                0 8px 15px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            transform: translateY(0);
+        }
+
+        .btn-3d:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 0 var(--theme-dark),
+                0 12px 20px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+        }
+
+        .btn-3d:active {
+            transform: translateY(1px);
+            box-shadow: 
+                0 2px 0 var(--theme-dark),
+                0 4px 8px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+        }
+
+        /* Secondary Button Style */
+        .btn-glass {
+            background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            border-radius: 0.75rem;
+            color: #e0f2fe;
+            transition: all 0.2s ease;
+        }
+
+        .btn-glass:hover {
+            background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            transform: translateY(-1px);
+        }
+
+        /* Input Fields */
+        .liquid-input {
+            background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            border-radius: 0.75rem;
+            color: #f0fdf4;
+            transition: all 0.3s ease;
+        }
+
+        .liquid-input::placeholder {
+            color: color-mix(in srgb, var(--theme-primary) 60%, white);
+        }
+
+        .liquid-input:focus {
+            background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            color: #ffffff;
+        }
+
+        .liquid-glow {
+            box-shadow: 0 0 30px color-mix(in srgb, var(--theme-primary) 20%, transparent);
+        }
+
+        /* Dropdown Menu */
+        #menuDropdown {
+            background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+            border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent);
+        }
+
+        #menuDropdown .hover\:bg-green-400\/20:hover {
+            background: color-mix(in srgb, var(--theme-primary) 20%, transparent);
+        }
+
+        #menuDropdown .border-green-400\/20 {
+            border-color: color-mix(in srgb, var(--theme-primary) 20%, transparent);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-600 to-green-800 min-h-screen p-6">
+    <div class="max-w-5xl mx-auto">
+        <header class="relative mb-8 min-h-[5rem]">
+            <!-- Hamburger Menu -->
+            <div class="absolute left-0 top-0 z-20">
+                <button id="menuBtn" class="btn-glass p-3 rounded-xl flex items-center justify-center" aria-label="Menu">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div id="menuDropdown" class="hidden absolute left-0 mt-2 w-48 liquid-panel rounded-xl p-1 shadow-lg">
+                    <a href="./Settings.html" class="block px-3 py-2 text-green-100 hover:bg-green-400/20 rounded-md transition-colors text-sm">
+                        Settings
+                    </a>
+                    <a href="../SignUp/SignUpAdmin.html" class="block px-3 py-2 text-green-100 hover:bg-green-400/20 rounded-md transition-colors text-sm">
+                        Sign Up
+                    </a>
+                    <a href="../logIn/LogInAdmin.html" class="block px-3 py-2 text-green-100 hover:bg-green-400/20 rounded-md transition-colors text-sm">
+                        Logout
+                    </a>
+                </div>
+            </div>
+
+            <div class="absolute inset-x-0 top-0 flex h-full items-center justify-center px-4 sm:px-8">
+                <div class="text-center">
+                    <h1 id="departmentName" class="text-4xl md:text-5xl font-bold text-green-100">Information Unit</h1>
+                    <p id="adminName" class="text-green-200/70 mt-2 text-base md:text-lg font-semibold"></p>
+                    <p class="text-green-200/50 text-xs mt-1">Manage your events and attendee records</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Events Counter Panel -->
+        <div class="liquid-panel p-6 mb-8 liquid-glow">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-green-100">Events:</h2>
+                <span id="eventCount" class="text-4xl font-bold text-green-200">0</span>
+            </div>
+            <button id="showCreateFormBtn" 
+                class="w-full btn-3d text-white font-semibold py-3.5 px-4 rounded-xl">
+                Create New Event
+            </button>
+        </div>
+
+        <!-- Create/Edit Event Form (Hidden by default) -->
+        <div id="createEventPanel" class="hidden liquid-panel p-6 mb-8 liquid-glow">
+            <h2 id="formTitle" class="text-2xl font-bold text-green-100 mb-6">Create New Event</h2>
+            <form id="eventForm" class="space-y-6">
+                <input type="hidden" id="editEventId">
+                <div class="space-y-2">
+                    <label for="eventTitle" class="block text-sm font-semibold text-green-200">Event Title</label>
+                    <input type="text" id="eventTitle" name="eventTitle" required 
+                        class="w-full px-4 py-3 liquid-input outline-none transition-all"
+                        placeholder="e.g., Annual Workshop">
+                </div>
+                <div class="space-y-2">
+                    <label for="eventDescription" class="block text-sm font-semibold text-green-200">About the Event</label>
+                    <textarea id="eventDescription" name="eventDescription" rows="3" required 
+                        class="w-full px-4 py-3 liquid-input outline-none transition-all resize-none"
+                        placeholder="Describe what the event is about..."></textarea>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="eventDate" class="block text-sm font-semibold text-green-200">Date</label>
+                        <input type="date" id="eventDate" name="eventDate" required 
+                            class="w-full px-4 py-3 liquid-input outline-none transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label for="eventTime" class="block text-sm font-semibold text-green-200">Time</label>
+                        <input type="time" id="eventTime" name="eventTime" required 
+                            class="w-full px-4 py-3 liquid-input outline-none transition-all">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label for="eventLocation" class="block text-sm font-semibold text-green-200">Location</label>
+                    <input type="text" id="eventLocation" name="eventLocation" required 
+                        class="w-full px-4 py-3 liquid-input outline-none transition-all"
+                        placeholder="e.g., Main Auditorium, Online (Zoom)">
+                </div>
+                <div class="space-y-2">
+                    <label for="eventDuration" class="block text-sm font-semibold text-green-200">Duration (hours)</label>
+                    <input type="number" id="eventDuration" name="eventDuration" min="1" required 
+                        class="w-full px-4 py-3 liquid-input outline-none transition-all"
+                        placeholder="e.g., 8">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" 
+                        class="flex-1 btn-3d text-white font-semibold py-3.5 rounded-xl">
+                        Create Event
+                    </button>
+                    <button type="button" id="cancelEditBtn" class="flex-1 btn-glass py-3.5 rounded-xl">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+            <input type="hidden" id="department">
+            <input type="hidden" id="speaker">
+        </div>
+
+        <!-- Events Stack -->
+        <div>
+            <h2 class="text-2xl font-bold text-green-100 mb-6">NVSU Events</h2>
+            <div id="eventsStack" class="space-y-4">
+                <p id="noEvents" class="text-green-200/60 text-center py-8 liquid-panel p-6 rounded-xl">No events created yet.</p>
+            </div>
+        </div>
+    </div>
+    <p class="text-center text-green-200/50 text-sm mt-4 pb-4">Information Unit @ 2025</p>
+    <script type="module" src="EventCRUD.js"></script>
+</body>
+</html>

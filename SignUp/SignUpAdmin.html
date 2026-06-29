@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'green-primary': '#22c55e',
+                        'green-dark': '#16a34a',
+                        'green-accent': '#10b981',
+                        'emerald': '#10b981',
+                        'mint': '#84cc95',
+                        'jade': '#22c55e',
+                        'teal': '#0d9488'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Solid Dark Green Background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #16a34a, #15803d, #166534);
+        }
+
+        /* Floating Liquid Shapes for Depth */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 15% 20%, rgba(34, 197, 94, 0.15) 0%, transparent 40%),
+                radial-gradient(ellipse at 85% 80%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 50%, rgba(13, 148, 136, 0.08) 0%, transparent 50%);
+            filter: blur(80px);
+            animation: float 30s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            33% { transform: translateY(-30px) scale(1.05); }
+            66% { transform: translateY(20px) scale(0.95); }
+        }
+
+        /* Liquid Glass Panel - Translucent */
+        .liquid-panel {
+            background: rgba(22, 163, 74, 0.12);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        .liquid-panel:hover {
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Solid 3D Green Button */
+        .btn-3d {
+            background: #22c55e;
+            background: linear-gradient(145deg, #34d399, #22c55e, #16a34a);
+            border: none;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 
+                0 4px 0 #16a34a,
+                0 8px 15px rgba(34, 197, 94, 0.3);
+            transform: translateY(0);
+        }
+
+        .btn-3d:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 0 #16a34a,
+                0 12px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .btn-3d:active {
+            transform: translateY(1px);
+            box-shadow: 
+                0 2px 0 #16a34a,
+                0 4px 8px rgba(34, 197, 94, 0.3);
+        }
+
+        /* Input Fields */
+        .liquid-input {
+            background: rgba(22, 163, 74, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 0.75rem;
+            color: #f0fdf4;
+            transition: all 0.3s ease;
+        }
+
+        .liquid-input::placeholder {
+            color: #a7f3d0;
+        }
+
+        .liquid-input:focus {
+            background: rgba(22, 163, 74, 0.25);
+            border-color: rgba(34, 197, 94, 0.6);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+            color: #ffffff;
+        }
+
+        .panel-glow {
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-600 to-green-800 min-h-screen flex flex-col p-4">
+    <div class="flex-grow flex items-center justify-center">
+    <div class="w-full max-w-md">
+        <div class="liquid-panel p-10 panel-glow">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-green-100 mb-2">Create Admin Account</h2>
+                <p class="text-green-200/70">
+                    Have an account? 
+                    <a href="../logIn/LogInAdmin.html" class="text-green-300 hover:text-green-200 font-medium">Login here</a>
+                </p>
+            </div>
+            <form id="signUpForm" class="space-y-5">
+                <div class="space-y-2">
+                    <label for="adminName" class="block text-sm font-semibold text-green-200">Admin Name</label>
+                    <input type="text" id="adminName" name="adminName" required 
+                        class="w-full px-4 py-3 liquid-input outline-none transition-all"
+                        placeholder="Full name">
+                </div>
+                <div class="space-y-2">
+                    <label for="email" class="block text-sm font-semibold text-green-200">Email</label>
+                    <input type="email" id="email" name="email" required 
+                        class="w-full px-4 py-3 liquid-input outline-none transition-all"
+                        placeholder="admin@example.com">
+                </div>
+                <div class="space-y-2">
+                    <label for="password" class="block text-sm font-semibold text-green-200">Password</label>
+                    <input type="password" id="password" name="password" required 
+                        class="w-full px-4 py-3 liquid-input outline-none transition-all"
+                        placeholder="Enter password (min 6 characters)">
+                </div>
+                <div class="space-y-2">
+                    <label for="confirmPassword" class="block text-sm font-semibold text-green-200">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required 
+                        class="w-full px-4 py-3 liquid-input outline-none transition-all"
+                        placeholder="Confirm password">
+                </div>
+                <button type="submit" class="w-full btn-3d py-3.5 font-semibold">
+                    Create Account
+                </button>
+        </div>
+    </div>
+    </div>
+    <p class="text-center text-green-200/50 text-sm mt-4 pb-4">Information Unit @ 2025</p>
+    <script type="module">
+        import '../PopupSystem.js';
+        import './SignUpAdmin.js';
+    </script>
+</body>
+</html>

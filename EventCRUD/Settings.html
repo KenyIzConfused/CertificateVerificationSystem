@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'green-primary': '#22c55e',
+                        'green-dark': '#16a34a',
+                        'green-accent': '#10b981',
+                        'emerald': '#10b981',
+                        'mint': '#84cc95',
+                        'jade': '#22c55e',
+                        'teal': '#0d9488'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --theme-primary: #22c55e;
+            --theme-dark: #16a34a;
+            --theme-gradient: linear-gradient(135deg, #16a34a, #15803d, #166534);
+        }
+
+        /* Solid Dark Green Background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: var(--theme-gradient);
+        }
+
+        /* Floating Liquid Shapes for Depth */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 15% 20%, color-mix(in srgb, var(--theme-primary) 15%, transparent) 0%, transparent 40%),
+                radial-gradient(ellipse at 85% 80%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--theme-primary) 8%, transparent) 0%, transparent 50%);
+            filter: blur(80px);
+            animation: float 30s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            33% { transform: translateY(-30px) scale(1.05); }
+            66% { transform: translateY(20px) scale(0.95); }
+        }
+
+        /* Liquid Glass Panel - Translucent */
+        .liquid-panel {
+            background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        /* Solid 3D Button */
+        .btn-3d {
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 50%, white), var(--theme-primary), var(--theme-dark));
+            border: none;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 
+                0 4px 0 var(--theme-dark),
+                0 8px 15px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            transform: translateY(0);
+        }
+
+        .btn-3d:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 0 var(--theme-dark),
+                0 12px 20px color-mix(in srgb, var(--theme-primary) 40%, transparent);
+        }
+
+        .btn-glass {
+            background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            border-radius: 0.75rem;
+            color: #e0f2fe;
+            transition: all 0.2s ease;
+        }
+
+        .btn-glass:hover {
+            background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            transform: translateY(-1px);
+        }
+
+        /* Input Fields */
+        .liquid-input {
+            background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            border-radius: 0.75rem;
+            color: #f0fdf4;
+            transition: all 0.3s ease;
+        }
+
+        .liquid-input::placeholder {
+            color: color-mix(in srgb, var(--theme-primary) 60%, white);
+        }
+
+        .liquid-input:focus {
+            background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 30%, transparent);
+            color: #ffffff;
+        }
+
+        .liquid-glow {
+            box-shadow: 0 0 30px color-mix(in srgb, var(--theme-primary) 20%, transparent);
+        }
+    </style>
+</head>
+<body style="background: var(--theme-gradient, linear-gradient(135deg, #16a34a, #15803d, #166534));" class="min-h-screen flex flex-col p-4">
+    <div class="flex-grow flex items-center justify-center">
+    <div class="w-full max-w-xl">
+        <div class="mb-8 text-center">
+            <a href="./EventCRUD.html" class="btn-glass px-4 py-2.5 font-medium inline-flex items-center mb-6">
+                Back to Dashboard
+            </a>
+            <h1 class="text-4xl font-bold text-green-100 mb-2">Settings</h1>
+            <p class="text-green-200/60">Manage your department information</p>
+        </div>
+
+        <form id="settingsForm" class="liquid-panel p-8 liquid-glow space-y-6">
+            <div class="space-y-2">
+                <label for="departmentName" class="block text-sm font-semibold text-green-200">Information Unit / Department Name</label>
+                <input type="text" id="departmentName" name="departmentName" required
+                    class="w-full px-4 py-3 liquid-input outline-none transition-all"
+                    placeholder="e.g., Information Unit">
+            </div>
+
+            <div class="space-y-2">
+                <label for="themeSelect" class="block text-sm font-semibold text-green-200">Theme</label>
+                <select id="themeSelect" name="themeSelect"
+                    class="w-full px-4 py-3 liquid-input outline-none transition-all appearance-none cursor-pointer">
+                    <option value="green">Green</option>
+                    <option value="blue">Blue</option>
+                    <option value="red">Red</option>
+                    <option value="orange">Orange</option>
+                    <option value="khaki">Khaki</option>
+                    <option value="white">White</option>
+                    <option value="dark">Dark</option>
+                    <option value="purple">Purple</option>
+                </select>
+            </div>
+
+            <div class="space-y-2">
+                <label for="departmentDetails" class="block text-sm font-semibold text-green-200">Department Details</label>
+                <textarea id="departmentDetails" name="departmentDetails" rows="5"
+                    class="w-full px-4 py-3 liquid-input outline-none transition-all resize-none"
+                    placeholder="Add department details here for future use..."></textarea>
+                <p class="text-sm text-green-200/50">These details are saved for future dashboard updates and do not affect existing events.</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button type="submit"
+                    class="flex-1 btn-3d text-white font-semibold py-3.5 rounded-xl">
+                    Save Settings
+                </button>
+                <a href="./EventCRUD.html"
+                    class="flex-1 text-center btn-glass py-3.5 font-semibold rounded-xl">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+    </div>
+    <p class="text-center text-green-200/50 text-sm mt-4 pb-4">Information Unit @ 2025</p>
+    <script type="module">
+        import '../PopupSystem.js';
+        import './Settings.js';
+    </script>
+</body>
+</html>
