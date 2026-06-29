@@ -597,6 +597,19 @@ body::before {
   line-height: 1.45;
 }
 
+.history-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-600);
+  cursor: pointer;
+}
+
+.history-entry__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
 .auth-page > .page-content.glass,
 .auth-page > .page-content.glass-strong {
   max-width: 500px;
@@ -847,7 +860,8 @@ tbody tr:last-child td {
     min-height: auto;
   }
 
-  .approval-request {
+  .approval-request,
+  .history-entry {
     flex-direction: column;
   }
 

@@ -424,8 +424,12 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-window.openSettings = () => {
-  showAlert('Settings - Coming Soon!', 'info');
+window.openSettings = async () => {
+  const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
+  const adminData = adminDoc.exists() ? adminDoc.data() : {};
+  document.getElementById('collegeName').value = adminData.collegeName || '';
+  document.getElementById('settingsModal').classList.remove('hidden');
+  document.getElementById('settingsModal').classList.add('flex');
 };
 
 window.handleLogout = async () => {
@@ -446,6 +450,37 @@ window.closeSettings = () => {
     modal.classList.remove('flex');
   }
 };
+
+document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const newName = document.getElementById('collegeName').value.trim();
+  const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
+  const adminData = adminDoc.exists() ? adminDoc.data() : {};
+  
+  if (newName === (adminData.collegeName || '')) {
+    showAlert('Already saved', { type: 'info' });
+    return;
+  }
+  
+  const confirmed = await showConfirm('Are you sure you want to change the name?');
+  if (confirmed !== 1) return;
+  
+  try {
+    showLoading('changeName');
+    await updateDoc(doc(db, 'Admin', currentUser.uid), {
+      collegeName: newName
+    });
+    localStorage.setItem('orgName', newName);
+    updateOrgDisplay(newName);
+    hideLoading('changeName');
+    window.closeSettings();
+    showToast('Name updated successfully');
+  } catch (error) {
+    hideLoading('changeName');
+    console.error('Error updating name:', error);
+    showAlert('Failed to update name', { type: 'error' });
+  }
+});
 
 window.openRegister = () => {
   window.location.href = '../AttendeeManagement/Register.html';

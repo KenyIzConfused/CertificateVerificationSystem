@@ -59,8 +59,10 @@ document.querySelector('form').addEventListener('submit', async (e) => {
      showToast('Login successful!');
      window.location.href = '../EventCRUD/EventCRUD.html';
    } catch (error) {
-    hideLoading('login');
-    console.error('Error:', error);
-    showAlert('Invalid Input', { type: 'error' });
-  }
+     hideLoading('login');
+     console.error('Error:', error);
+     const errCode = (error.code || error.message || '').toLowerCase();
+     const msg = errCode.includes('auth/wrong-password') || errCode.includes('wrong password') ? 'Wrong Password' : 'Invalid Input';
+     showAlert(msg, { type: 'error' });
+   }
 });

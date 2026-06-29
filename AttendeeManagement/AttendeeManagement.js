@@ -84,6 +84,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+let currentUser = null;
 let currentEventId = localStorage.getItem('currentEventId');
 let currentEvent = null;
 let allAttendees = [];
@@ -318,7 +319,6 @@ window.editAttendee = async (attendeeId) => {
   document.getElementById('editMajor').value = parts[1] || '';
   document.getElementById('editYear').value = parts[2] || '';
   
-  document.getElementById('editRole').value = attendee.role || '';
   document.getElementById('editTimeAttended').value = attendee.timeAttended || '';
   document.getElementById('editSession').value = attendee.session || 'morning';
   document.getElementById('editStatus').value = 'auto';
@@ -354,7 +354,6 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   const course = document.getElementById('editCourse').value.trim();
   const major = document.getElementById('editMajor').value.trim();
   const year = document.getElementById('editYear').value.trim();
-  const role = document.getElementById('editRole').value;
   const timeAttended = document.getElementById('editTimeAttended').value;
   const session = document.getElementById('editSession').value;
   const statusValue = document.getElementById('editStatus').value;
@@ -379,7 +378,6 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       fullName,
       course: combinedCourse,
-      role,
       timeAttended,
       session,
       status: finalStatus
@@ -621,15 +619,16 @@ function toCamelCase(str) {
 
 onAuthStateChanged(auth, async (user) => {
    console.log('Auth state changed:', user ? 'logged in' : 'logged out');
+   currentUser = user;
    
    initSearch();
    initAutoFormat();
    initDynamicDropdowns();
-  
-  if (!user) {
-    window.location.href = '../logIn/LogInAdmin.html';
-    return;
-  }
+   
+   if (!user) {
+     window.location.href = '../logIn/LogInAdmin.html';
+     return;
+   }
   
   if (!currentEventId) {
     console.log('No event ID found, redirecting...');
@@ -745,9 +744,23 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
   const confirmed = await showConfirm('Are you sure you want to save these settings?');
   if (confirmed !== 1) return;
   
-  localStorage.setItem('orgName', orgName);
-  window.closeSettings();
-  showToast('Settings saved');
+  try {
+    showLoading('saveSettings');
+    const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
+    const adminData = adminDoc.exists() ? adminDoc.data() : {};
+    
+    await updateDoc(doc(db, 'Admin', currentUser.uid), {
+      collegeName: orgName
+    });
+    localStorage.setItem('orgName', orgName);
+    hideLoading('saveSettings');
+    window.closeSettings();
+    showToast('Settings saved');
+  } catch (error) {
+    hideLoading('saveSettings');
+    console.error('Error saving settings:', error);
+    showAlert('Failed to save settings', { type: 'error' });
+  }
 });
 
 window.handleLogout = async () => {

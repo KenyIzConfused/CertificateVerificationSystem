@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showToast, showConfirm, showLoading, hideLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
@@ -23,13 +23,92 @@ const escapeHtml = (text) => {
   return div.innerHTML;
 };
 
+let selectedHistoryIds = new Set();
+
+window.toggleHistorySelection = (adminId, checked) => {
+  if (checked) {
+    selectedHistoryIds.add(adminId);
+  } else {
+    selectedHistoryIds.delete(adminId);
+  }
+  updateDeleteSelectedButton();
+};
+
+window.toggleSelectAllHistory = (checked) => {
+  selectedHistoryIds.clear();
+  if (checked) {
+    const historyContainer = document.getElementById('historyContainer');
+    historyContainer.querySelectorAll('input[type="checkbox"][data-admin-id]').forEach(cb => {
+      selectedHistoryIds.add(cb.dataset.adminId);
+    });
+  }
+  updateDeleteSelectedButton();
+};
+
+const updateDeleteSelectedButton = () => {
+  const btn = document.getElementById('deleteSelectedBtn');
+  const countSpan = document.getElementById('selectedCount');
+  const count = selectedHistoryIds.size;
+  countSpan.textContent = count;
+  if (count > 0) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+};
+
+window.deleteHistoryEntry = async (adminId) => {
+  const confirmed = await showConfirm('Are you sure you want to delete this history entry?');
+  if (confirmed !== 1) return;
+
+  try {
+    showLoading('deleteHistory');
+    await updateDoc(doc(db, 'Admin', adminId), { deleted: true });
+    selectedHistoryIds.delete(adminId);
+    updateDeleteSelectedButton();
+    hideLoading('deleteHistory');
+    showToast('History entry deleted');
+  } catch (error) {
+    hideLoading('deleteHistory');
+    console.error('Error deleting history entry:', error);
+    showAlert('Failed to delete history entry', { type: 'error' });
+  }
+};
+
+window.deleteSelectedHistory = async () => {
+  if (selectedHistoryIds.size === 0) return;
+
+  const confirmed = await showConfirm(`Delete ${selectedHistoryIds.size} selected history entry/entries?`);
+  if (confirmed !== 1) return;
+
+  try {
+    showLoading('deleteSelectedHistory');
+    const batch = writeBatch(db);
+    selectedHistoryIds.forEach(adminId => {
+      batch.update(doc(db, 'Admin', adminId), { deleted: true });
+    });
+    await batch.commit();
+    selectedHistoryIds.clear();
+    updateDeleteSelectedButton();
+    hideLoading('deleteSelectedHistory');
+    showToast('Selected history entries deleted');
+  } catch (error) {
+    hideLoading('deleteSelectedHistory');
+    console.error('Error deleting selected history:', error);
+    showAlert('Failed to delete selected entries', { type: 'error' });
+  }
+};
+
 window.approveAdmin = async (adminId, collegeName) => {
   const confirmed = await showConfirm(`Approve ${collegeName}? This will allow them to login.`);
   if (confirmed !== 1) return;
 
   try {
     showLoading('approve');
-    await updateDoc(doc(db, 'Admin', adminId), { status: 'approved' });
+    await updateDoc(doc(db, 'Admin', adminId), {
+      status: 'approved',
+      approvedAt: new Date()
+    });
     hideLoading('approve');
     showToast('Admin approved successfully');
   } catch (error) {
@@ -74,7 +153,7 @@ const formatDate = (dateValue) => {
 const renderPendingAdmins = (admins) => {
   const container = document.getElementById('pendingAdminsContainer');
   
-  const pendingAdmins = admins.filter(a => a.status === 'pending');
+  const pendingAdmins = admins.filter(a => a.status === 'pending' && !a.deleted);
   
   if (pendingAdmins.length === 0) {
     container.innerHTML = '<p class="dashboard-empty-state">No pending approvals.</p>';
@@ -109,7 +188,7 @@ const renderPendingAdmins = (admins) => {
 const renderHistory = (admins) => {
   const container = document.getElementById('historyContainer');
   
-  const historyAdmins = admins.filter(a => a.status === 'approved' || a.status === 'rejected');
+  const historyAdmins = admins.filter(a => (a.status === 'approved' || a.status === 'rejected') && !a.deleted);
   
   if (historyAdmins.length === 0) {
     container.innerHTML = '<p class="dashboard-empty-state">No history yet.</p>';
@@ -122,13 +201,15 @@ const renderHistory = (admins) => {
     return new Date(dateB) - new Date(dateA);
   });
   
+  const isChecked = (id) => selectedHistoryIds.has(id);
+  
   container.innerHTML = sorted.map(admin => {
     const isApproved = admin.status === 'approved';
-    const date = isApproved 
+    const date = isApproved
       ? (admin.approvedAt ? new Date(admin.approvedAt.toDate()).toLocaleString() : 'N/A')
       : (admin.rejectedAt ? new Date(admin.rejectedAt.toDate()).toLocaleString() : 'N/A');
     const actionText = isApproved ? 'Approved' : 'Rejected';
-    
+
     return `
       <article class="history-entry">
         <div class="history-entry__top">
@@ -136,13 +217,22 @@ const renderHistory = (admins) => {
             <h3>${escapeHtml(admin.collegeName)}</h3>
             <p>${escapeHtml(admin.email)}</p>
           </div>
-          <span class="history-badge ${isApproved ? 'history-badge--approved' : 'history-badge--rejected'}">
-            ${actionText}
-          </span>
+          <div class="flex items-center gap-2">
+            <input type="checkbox" class="history-checkbox" data-admin-id="${admin.id}" ${isChecked(admin.id) ? 'checked' : ''} onchange="window.toggleHistorySelection('${admin.id}', this.checked)">
+            <span class="history-badge ${isApproved ? 'history-badge--approved' : 'history-badge--rejected'}">
+              ${actionText}
+            </span>
+          </div>
         </div>
         <div class="history-entry__footer">
           <span>${date}</span>
           ${admin.reason ? `<span>Reason: ${escapeHtml(admin.reason)}</span>` : ''}
+        </div>
+        <div class="history-entry__actions">
+          <button onclick="window.deleteHistoryEntry('${admin.id}')" 
+            class="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm">
+            Delete
+          </button>
         </div>
       </article>
     `;
@@ -160,35 +250,50 @@ window.handleLogout = async () => {
   window.location.href = '../logIn/LogInSuperAdmin.html?v=' + Date.now();
 };
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = '../logIn/LogInSuperAdmin.html';
-    return;
-  }
-  
-  const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
-  if (!adminDoc.exists() || adminDoc.data().role !== 'super_admin') {
-    await signOut(auth);
-    window.location.href = '../logIn/LogInSuperAdmin.html';
-    return;
-  }
-  
-  if (adminDoc.data().status !== 'approved') {
-    await signOut(auth);
-    window.location.href = '../logIn/LogInSuperAdmin.html';
-    return;
-  }
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = '../logIn/LogInSuperAdmin.html';
+      return;
+    }
+    
+    const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
+    if (!adminDoc.exists() || adminDoc.data().role !== 'super_admin') {
+      await signOut(auth);
+      window.location.href = '../logIn/LogInSuperAdmin.html';
+      return;
+    }
+    
+    if (adminDoc.data().status !== 'approved') {
+      await signOut(auth);
+      window.location.href = '../logIn/LogInSuperAdmin.html';
+      return;
+    }
 
-  const q = collection(db, 'Admin');
-  onSnapshot(q, (snapshot) => {
-    const admins = [];
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.role !== 'super_admin' || data.status === 'pending') {
-        admins.push({ id: doc.id, ...data });
+    const selectAllCheckbox = document.getElementById('selectAllHistory');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', (e) => {
+        window.toggleSelectAllHistory(e.target.checked);
+      });
+    }
+
+    const q = collection(db, 'Admin');
+    onSnapshot(q, (snapshot) => {
+      const admins = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.deleted) return;
+        if (data.role !== 'super_admin' || data.status === 'pending') {
+          admins.push({ id: doc.id, ...data });
+        }
+      });
+      renderPendingAdmins(admins);
+      renderHistory(admins);
+      
+      const selectAllCheckbox = document.getElementById('selectAllHistory');
+      if (selectAllCheckbox) {
+        const historyContainer = document.getElementById('historyContainer');
+        const remaining = historyContainer.querySelectorAll('input[type="checkbox"][data-admin-id]');
+        selectAllCheckbox.checked = remaining.length > 0 && selectedHistoryIds.size === remaining.length;
       }
     });
-    renderPendingAdmins(admins);
-    renderHistory(admins);
   });
-});

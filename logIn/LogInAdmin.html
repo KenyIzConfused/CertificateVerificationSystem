@@ -369,10 +369,12 @@
                 window.location.href = '../EventCRUD/EventCRUD.html';
             } catch (error) {
                 hideLoading('login');
-                showAlert('Invalid Input', { type: 'error' });
+                const errCode = (error.code || error.message || '').toLowerCase();
+                const msg = errCode.includes('auth/wrong-password') || errCode.includes('wrong password') ? 'Wrong Password' : 'Invalid Input';
+                showAlert(msg, { type: 'error' });
             }
         });
-
+        
         document.getElementById('systemLoginFormElement').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('systemEmail').value;
@@ -400,10 +402,12 @@
                 window.location.href = '../SuperAdminDashboard/SuperAdminDashboard.html';
             } catch (error) {
                 hideLoading('login');
-                showAlert('Invalid Input', { type: 'error' });
+                const errCode = (error.code || error.message || '').toLowerCase();
+                const msg = errCode.includes('auth/wrong-password') || errCode.includes('wrong password') ? 'Wrong Password' : 'Invalid Input';
+                showAlert(msg, { type: 'error' });
             }
         });
-
+        
         document.getElementById('collegeSignUpFormElement').addEventListener('submit', async (e) => {
             e.preventDefault();
             const collegeName = document.getElementById('collegeName').value.trim();
@@ -431,10 +435,12 @@
                 switchToLogin('college');
             } catch (error) {
                 hideLoading('signup');
-                showAlert('Invalid Input', { type: 'error' });
+                const errCode = (error.code || error.message || '').toLowerCase();
+                const msg = errCode.includes('auth/email-already-in-use') ? 'Email already in use' : 'Invalid Input';
+                showAlert(msg, { type: 'error' });
             }
         });
-
+        
         document.getElementById('systemSignUpFormElement').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fullName = document.getElementById('systemFullName').value.trim();
@@ -463,7 +469,9 @@
                 switchToLogin('system');
             } catch (error) {
                 hideLoading('signup');
-                showAlert('Invalid Input', { type: 'error' });
+                const errCode = (error.code || error.message || '').toLowerCase();
+                const msg = errCode.includes('auth/email-already-in-use') ? 'Email already in use' : 'Invalid Input';
+                showAlert(msg, { type: 'error' });
             }
         });
 

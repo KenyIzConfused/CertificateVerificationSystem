@@ -62,7 +62,18 @@
     <main class="dashboard-layout">
         <!-- Smaller left panel for completed approval records -->
         <section class="dashboard-card dashboard-history-card" aria-labelledby="approvalHistoryTitle">
-            <h2 id="approvalHistoryTitle" class="dashboard-card-title">Approval History</h2>
+            <div class="flex items-center justify-between mb-4">
+                <h2 id="approvalHistoryTitle" class="dashboard-card-title">Approval History</h2>
+                <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                        <input type="checkbox" id="selectAllHistory" class="rounded border-gray-300">
+                        Select All
+                    </label>
+                    <button onclick="window.deleteSelectedHistory()" id="deleteSelectedBtn" class="hidden px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-all shadow-sm">
+                        Delete Selected (<span id="selectedCount">0</span>)
+                    </button>
+                </div>
+            </div>
             <div id="historyContainer" class="dashboard-history-list">
                 <p class="dashboard-empty-state">No history yet.</p>
             </div>

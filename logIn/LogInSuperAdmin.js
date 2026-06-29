@@ -51,6 +51,8 @@ document.getElementById('superAdminLoginForm').addEventListener('submit', async 
   } catch (error) {
     hideLoading('login');
     console.error('Error:', error);
-    showAlert('Invalid Input', { type: 'error' });
+    const errCode = (error.code || error.message || '').toLowerCase();
+    const msg = errCode.includes('auth/wrong-password') || errCode.includes('wrong password') ? 'Wrong Password' : 'Invalid Input';
+    showAlert(msg, { type: 'error' });
   }
 });
