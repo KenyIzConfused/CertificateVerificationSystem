@@ -28,11 +28,11 @@ document.querySelector('form').addEventListener('submit', async (e) => {
      showToast('Login successful!');
      window.location.href = '../EventCRUD/EventCRUD.html';
   } catch (error) {
-    console.error('Error:', error);
-    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+    console.error('Login error:', error);
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email') {
       showAlert('Invalid email or password', { type: 'error' });
     } else {
-      showAlert('Login failed: ' + error.message, { type: 'error' });
+      showAlert('Login failed. Please try again.', { type: 'error' });
     }
   }
 });

@@ -96,6 +96,9 @@ loadTheme();
 document.getElementById('eventForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
+  const submitBtn = document.querySelector('#eventForm button[type="submit"]');
+  if (submitBtn.disabled) return;
+  
   if (!currentUser) {
     showAlert('Please log in first', { type: 'warning' });
     return;
@@ -113,6 +116,8 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
   
   try {
     if (editId) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Updating...';
       await updateDoc(doc(db, 'Events', editId), {
         title: eventTitle,
         description: eventDescription,
@@ -129,6 +134,8 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
       document.querySelector('#eventForm button[type="submit"]').textContent = 'Create Event';
       document.getElementById('cancelEditBtn').classList.add('hidden');
     } else {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
       await addDoc(collection(db, 'Events'), {
         adminId: currentUser.uid,
         title: eventTitle,
@@ -143,12 +150,16 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
         createdAt: new Date()
       });
       showToast('Event created successfully!');
-      document.getElementById('createEventForm').reset();
+      document.getElementById('eventForm').reset();
       document.getElementById('createEventPanel').classList.add('hidden');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Event';
     }
   } catch (error) {
     console.error('Error saving event:', error);
     showAlert(editId ? 'Failed to update event' : 'Failed to create event', { type: 'error' });
+    submitBtn.disabled = false;
+    submitBtn.textContent = editId ? 'Update Event' : 'Create Event';
   }
 });
 

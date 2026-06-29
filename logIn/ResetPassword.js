@@ -53,7 +53,7 @@ if (form) {
       }, 1500);
     } catch (error) {
       console.error('Reset password error:', error);
-      showAlert('Failed to reset password: ' + error.message, { type: 'error' });
+      showAlert('Failed to reset password. Please try again.', { type: 'error' });
     }
   });
 }

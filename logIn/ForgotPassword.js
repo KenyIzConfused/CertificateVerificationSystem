@@ -31,9 +31,9 @@ if (form) {
       await sendPasswordResetEmail(auth, email);
       showToast('Password reset email sent! Please check your inbox and spam folder.');
       form.reset();
-    } catch (error) {
-      console.error('Password reset error:', error);
-      showAlert('Failed to send reset email: ' + error.message, { type: 'error' });
+} catch (error) {
+       console.error('Password reset error:', error);
+       showAlert('Failed to send reset email. Please try again.', { type: 'error' });
     }
   });
 }

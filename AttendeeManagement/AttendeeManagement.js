@@ -2,6 +2,8 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+import { showAlert, showToast, showConfirm } from '../PopupSystem.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
   authDomain: "ipprc-certificate-verification.firebaseapp.com",
@@ -55,13 +57,22 @@ function escapeHtml(text) {
 document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const submitBtn = document.querySelector('#addAttendeeForm button[type="submit"]');
+  if (submitBtn.disabled) return;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Adding...';
+  
   if (!currentEvent) {
-    showToast('Event not found', 'error');
+    showAlert('Event not found', { type: 'error' });
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Add Attendee';
     return;
   }
 
   if (currentEvent.status === 'closed') {
-    showToast('This event is closed. Attendees can no longer be added.', 'error');
+    showAlert('This event is closed. Attendees can no longer be added.', { type: 'error' });
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Add Attendee';
     return;
   }
 
@@ -72,33 +83,24 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
 
   try {
     const certificateId = await generateUniqueCertificateId(allAttendees);
-    const docRef = await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
+    await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
       fullName: attendeeName,
       course: course,
       role: role,
       dateAttended: dateAttended,
-      status: 'present',
       certificateId: certificateId
     });
-
-    const newAttendee = {
-      id: docRef.id,
-      fullName: attendeeName,
-      course: course,
-      role: role,
-      dateAttended: dateAttended,
-      status: 'present',
-      certificateId: certificateId
-    };
-    allAttendees.push(newAttendee);
-    renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
 
     console.log('Attendee added successfully');
     document.getElementById('addAttendeeForm').reset();
     showToast('Attendee added successfully!');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Add Attendee';
   } catch (error) {
     console.error('Error adding attendee:', error);
-    showToast('Failed to add attendee.', 'error');
+    showAlert('Failed to add attendee. Please try again.', { type: 'error' });
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Add Attendee';
   }
 });
 
@@ -119,7 +121,7 @@ function filterAttendees(attendeesList, searchTerm) {
     (a.course || '').toLowerCase().includes(term) ||
     (a.role || '').toLowerCase().includes(term) ||
     (a.dateAttended || '').toLowerCase().includes(term) ||
-    (a.status || '').toLowerCase().includes(term) ||
+    ((a.status || '') + '').toLowerCase().includes(term) ||
     (a.certificateId || '').toLowerCase().includes(term)
   );
 }
@@ -136,59 +138,80 @@ function renderTable(attendeesList) {
 
   noAttendees.style.display = 'none';
 
-  tableBody.innerHTML = attendeesList.map(attendee => `
-    <tr class="border-b border-green-400/20 hover:bg-white/10 transition-colors">
-      <td class="py-4 px-2">
-        <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
-      </td>
-      <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
-      <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
-      <td class="py-4 px-2 text-green-200/80">${attendee.dateAttended}</td>
-      <td class="py-4 px-2">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${attendee.status === 'present' ? 'bg-green-400/30 text-green-200' : attendee.status === 'late' ? 'bg-orange-400/30 text-orange-200' : 'bg-red-400/30 text-red-200'}">
-          ${attendee.status.toUpperCase()}
-        </span>
-      </td>
-      <td class="py-4 px-2">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-400/30 text-blue-200">
-          ${escapeHtml(attendee.certificateId || '')}
-        </span>
-      </td>
-      <td class="py-4 px-2">
-        <div class="flex gap-1 flex-wrap">
-          <button onclick="window.markPresent('${attendee.id}')"
-            class="action-item px-2 py-1 text-xs flex items-center gap-1">
-            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
-            Present
-          </button>
-          <button onclick="window.markAbsent('${attendee.id}')"
-            class="action-item px-2 py-1 text-xs flex items-center gap-1">
-            <span class="w-2 h-2 bg-red-400 rounded-full"></span>
-            Absent
-          </button>
-          <button onclick="window.markLate('${attendee.id}')"
-            class="action-item px-2 py-1 text-xs flex items-center gap-1">
-            <span class="w-2 h-2 bg-yellow-400 rounded-full"></span>
-            Late
-          </button>
-          <button onclick="window.editAttendee('${attendee.id}')"
-            class="action-item px-2 py-1 text-xs flex items-center gap-1">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-            </svg>
-            Edit
-          </button>
-          <button onclick="window.deleteAttendee('${attendee.id}')"
-            class="action-item px-2 py-1 text-xs flex items-center gap-1">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-            Delete
-          </button>
-        </div>
-      </td>
-    </tr>
-  `).join('');
+  tableBody.innerHTML = attendeesList.map(attendee => {
+    let statusClass = 'bg-gray-400/30 text-gray-200';
+    let statusLabel = 'PENDING';
+    const isStatusMarked = !!attendee.status;
+    
+    if (attendee.status === 'present') {
+      statusClass = 'bg-green-400/30 text-green-200';
+      statusLabel = 'PRESENT';
+    } else if (attendee.status === 'late') {
+      statusClass = 'bg-orange-400/30 text-orange-200';
+      statusLabel = 'LATE';
+    } else if (attendee.status === 'absent') {
+      statusClass = 'bg-red-400/30 text-red-200';
+      statusLabel = 'ABSENT';
+    }
+    
+    const statusButtons = isStatusMarked ? '' : `
+            <button onclick="window.markPresent('${attendee.id}')"
+              class="action-item px-2 py-1 text-xs flex items-center gap-1">
+              <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+              Present
+            </button>
+            <button onclick="window.markAbsent('${attendee.id}')"
+              class="action-item px-2 py-1 text-xs flex items-center gap-1">
+              <span class="w-2 h-2 bg-red-400 rounded-full"></span>
+              Absent
+            </button>
+            <button onclick="window.markLate('${attendee.id}')"
+              class="action-item px-2 py-1 text-xs flex items-center gap-1">
+              <span class="w-2 h-2 bg-yellow-400 rounded-full"></span>
+              Late
+            </button>
+    `;
+    
+    return `
+      <tr class="border-b border-green-400/20 hover:bg-white/10 transition-colors">
+        <td class="py-4 px-2">
+          <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
+        </td>
+        <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
+        <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
+        <td class="py-4 px-2 text-green-200/80">${attendee.dateAttended}</td>
+        <td class="py-4 px-2">
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${statusClass}">
+            ${statusLabel}
+          </span>
+        </td>
+        <td class="py-4 px-2">
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-400/30 text-blue-200">
+            ${escapeHtml(attendee.certificateId || '')}
+          </span>
+        </td>
+        <td class="py-4 px-2">
+          <div class="flex gap-1 flex-wrap">
+            ${statusButtons}
+            <button onclick="window.editAttendee('${attendee.id}')"
+              class="action-item px-2 py-1 text-xs flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              Edit
+            </button>
+            <button onclick="window.deleteAttendee('${attendee.id}')"
+              class="action-item px-2 py-1 text-xs flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 window.markPresent = async (attendeeId) => {
@@ -199,7 +222,7 @@ window.markPresent = async (attendeeId) => {
     showToast('Attendee marked as present');
   } catch (error) {
     console.error('Error updating status:', error);
-    showToast('Failed to update status', 'error');
+    showAlert('Failed to update status', { type: 'error' });
   }
 };
 
@@ -211,7 +234,7 @@ window.markAbsent = async (attendeeId) => {
     showToast('Attendee marked as absent');
   } catch (error) {
     console.error('Error updating status:', error);
-    showToast('Failed to update status', 'error');
+    showAlert('Failed to update status', { type: 'error' });
   }
 };
 
@@ -236,7 +259,7 @@ window.editAttendee = async (attendeeId) => {
   document.getElementById('editCourse').value = attendee.course || '';
   document.getElementById('editRole').value = attendee.role || '';
   document.getElementById('editDateAttended').value = attendee.dateAttended || '';
-  document.getElementById('editStatus').value = attendee.status || 'present';
+  document.getElementById('editStatus').value = attendee.status || '';
 
   const modal = document.getElementById('editModal');
   modal.classList.remove('hidden');
@@ -275,18 +298,16 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
 });
 
 window.deleteAttendee = async (attendeeId) => {
-  const confirmed = await showConfirm('Are you sure you want to delete this attendee?');
-  if (confirmed !== 1) return;
+    const confirmed = await showConfirm('Are you sure you want to delete this attendee?');
+    if (confirmed !== 1) return;
 
-  try {
-    await deleteDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId));
-    showToast('Attendee deleted');
-    allAttendees = allAttendees.filter(a => a.id !== attendeeId);
-    renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
-  } catch (error) {
-    console.error('Error deleting attendee:', error);
-    showAlert('Failed to delete attendee', { type: 'error' });
-  }
+    try {
+        await deleteDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId));
+        showToast('Attendee deleted');
+    } catch (error) {
+        console.error('Error deleting attendee:', error);
+        showAlert('Failed to delete attendee', { type: 'error' });
+    }
 };
 
 window.exportAttendeesToExcel = async () => {
@@ -390,7 +411,7 @@ onAuthStateChanged(auth, async (user) => {
   try {
     const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
     if (!eventDoc.exists()) {
-      showToast('Event not found', 'error');
+      showAlert('Event not found', { type: 'error' });
       window.location.href = '../EventCRUD/EventCRUD.html';
       return;
     }
