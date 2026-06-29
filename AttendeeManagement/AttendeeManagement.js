@@ -88,27 +88,55 @@ let currentEventId = localStorage.getItem('currentEventId');
 let currentEvent = null;
 let allAttendees = [];
 
-document.getElementById('todayBtn').addEventListener('click', () => {
-  const { date, time } = getCurrentDateTime();
-  document.getElementById('dateAttended').value = date;
-  document.getElementById('timeAttended').value = time;
-  document.getElementById('timeAttended').readOnly = true;
+document.getElementById('setCurrentTimeBtn').addEventListener('click', () => {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const currentTime = `${hours}:${minutes}`;
+  document.getElementById('timeAttended').value = currentTime;
+  
+  if (hours < 12) {
+    document.getElementById('session').value = 'morning';
+  } else {
+    document.getElementById('session').value = 'afternoon';
+  }
 });
 
-const initDefaultDateTime = () => {
-  const { date, time } = getCurrentDateTime();
-  const dateInput = document.getElementById('dateAttended');
-  const timeInput = document.getElementById('timeAttended');
-  if (dateInput && !dateInput.value) dateInput.value = date;
-  if (timeInput && !timeInput.value) {
-    timeInput.value = time;
-    timeInput.readOnly = true;
+document.getElementById('fetchStudentBtn').addEventListener('click', async () => {
+  const idNumber = document.getElementById('idNumber').value.trim();
+  if (!idNumber) {
+    showAlert('Please enter an ID number', { type: 'warning' });
+    return;
   }
-};
-
-document.getElementById('dateAttended').addEventListener('change', () => {
-  const timeInput = document.getElementById('timeAttended');
-  timeInput.readOnly = false;
+  
+  try {
+    showLoading('fetchStudent');
+    const q = query(collection(db, 'RegisteredStudents'), where('idNumber', '==', idNumber));
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+      hideLoading('fetchStudent');
+      showAlert('Student not found in registered students', { type: 'warning' });
+      document.getElementById('studentInfoDisplay').classList.add('hidden');
+      return;
+    }
+    
+    const student = snapshot.docs[0].data();
+    document.getElementById('attendeeName').value = student.fullName || '';
+    document.getElementById('course').value = (student.course || '').split('-')[0] || '';
+    document.getElementById('major').value = (student.course || '').split('-')[1] || '';
+    document.getElementById('year').value = (student.course || '').split('-')[2] || '';
+    document.getElementById('role').value = student.role || 'Student';
+    
+    document.getElementById('fetchedStudentName').textContent = student.fullName || '';
+    document.getElementById('fetchedStudentCourse').textContent = student.course || '';
+    document.getElementById('studentInfoDisplay').classList.remove('hidden');
+    hideLoading('fetchStudent');
+  } catch (error) {
+    hideLoading('fetchStudent');
+    console.error('Error fetching student:', error);
+    showAlert('Failed to fetch student', { type: 'error' });
+  }
 });
 
 document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
@@ -128,7 +156,6 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   const major = document.getElementById('major').value.trim();
   const year = document.getElementById('year').value.trim();
   const role = document.getElementById('role').value;
-  const dateAttended = document.getElementById('dateAttended').value;
   const timeAttended = document.getElementById('timeAttended').value;
   const session = document.getElementById('session').value;
   
@@ -144,7 +171,7 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
       idNumber: idNumber,
       course: combinedCourse,
       role: role,
-      dateAttended: dateAttended,
+      dateAttended: currentEvent.date,
       timeAttended: timeAttended,
       session: session,
       uuid: certificateUuid,
@@ -160,7 +187,6 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     console.log('Attendee added successfully');
     hideLoading('addAttendee');
     document.getElementById('addAttendeeForm').reset();
-    document.getElementById('dateAttended').value = '';
     document.getElementById('timeAttended').value = '';
   } catch (error) {
     hideLoading('addAttendee');
@@ -197,8 +223,6 @@ function filterAttendees(attendeesList, searchTerm) {
     (a.fullName || '').toLowerCase().includes(term) ||
     (a.idNumber || '').toLowerCase().includes(term) ||
     (a.course || '').toLowerCase().includes(term) ||
-    (a.role || '').toLowerCase().includes(term) ||
-    (a.dateAttended || '').toLowerCase().includes(term) ||
     (getDisplayStatus(a) || '').toLowerCase().includes(term)
   );
 }
@@ -227,8 +251,6 @@ function renderTable(attendeesList, tableBodyId, noDataId) {
       </td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.idNumber || '')}</td>
       <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.course)}</td>
-      <td class="py-4 px-4 text-gray-600">${escapeHtml(attendee.role)}</td>
-      <td class="py-4 px-4 text-gray-600">${attendee.dateAttended}</td>
       <td class="py-4 px-4 text-gray-600">${formatTime12Hour(attendee.timeAttended)}</td>
       <td class="py-4 px-4">
         <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${attendee.displayStatus === 'present' ? 'bg-green-100 text-green-800' : attendee.displayStatus === 'late' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}">
@@ -297,9 +319,8 @@ window.editAttendee = async (attendeeId) => {
   document.getElementById('editYear').value = parts[2] || '';
   
   document.getElementById('editRole').value = attendee.role || '';
-  document.getElementById('dateAttended').value = attendee.dateAttended || '';
-  document.getElementById('timeAttended').value = attendee.timeAttended || '';
-  document.getElementById('session').value = attendee.session || 'morning';
+  document.getElementById('editTimeAttended').value = attendee.timeAttended || '';
+  document.getElementById('editSession').value = attendee.session || 'morning';
   document.getElementById('editStatus').value = 'auto';
   
   document.getElementById('editModal').classList.remove('hidden');
@@ -311,6 +332,20 @@ window.closeEditModal = () => {
   document.getElementById('editModal').classList.remove('flex');
 };
 
+document.getElementById('setEditCurrentTimeBtn').addEventListener('click', () => {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const currentTime = `${hours}:${minutes}`;
+  document.getElementById('editTimeAttended').value = currentTime;
+  
+  if (hours < 12) {
+    document.getElementById('editSession').value = 'morning';
+  } else {
+    document.getElementById('editSession').value = 'afternoon';
+  }
+});
+
 document.getElementById('editAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
@@ -320,9 +355,8 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   const major = document.getElementById('editMajor').value.trim();
   const year = document.getElementById('editYear').value.trim();
   const role = document.getElementById('editRole').value;
-  const dateAttended = document.getElementById('dateAttended').value;
-  const timeAttended = document.getElementById('timeAttended').value;
-  const session = document.getElementById('session').value;
+  const timeAttended = document.getElementById('editTimeAttended').value;
+  const session = document.getElementById('editSession').value;
   const statusValue = document.getElementById('editStatus').value;
   
   const parts = [course, major, year].filter(Boolean);
@@ -346,7 +380,6 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
       fullName,
       course: combinedCourse,
       role,
-      dateAttended,
       timeAttended,
       session,
       status: finalStatus
@@ -461,7 +494,7 @@ window.exportAttendeesToExcel = () => {
   const morningAttendees = allAttendees.filter(a => a.session === 'morning');
   const afternoonAttendees = allAttendees.filter(a => a.session === 'afternoon');
   
-  const headers = ['Attendee Name', 'ID Number', 'Course', 'Role', 'Date Attended', 'Time Attended', 'Status'];
+  const headers = ['Attendee Name', 'ID Number', 'Course', 'Time Attended', 'Status'];
   
   let csvContent = `Event: ${currentEvent.title}\n\n`;
   
@@ -483,8 +516,6 @@ window.exportAttendeesToExcel = () => {
         attendee.fullName || '',
         attendee.idNumber || '',
         attendee.course || '',
-        attendee.role || '',
-        attendee.dateAttended || '',
         attendee.timeAttended ? formatTime12Hour(attendee.timeAttended) : '',
         attendee.status || ''
       ];
@@ -510,8 +541,6 @@ window.exportAttendeesToExcel = () => {
         attendee.fullName || '',
         attendee.idNumber || '',
         attendee.course || '',
-        attendee.role || '',
-        attendee.dateAttended || '',
         attendee.timeAttended ? formatTime12Hour(attendee.timeAttended) : '',
         attendee.status || ''
       ];
@@ -591,12 +620,11 @@ function toCamelCase(str) {
 }
 
 onAuthStateChanged(auth, async (user) => {
-  console.log('Auth state changed:', user ? 'logged in' : 'logged out');
-  
-  initDefaultDateTime();
-  initSearch();
-  initAutoFormat();
-  initDynamicDropdowns();
+   console.log('Auth state changed:', user ? 'logged in' : 'logged out');
+   
+   initSearch();
+   initAutoFormat();
+   initDynamicDropdowns();
   
   if (!user) {
     window.location.href = '../logIn/LogInAdmin.html';
@@ -721,3 +749,14 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
   window.closeSettings();
   showToast('Settings saved');
 });
+
+window.handleLogout = async () => {
+  try {
+    await auth.signOut();
+    sessionStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('orgName');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+  window.location.href = '../logIn/LogInAdmin.html?v=' + Date.now();
+};

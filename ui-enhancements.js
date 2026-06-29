@@ -43,8 +43,13 @@ const pageMeta = [
     subtitle: 'Create, manage, and report events'
   },
   {
+    match: (path) => path.endsWith('/AttendeeManagement/Register.html'),
+    title: 'Register Students',
+    subtitle: 'Register students for faster event attendance tracking'
+  },
+  {
     match: (path) => path.endsWith('/AttendeeManagement/AttendeeManagement.html'),
-    title: 'Attendee Management',
+    title: 'Manage Attendees',
     subtitle: 'Manage event attendance records'
   },
   {

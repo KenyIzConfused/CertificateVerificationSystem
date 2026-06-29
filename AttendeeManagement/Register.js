@@ -174,6 +174,12 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
   
+  const orgName = localStorage.getItem('orgName');
+  const headerOrgName = document.getElementById('headerOrgName');
+  if (headerOrgName && orgName) {
+    headerOrgName.textContent = orgName;
+  }
+  
   const q = query(collection(db, 'RegisteredStudents'));
   onSnapshot(q, (snapshot) => {
     allStudents = [];
@@ -183,3 +189,14 @@ onAuthStateChanged(auth, async (user) => {
     renderStudents(allStudents, document.getElementById('searchStudents').value);
   });
 });
+
+window.handleLogout = async () => {
+  try {
+    await auth.signOut();
+    sessionStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('orgName');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+  window.location.href = '../logIn/LogInAdmin.html?v=' + Date.now();
+};

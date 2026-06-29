@@ -21,185 +21,193 @@
     <link rel="stylesheet" href="../styles.css">
 </head>
 <body class="app-page min-h-screen p-0 text-brand-900 antialiased">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-3">
+    <header class="w-full app-header">
+        <div class="app-header__inner">
+            <div class="flex items-center gap-3 relative">
                 <!-- Menu Button -->
                 <div class="relative">
-                    <button id="menuBtn" class="p-2 rounded-lg hover:bg-white/50 transition-colors">
-                        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button id="menuBtn" class="p-2 rounded-xl bg-white/15 hover:bg-white/25 transition-all duration-200 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                         </svg>
                     </button>
-                    <div id="menuDropdown" class="hidden absolute top-10 left-0 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50">
-                        <button onclick="window.openSettings()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Settings</button>
-                    </div>
-                </div>
-                <div>
-                    <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">Manage Attendees</h1>
-                    <p id="eventInfo" class="text-gray-600 mt-1"></p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="../EventCRUD/EventCRUD.html" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium shadow-md">
-                    ← Back to Events
-                </a>
-                <button id="exportAttendeesBtn" class="text-green-600 hover:text-green-700 font-medium">Export to Excel</button>
-            </div>
-        </header>
-
-        <!-- Add Attendee Form -->
-        <div id="addAttendeeWrapper" class="bg-white rounded-2xl shadow-xl p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">Add Attendee</h2>
-            <form id="addAttendeeForm" class="space-y-6">
-                <div class="space-y-2">
-                    <label for="idNumber" class="block text-sm font-semibold text-gray-700">ID Number</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="idNumber" name="idNumber" required
-                            class="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                            placeholder="Enter ID Number to fetch student data">
-                        <button type="button" id="fetchStudentBtn" 
-                            class="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap">
-                            Verify Student
+                    <div id="menuDropdown" class="hidden absolute top-12 left-0 bg-white/95 rounded-2xl shadow-xl border border-green-100/50 py-2 w-56 z-[100] backdrop-blur-xl">
+                        <button onclick="window.openRegister()" class="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                            </svg>
+                            Register Student
                         </button>
-                    </div>
-                    <div id="studentInfoDisplay" class="mt-2 p-3 bg-green-50 rounded-lg hidden">
-                        <p class="text-sm font-medium text-green-800">Student: <span id="fetchedStudentName" class="font-bold"></span></p>
-                        <p class="text-sm font-medium text-green-800">Course: <span id="fetchedStudentCourse" class="font-bold"></span></p>
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <label for="dateAttended" class="block text-sm font-semibold text-gray-700">Date Attended</label>
-                    <div class="flex gap-2">
-                        <input type="date" id="dateAttended" name="dateAttended" required 
-                            class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none">
-                        <button type="button" id="todayBtn" 
-                            class="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap">
-                            Today
+                        <button onclick="window.openSettings()" class="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors flex items-center gap-3">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.544 2.272-2.25 3.58-.986.688.674.986 1.76.674 2.697-.31 1.002-1.168 1.71-2.28 1.71H8.574c-.426 0-1.168-.674-2.28-1.71-.31-.88-.013-1.71.674-2.252z"/>
+                            </svg>
+                            Settings
                         </button>
                     </div>
                 </div>
-                <div class="space-y-2">
-                    <label for="timeAttended" class="block text-sm font-semibold text-gray-700">Time Attended</label>
-                    <input type="time" id="timeAttended" name="timeAttended" 
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                        readonly>
-                </div>
-                <div class="space-y-2">
-                    <label for="session" class="block text-sm font-semibold text-gray-700">Session</label>
-                    <select id="session" name="session" required 
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none">
-                        <option value="">Select Session</option>
-                        <option value="morning">Morning</option>
-                        <option value="afternoon">Afternoon</option>
-                    </select>
-                </div>
-                <button type="submit" 
-                    class="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold py-3 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-green-200">
-                    Add Attendee
-                </button>
-            </form>
-        </div>
-
-        <div id="addAttendeeLockOverlay" class="hidden fixed inset-0 bg-black bg-opacity-60 z-40 flex items-center justify-center">
-            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 text-center">
-                <div class="text-5xl mb-4">🔒</div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">Add Attendee Locked</h3>
-                <p class="text-gray-600 mb-4">Adding attendees will be available on the event date.</p>
-                <p id="lockEventDate" class="text-lg font-semibold text-green-600 mb-6"></p>
-                <button onclick="window.backToEvents()" 
-                    class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold shadow-lg">
-                    OK
-                </button>
-            </div>
-        </div>
-
-        <!-- Attendees Counter Panel -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Attendees:</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 font-medium">Total</p>
-                    <p id="attendeeCount" class="text-4xl font-bold text-green-600">0</p>
-                </div>
-                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 font-medium">Morning</p>
-                    <p id="morningCount" class="text-4xl font-bold text-yellow-600">0</p>
-                </div>
-                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 text-center">
-                    <p class="text-sm text-gray-600 font-medium">Afternoon</p>
-                    <p id="afternoonCount" class="text-4xl font-bold text-indigo-600">0</p>
+                <div class="brand-text">
+                    <span id="headerOrgName" class="brand-title">Manage Attendees</span>
+                    <p id="eventInfo" class="brand-subtitle"></p>
                 </div>
             </div>
+            <div class="app-header__actions">
+                <a href="../EventCRUD/EventCRUD.html" class="header-link">← Back to Event Manager</a>
+                <button id="exportAttendeesBtn" class="header-button">Export to Excel</button>
+            </div>
         </div>
+    </header>
 
-        <!-- Morning Attendees Table -->
-        <div id="morningTableContainer" class="bg-white rounded-2xl shadow-xl mb-8">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-yellow-700">Morning Attendees</h2>
-                    <button onclick="window.lockMorning()" 
-                        class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium">
-                        Save
+    <main class="page-content">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <!-- Add Attendee Form -->
+            <div id="addAttendeeWrapper" class="glass-strong rounded-2xl p-6 mb-8">
+                <h2 class="text-2xl font-bold text-brand-900 mb-6">Add Attendee</h2>
+                <form id="addAttendeeForm" class="space-y-6">
+                    <div class="space-y-2">
+                        <label for="idNumber" class="block text-sm font-semibold text-brand-700">ID Number</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="idNumber" name="idNumber" required
+                                class="flex-1 px-4 py-3 rounded-lg input-glass text-brand-900 placeholder:text-brand-400"
+                                placeholder="Enter ID Number to fetch student data">
+                            <button type="button" id="fetchStudentBtn" 
+                                class="px-4 py-3 btn-primary rounded-lg transition-colors text-sm font-medium whitespace-nowrap">
+                                Verify Student
+                            </button>
+                        </div>
+                        <div id="studentInfoDisplay" class="mt-2 p-3 bg-green-50 rounded-lg hidden">
+                            <p class="text-sm font-medium text-green-800">Student: <span id="fetchedStudentName" class="font-bold"></span></p>
+                            <p class="text-sm font-medium text-green-800">Course: <span id="fetchedStudentCourse" class="font-bold"></span></p>
+                        </div>
+                    </div>
+                    <input type="hidden" id="attendeeName">
+                    <input type="hidden" id="course">
+                    <input type="hidden" id="major">
+                    <input type="hidden" id="year">
+                    <input type="hidden" id="role" value="Student">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-brand-700">Time Attended</label>
+                        <div class="flex gap-2">
+                            <input type="time" id="timeAttended" name="timeAttended" required
+                                class="flex-1 px-4 py-3 rounded-lg input-glass text-brand-900">
+                            <button type="button" id="setCurrentTimeBtn"
+                                class="px-4 py-3 btn-primary rounded-lg transition-colors text-sm font-medium whitespace-nowrap">
+                                Time
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="session" class="block text-sm font-semibold text-brand-700">Session</label>
+                        <select id="session" name="session" required 
+                            class="w-full px-4 py-3 rounded-lg input-glass text-brand-900">
+                            <option value="">Select Session</option>
+                            <option value="morning">Morning</option>
+                            <option value="afternoon">Afternoon</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full btn-primary font-semibold py-3 rounded-xl transition-all shadow-lg">
+                        Add Attendee
+                    </button>
+                </form>
+            </div>
+
+            <div id="addAttendeeLockOverlay" class="hidden fixed inset-0 bg-black bg-opacity-60 z-40 flex items-center justify-center">
+                <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 text-center glass-strong">
+                    <div class="text-5xl mb-4">🔒</div>
+                    <h3 class="text-2xl font-bold text-brand-950 mb-2">Add Attendee Locked</h3>
+                    <p class="text-brand-600 mb-4">Adding attendees will be available on the event date.</p>
+                    <p id="lockEventDate" class="text-lg font-semibold text-brand-700 mb-6"></p>
+                    <button onclick="window.backToEvents()" 
+                        class="px-6 py-3 btn-primary rounded-xl transition-colors font-semibold shadow-lg">
+                        OK
                     </button>
                 </div>
-                <input type="text" id="morningSearch" placeholder="Search morning attendees..." 
-                    class="w-full px-4 py-2 border border-green-200 rounded-lg mb-4 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
             </div>
-            <div class="overflow-x-auto max-h-96 overflow-y-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-b-2 border-green-200 bg-white sticky top-0">
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Full Name</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">ID Number</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Course</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date Attended</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time Attended</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="morningTableBody">
-                    </tbody>
-                </table>
-                <p id="noMorning" class="text-gray-500 text-center py-8">No morning attendees yet.</p>
-            </div>
-        </div>
 
-        <!-- Afternoon Attendees Table -->
-        <div id="afternoonTableContainer" class="bg-white rounded-2xl shadow-xl">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-indigo-700">Afternoon Attendees</h2>
-                    <button onclick="window.lockAfternoon()"
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
-                        Save
-                    </button>
+            <!-- Attendees Counter Panel -->
+            <div class="glass rounded-2xl p-6 mb-8">
+                <h2 class="text-2xl font-bold text-brand-900 mb-4">Attendees:</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="glass-strong rounded-xl p-4 text-center">
+                        <p class="text-sm text-brand-600 font-medium">Total</p>
+                        <p id="attendeeCount" class="text-4xl font-bold text-brand-700">0</p>
+                    </div>
+                    <div class="glass-strong rounded-xl p-4 text-center">
+                        <p class="text-sm text-brand-600 font-medium">Morning</p>
+                        <p id="morningCount" class="text-4xl font-bold text-yellow-600">0</p>
+                    </div>
+                    <div class="glass-strong rounded-xl p-4 text-center">
+                        <p class="text-sm text-brand-600 font-medium">Afternoon</p>
+                        <p id="afternoonCount" class="text-4xl font-bold text-indigo-700">0</p>
+                    </div>
                 </div>
-                <input type="text" id="afternoonSearch" placeholder="Search afternoon attendees..."
-                    class="w-full px-4 py-2 border border-green-200 rounded-lg mb-4 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
             </div>
-            <div class="overflow-x-auto max-h-96 overflow-y-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-b-2 border-green-200 bg-white sticky top-0">
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Full Name</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">ID Number</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Course</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date Attended</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time Attended</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="afternoonTableBody">
-                    </tbody>
-                </table>
-                <p id="noAfternoon" class="text-gray-500 text-center py-8">No afternoon attendees yet.</p>
+
+            <!-- Morning Attendees Table -->
+            <div id="morningTableContainer" class="glass rounded-2xl shadow-xl mb-8">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-brand-900">Morning Attendees</h2>
+                        <button onclick="window.lockMorning()" 
+                            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium">
+                            Save
+                        </button>
+                    </div>
+                    <input type="text" id="morningSearch" placeholder="Search morning attendees..." 
+                        class="w-full px-4 py-2 rounded-lg input-glass text-brand-900 placeholder:text-brand-400 mb-4 text-sm">
+                </div>
+                <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                    <table class="w-full">
+                        <thead>
+<tr class="border-b-2 border-green-200 bg-white sticky top-0">
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Full Name</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">ID Number</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Course</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Time Attended</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Status</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody id="morningTableBody">
+                         </tbody>
+                     </table>
+                     <p id="noMorning" class="text-brand-500 text-center py-8">No morning attendees yet.</p>
+                 </div>
+             </div>
+
+             <!-- Afternoon Attendees Table -->
+             <div id="afternoonTableContainer" class="glass rounded-2xl shadow-xl">
+                 <div class="p-6">
+                     <div class="flex justify-between items-center mb-4">
+                         <h2 class="text-xl font-bold text-brand-900">Afternoon Attendees</h2>
+                         <button onclick="window.lockAfternoon()"
+                             class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                             Save
+                         </button>
+                     </div>
+                     <input type="text" id="afternoonSearch" placeholder="Search afternoon attendees..."
+                         class="w-full px-4 py-2 rounded-lg input-glass text-brand-900 placeholder:text-brand-400 mb-4 text-sm">
+                 </div>
+                 <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                     <table class="w-full">
+                         <thead>
+                             <tr class="border-b-2 border-green-200 bg-white sticky top-0">
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Full Name</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">ID Number</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Course</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Time Attended</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Status</th>
+                                 <th class="text-left py-3 px-4 text-sm font-semibold text-brand-700">Actions</th>
+                             </tr>
+                         </thead>
+                         <tbody id="afternoonTableBody">
+                        </tbody>
+                    </table>
+                    <p id="noAfternoon" class="text-brand-500 text-center py-8">No afternoon attendees yet.</p>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
     <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Edit Attendee</h2>
@@ -256,9 +264,29 @@
                     </select>
                 </div>
                 <div class="space-y-2">
-                    <label for="editStatus" class="block text-sm font-semibold text-gray-700">Status</label>
+                    <label class="block text-sm font-semibold text-brand-700">Time Attended</label>
+                    <div class="flex gap-2">
+                        <input type="time" id="editTimeAttended" name="editTimeAttended" required
+                            class="flex-1 px-4 py-3 rounded-lg input-glass text-brand-900">
+                        <button type="button" id="setEditCurrentTimeBtn"
+                            class="px-4 py-3 btn-primary rounded-lg transition-colors text-sm font-medium whitespace-nowrap">
+                            Time
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label for="editSession" class="block text-sm font-semibold text-brand-700">Session</label>
+                    <select id="editSession" name="editSession" required 
+                        class="w-full px-4 py-3 rounded-lg input-glass text-brand-900">
+                        <option value="">Select Session</option>
+                        <option value="morning">Morning</option>
+                        <option value="afternoon">Afternoon</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label for="editStatus" class="block text-sm font-semibold text-brand-700">Status</label>
                     <select id="editStatus" required
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none">
+                        class="w-full px-4 py-3 rounded-lg input-glass text-brand-900">
                         <option value="auto">Auto (Present/Late based on time)</option>
                         <option value="absent">Absent</option>
                     </select>
@@ -314,6 +342,9 @@
           });
           document.addEventListener('click', () => {
             menuDropdown.classList.add('hidden');
+          });
+          menuDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
           });
         }
     </script>
