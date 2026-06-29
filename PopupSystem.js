@@ -6,7 +6,7 @@ function injectStyles() {
         style.textContent = `
 /* Popup styles matching app theme */
 .liquid-popup {
-    background: color-mix(in srgb, var(--theme-primary, #22c55e) 12%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary, #22c55e) 12%, transparent), color-mix(in srgb, var(--theme-dark, #16a34a) 8%, transparent));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid color-mix(in srgb, var(--theme-primary, #22c55e) 25%, transparent);
@@ -34,7 +34,7 @@ function injectStyles() {
 }
 
 .btn-popup-secondary {
-    background: color-mix(in srgb, var(--theme-primary, #22c55e) 15%, transparent);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary, #22c55e) 15%, transparent), color-mix(in srgb, var(--theme-dark, #16a34a) 10%, transparent));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid color-mix(in srgb, var(--theme-primary, #22c55e) 30%, transparent);
@@ -45,12 +45,12 @@ function injectStyles() {
 }
 
 .btn-popup-secondary:hover {
-    background: color-mix(in srgb, var(--theme-primary, #22c55e) 25%, transparent);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary, #22c55e) 25%, transparent), color-mix(in srgb, var(--theme-dark, #16a34a) 18%, transparent));
     transform: translateY(-1px);
 }
 
 .btn-popup-danger {
-    background: rgba(239, 68, 68, 0.9);
+    background: linear-gradient(145deg, #f87171, #ef4444, #dc2626);
     border: none;
     border-radius: 0.5rem;
     color: white;

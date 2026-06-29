@@ -143,12 +143,12 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
         createdAt: new Date()
       });
       showToast('Event created successfully!');
-      document.getElementById('createEventForm').reset();
+      document.getElementById('eventForm').reset();
       document.getElementById('createEventPanel').classList.add('hidden');
     }
   } catch (error) {
     console.error('Error saving event:', error);
-    showAlert(editId ? 'Failed to update event' : 'Failed to create event', { type: 'error' });
+    showAlert(editId ? 'Failed to update event. Please try again.' : 'Failed to create event. Please try again.', { type: 'error' });
   }
 });
 
@@ -298,7 +298,7 @@ window.exportSingleEvent = async (eventId, eventTitle) => {
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Error exporting event:', error);
-    showAlert('Failed to export event', { type: 'error' });
+    showAlert('Failed to export event. Please try again.', { type: 'error' });
   }
 };
 
@@ -322,7 +322,7 @@ window.deleteEvent = async (eventId) => {
     showToast('Event and all associated attendees deleted');
   } catch (error) {
     console.error('Error deleting event:', error);
-    showAlert('Failed to delete event', { type: 'error' });
+    showAlert('Failed to delete event. Please try again.', { type: 'error' });
   }
 };
 
@@ -338,7 +338,7 @@ window.closeEvent = async (eventId) => {
     showToast('Event closed successfully');
   } catch (error) {
     console.error('Error closing event:', error);
-    showAlert('Failed to close event', { type: 'error' });
+    showAlert('Failed to close event. Please try again.', { type: 'error' });
   }
 };
 

@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('result').classList.remove('hidden');
             } catch (error) {
                 console.error('Error verifying certificate:', error);
-                showAlert(`Failed to verify certificate: ${error.message || 'Unknown error'}`, { type: 'error' });
+                 showAlert('Failed to verify certificate. Please try again.', { type: 'error' });
             }
         });
     }

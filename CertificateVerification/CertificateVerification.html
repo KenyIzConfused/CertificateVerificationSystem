@@ -40,9 +40,9 @@
             inset: 0;
             z-index: -1;
             background: 
-                radial-gradient(ellipse at 15% 20%, rgba(34, 197, 94, 0.15) 0%, transparent 40%),
-                radial-gradient(ellipse at 85% 80%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 50%, rgba(13, 148, 136, 0.08) 0%, transparent 50%);
+                radial-gradient(ellipse at 15% 20%, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.08) 40%, transparent 70%),
+                radial-gradient(ellipse at 85% 80%, rgba(16, 185, 129, 0.12) 0%, rgba(13, 148, 136, 0.06) 40%, transparent 70%),
+                radial-gradient(ellipse at 50% 50%, rgba(13, 148, 136, 0.08) 0%, rgba(21, 128, 61, 0.04) 40%, transparent 70%);
             filter: blur(80px);
             animation: float 30s ease-in-out infinite;
         }
@@ -55,7 +55,7 @@
 
         /* Liquid Glass Panel - Translucent */
         .liquid-panel {
-            background: rgba(22, 163, 74, 0.12);
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(22, 163, 74, 0.08));
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(34, 197, 94, 0.25);
@@ -95,7 +95,7 @@
 
         /* Input Fields */
         .liquid-input {
-            background: rgba(22, 163, 74, 0.15);
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(34, 197, 94, 0.3);
@@ -109,25 +109,25 @@
         }
 
         .liquid-input:focus {
-            background: rgba(22, 163, 74, 0.25);
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(22, 163, 74, 0.18));
             border-color: rgba(34, 197, 94, 0.6);
             box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
             color: #ffffff;
         }
 
         .panel-glow {
-            box-shadow: 0 0 30px rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 30px color-mix(in srgb, #22c55e 20%, transparent);
         }
 
         .result-item {
-            background: rgba(22, 163, 74, 0.1);
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.06));
             border: 1px solid rgba(34, 197, 94, 0.2);
             border-radius: 0.75rem;
             padding: 0.75rem 1rem;
         }
 
         .btn-glass {
-            background: rgba(22, 163, 74, 0.15);
+            background: linear-gradient(145deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(34, 197, 94, 0.3);
@@ -137,12 +137,12 @@
         }
 
         .btn-glass:hover {
-            background: rgba(22, 163, 74, 0.25);
+            background: linear-gradient(145deg, rgba(34, 197, 94, 0.25), rgba(22, 163, 74, 0.18));
             transform: translateY(-1px);
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-green-600 to-green-800 min-h-screen flex flex-col p-4">
+<body class="min-h-screen flex flex-col p-4">
     <a href="../logIn/LogInAdmin.html" class="absolute top-6 left-6 btn-3d px-5 py-2.5 font-medium">
         Admin Login
     </a>

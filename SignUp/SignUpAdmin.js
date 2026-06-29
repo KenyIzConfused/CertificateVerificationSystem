@@ -42,6 +42,12 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     window.location.href = '../logIn/LogInAdmin.html';
   } catch (error) {
     console.error('Error:', error);
-    showAlert('Sign up failed: ' + error.message, { type: 'error' });
+    if (error.code === 'auth/email-already-in-use') {
+      showAlert('An account with this email already exists', { type: 'error' });
+    } else if (error.code === 'auth/weak-password') {
+      showAlert('Password should be at least 6 characters', { type: 'warning' });
+    } else {
+      showAlert('Sign up failed. Please try again.', { type: 'error' });
+    }
   }
 });

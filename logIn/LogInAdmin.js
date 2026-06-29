@@ -25,14 +25,18 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     sessionStorage.setItem('adminLoggedIn', 'true');
-     showToast('Login successful!');
-     window.location.href = '../EventCRUD/EventCRUD.html';
-  } catch (error) {
+    showToast('Login successful!');
+    window.location.href = '../EventCRUD/EventCRUD.html';
+   } catch (error) {
     console.error('Error:', error);
-    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-      showAlert('Invalid email or password', { type: 'error' });
+    if (error.code === 'auth/user-not-found') {
+      showAlert('No account found with this email', { type: 'error' });
+    } else if (error.code === 'auth/wrong-password') {
+      showAlert('Wrong password', { type: 'error' });
+    } else if (error.code === 'auth/too-many-requests') {
+      showAlert('Too many attempts. Please try again later.', { type: 'error' });
     } else {
-      showAlert('Login failed: ' + error.message, { type: 'error' });
+      showAlert('Login failed. Please try again.', { type: 'error' });
     }
   }
 });

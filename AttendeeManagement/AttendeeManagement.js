@@ -16,6 +16,65 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+const themes = {
+  green: {
+    primary: '#22c55e',
+    dark: '#16a34a',
+    gradient: 'linear-gradient(135deg, #16a34a, #15803d, #166534)'
+  },
+  blue: {
+    primary: '#3b82f6',
+    dark: '#2563eb',
+    gradient: 'linear-gradient(135deg, #2563eb, #1d4ed8, #1e40af)'
+  },
+  red: {
+    primary: '#ef4444',
+    dark: '#dc2626',
+    gradient: 'linear-gradient(135deg, #dc2626, #b91c1c, #991b1b)'
+  },
+  orange: {
+    primary: '#f97316',
+    dark: '#ea580c',
+    gradient: 'linear-gradient(135deg, #ea580c, #c2410c, #9f330c)'
+  },
+  khaki: {
+    primary: '#ca8a04',
+    dark: '#a16207',
+    gradient: 'linear-gradient(135deg, #a16207, #854d0e, #713f12)'
+  },
+  white: {
+    primary: '#e5e7eb',
+    dark: '#9ca3af',
+    gradient: 'linear-gradient(135deg, #e5e7eb, #d1d5e7, #cbd5e1)'
+  },
+  dark: {
+    primary: '#1f2937',
+    dark: '#111827',
+    gradient: 'linear-gradient(135deg, #111827, #0f172a, #020617)'
+  },
+  purple: {
+    primary: '#a855f7',
+    dark: '#9333ea',
+    gradient: 'linear-gradient(135deg, #9333ea, #7e22ce, #6b21a8)'
+  }
+};
+
+function applyTheme(themeName) {
+  const theme = themes[themeName] || themes.green;
+  const root = document.documentElement;
+  root.style.setProperty('--theme-primary', theme.primary);
+  root.style.setProperty('--theme-dark', theme.dark);
+  root.style.setProperty('--theme-gradient', theme.gradient);
+  localStorage.setItem('selectedTheme', themeName);
+}
+
+function loadTheme() {
+  const savedTheme = localStorage.getItem('selectedTheme');
+  if (savedTheme && themes[savedTheme]) {
+    applyTheme(savedTheme);
+  }
+}
+
 function generateShortId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let id = '';
@@ -51,6 +110,8 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+loadTheme();
 
 document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -98,7 +159,7 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
     showToast('Attendee added successfully!');
   } catch (error) {
     console.error('Error adding attendee:', error);
-    showToast('Failed to add attendee.', 'error');
+    showToast('Failed to add attendee. Please try again.', 'error');
   }
 });
 
@@ -199,7 +260,7 @@ window.markPresent = async (attendeeId) => {
     showToast('Attendee marked as present');
   } catch (error) {
     console.error('Error updating status:', error);
-    showToast('Failed to update status', 'error');
+    showToast('Failed to update status. Please try again.', 'error');
   }
 };
 
@@ -211,7 +272,7 @@ window.markAbsent = async (attendeeId) => {
     showToast('Attendee marked as absent');
   } catch (error) {
     console.error('Error updating status:', error);
-    showToast('Failed to update status', 'error');
+    showToast('Failed to update status. Please try again.', 'error');
   }
 };
 
@@ -223,7 +284,7 @@ window.markLate = async (attendeeId) => {
     showToast('Attendee marked as late');
   } catch (error) {
     console.error('Error updating status:', error);
-    showAlert('Failed to update status', { type: 'error' });
+    showAlert('Failed to update status. Please try again.', { type: 'error' });
   }
 };
 
@@ -270,7 +331,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
     showToast('Attendee updated');
   } catch (error) {
     console.error('Error updating attendee:', error);
-    showAlert('Failed to update attendee', { type: 'error' });
+    showAlert('Failed to update attendee. Please try again.', { type: 'error' });
   }
 });
 
@@ -285,7 +346,7 @@ window.deleteAttendee = async (attendeeId) => {
     renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
   } catch (error) {
     console.error('Error deleting attendee:', error);
-    showAlert('Failed to delete attendee', { type: 'error' });
+    showAlert('Failed to delete attendee. Please try again.', { type: 'error' });
   }
 };
 
@@ -363,7 +424,7 @@ window.exportAttendeesToExcel = async () => {
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error('Error exporting to Excel:', error);
-    showAlert('Failed to export to Excel', { type: 'error' });
+    showAlert('Failed to export to Excel. Please try again.', { type: 'error' });
   }
 };
 

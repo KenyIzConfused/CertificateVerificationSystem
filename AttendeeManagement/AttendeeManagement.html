@@ -25,13 +25,19 @@
         }
     </script>
     <style>
+        :root {
+            --theme-primary: #22c55e;
+            --theme-dark: #16a34a;
+            --theme-gradient: linear-gradient(135deg, #16a34a, #15803d, #166534);
+        }
+
         /* Solid Dark Green Background */
         body::before {
             content: '';
             position: fixed;
             inset: 0;
             z-index: -1;
-            background: linear-gradient(135deg, #16a34a, #15803d, #166534);
+            background: var(--theme-gradient);
         }
 
         /* Floating Liquid Shapes for Depth */
@@ -41,9 +47,9 @@
             inset: 0;
             z-index: -1;
             background: 
-                radial-gradient(ellipse at 15% 20%, rgba(34, 197, 94, 0.15) 0%, transparent 40%),
-                radial-gradient(ellipse at 85% 80%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 50%, rgba(13, 148, 136, 0.08) 0%, transparent 50%);
+                radial-gradient(ellipse at 15% 20%, color-mix(in srgb, var(--theme-primary) 15%, transparent) 0%, color-mix(in srgb, var(--theme-dark) 8%, transparent) 50%, transparent 70%),
+                radial-gradient(ellipse at 85% 80%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, color-mix(in srgb, var(--theme-dark) 6%, transparent) 50%, transparent 70%),
+                radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--theme-primary) 8%, transparent) 0%, color-mix(in srgb, var(--theme-dark) 4%, transparent) 50%, transparent 70%);
             filter: blur(80px);
             animation: float 30s ease-in-out infinite;
         }
@@ -56,10 +62,10 @@
 
         /* Liquid Glass Panel - Translucent */
         .liquid-panel {
-            background: rgba(22, 163, 74, 0.12);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 12%, transparent), color-mix(in srgb, var(--theme-dark) 8%, transparent));
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(34, 197, 94, 0.25);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 25%, transparent);
             border-radius: 1.5rem;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
             transition: all 0.3s ease;
@@ -67,83 +73,83 @@
 
         /* Solid 3D Green Button */
         .btn-3d {
-            background: linear-gradient(145deg, #34d399, #22c55e, #16a34a);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 50%, white), var(--theme-primary), var(--theme-dark));
             border: none;
             border-radius: 0.75rem;
             color: white;
             font-weight: 600;
             transition: all 0.2s ease;
             box-shadow: 
-                0 4px 0 #16a34a,
-                0 8px 15px rgba(34, 197, 94, 0.3);
+                0 4px 0 var(--theme-dark),
+                0 8px 15px color-mix(in srgb, var(--theme-primary) 30%, transparent);
             transform: translateY(0);
         }
 
         .btn-3d:hover {
             transform: translateY(-2px);
             box-shadow: 
-                0 6px 0 #16a34a,
-                0 12px 20px rgba(34, 197, 94, 0.4);
+                0 6px 0 var(--theme-dark),
+                0 12px 20px color-mix(in srgb, var(--theme-primary) 40%, transparent);
         }
 
         .btn-glass {
-            background: rgba(22, 163, 74, 0.15);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 15%, transparent), color-mix(in srgb, var(--theme-dark) 10%, transparent));
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
             border-radius: 0.75rem;
             color: #e0f2fe;
             transition: all 0.2s ease;
         }
 
         .btn-glass:hover {
-            background: rgba(22, 163, 74, 0.25);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 25%, transparent), color-mix(in srgb, var(--theme-dark) 18%, transparent));
             transform: translateY(-1px);
         }
 
         /* Input Fields */
         .liquid-input {
-            background: rgba(22, 163, 74, 0.15);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 15%, transparent), color-mix(in srgb, var(--theme-dark) 10%, transparent));
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
             border-radius: 0.75rem;
             color: #f0fdf4;
             transition: all 0.3s ease;
         }
 
         .liquid-input::placeholder {
-            color: #a7f3d0;
+            color: color-mix(in srgb, var(--theme-primary) 60%, white);
         }
 
         .liquid-input:focus {
-            background: rgba(22, 163, 74, 0.25);
-            border-color: rgba(34, 197, 94, 0.6);
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 25%, transparent), color-mix(in srgb, var(--theme-dark) 18%, transparent));
+            border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 30%, transparent);
             color: #ffffff;
         }
 
         .liquid-glow {
-            box-shadow: 0 0 30px rgba(34, 197, 94, 0.2);
+            box-shadow: 0 0 30px color-mix(in srgb, var(--theme-primary) 20%, transparent);
         }
 
         .liquid-table {
-            background: rgba(22, 163, 74, 0.08);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 8%, transparent), color-mix(in srgb, var(--theme-dark) 5%, transparent));
         }
 
         .action-item {
-            background: rgba(22, 163, 74, 0.12);
-            border: 1px solid rgba(34, 197, 94, 0.2);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 12%, transparent), color-mix(in srgb, var(--theme-dark) 8%, transparent));
+            border: 1px solid color-mix(in srgb, var(--theme-primary) 20%, transparent);
             border-radius: 0.5rem;
         }
 
         .action-item:hover {
-            background: rgba(22, 163, 74, 0.2);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 20%, transparent), color-mix(in srgb, var(--theme-dark) 14%, transparent));
             transform: translateY(-1px);
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-green-600 to-green-800 min-h-screen p-6">
+<body class="min-h-screen p-6">
     <div class="max-w-7xl mx-auto">
         <header class="liquid-panel mb-8 p-6 flex flex-col lg:flex-row justify-between items-center gap-4">
             <div>

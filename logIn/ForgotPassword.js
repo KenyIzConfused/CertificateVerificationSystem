@@ -33,7 +33,11 @@ if (form) {
       form.reset();
     } catch (error) {
       console.error('Password reset error:', error);
-      showAlert('Failed to send reset email: ' + error.message, { type: 'error' });
+      if (error.code === 'auth/user-not-found') {
+        showAlert('No account found with this email', { type: 'error' });
+      } else {
+        showAlert('Failed to send reset email. Please try again.', { type: 'error' });
+      }
     }
   });
 }

@@ -46,9 +46,9 @@
             inset: 0;
             z-index: -1;
             background: 
-                radial-gradient(ellipse at 15% 20%, color-mix(in srgb, var(--theme-primary) 15%, transparent) 0%, transparent 40%),
-                radial-gradient(ellipse at 85% 80%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--theme-primary) 8%, transparent) 0%, transparent 50%);
+                radial-gradient(ellipse at 15% 20%, color-mix(in srgb, var(--theme-primary) 15%, transparent) 0%, color-mix(in srgb, var(--theme-dark) 8%, transparent) 50%, transparent 70%),
+                radial-gradient(ellipse at 85% 80%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, color-mix(in srgb, var(--theme-dark) 6%, transparent) 50%, transparent 70%),
+                radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--theme-primary) 8%, transparent) 0%, color-mix(in srgb, var(--theme-dark) 4%, transparent) 50%, transparent 70%);
             filter: blur(80px);
             animation: float 30s ease-in-out infinite;
         }
@@ -61,7 +61,7 @@
 
         /* Liquid Glass Panel - Translucent */
         .liquid-panel {
-            background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 12%, transparent), color-mix(in srgb, var(--theme-dark) 8%, transparent));
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid color-mix(in srgb, var(--theme-primary) 25%, transparent);
@@ -92,7 +92,7 @@
         }
 
         .btn-glass {
-            background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 15%, transparent), color-mix(in srgb, var(--theme-dark) 10%, transparent));
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
@@ -102,13 +102,13 @@
         }
 
         .btn-glass:hover {
-            background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            background: linear-gradient(145deg, color-mix(in srgb, var(--theme-primary) 25%, transparent), color-mix(in srgb, var(--theme-dark) 18%, transparent));
             transform: translateY(-1px);
         }
 
         /* Input Fields */
         .liquid-input {
-            background: color-mix(in srgb, var(--theme-primary) 15%, transparent);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 15%, transparent), color-mix(in srgb, var(--theme-dark) 10%, transparent));
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent);
@@ -122,7 +122,7 @@
         }
 
         .liquid-input:focus {
-            background: color-mix(in srgb, var(--theme-primary) 25%, transparent);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--theme-primary) 25%, transparent), color-mix(in srgb, var(--theme-dark) 18%, transparent));
             border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent);
             box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 30%, transparent);
             color: #ffffff;
