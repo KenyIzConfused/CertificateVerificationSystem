@@ -18,30 +18,31 @@
             }
         }
     </script>
-  <script type="module" crossorigin src="/assets/attendeeManagement-Dtn1-Vfk.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/ui-enhancements-oSulpFv0.js">
+  <script type="module" crossorigin src="/assets/attendeeManagement-rts8hXGv.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/ui-enhancements-BekM25Cp.js">
   <link rel="modulepreload" crossorigin href="/assets/PopupSystem-C6gwMGe4.js">
-  <link rel="stylesheet" crossorigin href="/assets/ui-enhancements-Dv2I7Okw.css">
+  <link rel="stylesheet" crossorigin href="/assets/ui-enhancements-BtwzHbpN.css">
 </head>
 <body class="app-page min-h-screen p-0 text-brand-900 antialiased">
     <div class="max-w-4xl mx-auto">
-        <!-- Menu Button (Top Left) -->
-        <div class="relative mb-4">
-            <button id="menuBtn" class="p-2 rounded-lg hover:bg-white/50 transition-colors">
-                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-            </button>
-            <div id="menuDropdown" class="hidden absolute top-10 left-0 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50">
-                <button onclick="window.openSettings()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Settings</button>
-            </div>
-        </div>
-
         <!-- Header -->
         <header class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">Manage Attendees</h1>
-                <p id="eventInfo" class="text-gray-600 mt-1"></p>
+            <div class="flex items-center gap-3">
+                <!-- Menu Button -->
+                <div class="relative">
+                    <button id="menuBtn" class="p-2 rounded-lg hover:bg-white/50 transition-colors">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <div id="menuDropdown" class="hidden absolute top-10 left-0 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50">
+                        <button onclick="window.openSettings()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Settings</button>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent">Manage Attendees</h1>
+                    <p id="eventInfo" class="text-gray-600 mt-1"></p>
+                </div>
             </div>
             <div class="flex items-center gap-3">
                 <a href="../EventCRUD/EventCRUD.html" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium shadow-md">
@@ -56,67 +57,20 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Add Attendee</h2>
             <form id="addAttendeeForm" class="space-y-6">
                 <div class="space-y-2">
-                    <label for="attendeeName" class="block text-sm font-semibold text-gray-700">Full Name</label>
-                    <input type="text" id="attendeeName" name="attendeeName" required
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                        placeholder="e.g., Juan Dela Cruz">
-                </div>
-                <div class="space-y-2">
                     <label for="idNumber" class="block text-sm font-semibold text-gray-700">ID Number</label>
-                    <input type="text" id="idNumber" name="idNumber" required
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                        placeholder="ID Number">
-                </div>
-                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">Course</label>
-                    <select id="course" name="course" required 
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none">
-                        <option value="">Select Course</option>
-                        <option value="BSCS">BSCS</option>
-                        <option value="BSIS">BSIS</option>
-                        <option value="BSIT">BSIT</option>
-                    </select>
-                </div>
-                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-700">Major & Year</label>
                     <div class="flex gap-2">
-                        <div class="flex-1">
-                            <label for="major" class="block text-xs text-gray-500 mb-1">Major</label>
-                            <select id="major" name="major" required 
-                                class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none">
-                                <option value="">Select Major</option>
-                            </select>
-                        </div>
-                        <div class="w-32">
-                            <label for="year" class="block text-xs text-gray-500 mb-1">Year</label>
-                            <select id="year" name="year" required 
-                                class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none">
-                                <option value="">Select Year</option>
-                                <option value="1A">1A</option>
-                                <option value="1B">1B</option>
-                                <option value="1C">1C</option>
-                                <option value="1D">1D</option>
-                                <option value="2A">2A</option>
-                                <option value="2B">2B</option>
-                                <option value="2C">2C</option>
-                                <option value="2D">2D</option>
-                                <option value="3A">3A</option>
-                                <option value="3B">3B</option>
-                                <option value="3C">3C</option>
-                                <option value="3D">3D</option>
-                                <option value="4A">4A</option>
-                                <option value="4B">4B</option>
-                                <option value="4C">4C</option>
-                                <option value="4D">4D</option>
-                            </select>
-                        </div>
+                        <input type="text" id="idNumber" name="idNumber" required
+                            class="flex-1 px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
+                            placeholder="Enter ID Number to fetch student data">
+                        <button type="button" id="fetchStudentBtn" 
+                            class="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap">
+                            Verify Student
+                        </button>
                     </div>
-                </div>
-                <div class="space-y-2">
-                    <label for="role" class="block text-sm font-semibold text-gray-700">Role</label>
-                    <input type="text" id="role" name="role" required 
-                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
-                        placeholder="e.g., Student, Speaker, Organizer">
+                    <div id="studentInfoDisplay" class="mt-2 p-3 bg-green-50 rounded-lg hidden">
+                        <p class="text-sm font-medium text-green-800">Student: <span id="fetchedStudentName" class="font-bold"></span></p>
+                        <p class="text-sm font-medium text-green-800">Course: <span id="fetchedStudentCourse" class="font-bold"></span></p>
+                    </div>
                 </div>
                 <div class="space-y-2">
                     <label for="dateAttended" class="block text-sm font-semibold text-gray-700">Date Attended</label>
@@ -184,63 +138,69 @@
         </div>
 
         <!-- Morning Attendees Table -->
-        <div id="morningTableContainer" class="bg-white rounded-2xl shadow-xl p-6 overflow-x-auto mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-yellow-700">Morning Attendees</h2>
-                <button onclick="window.lockMorning()" 
-                    class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium">
-                    Save
-                </button>
+        <div id="morningTableContainer" class="bg-white rounded-2xl shadow-xl mb-8">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-yellow-700">Morning Attendees</h2>
+                    <button onclick="window.lockMorning()" 
+                        class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium">
+                        Save
+                    </button>
+                </div>
+                <input type="text" id="morningSearch" placeholder="Search morning attendees..." 
+                    class="w-full px-4 py-2 border border-green-200 rounded-lg mb-4 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
             </div>
-            <input type="text" id="morningSearch" placeholder="Search morning attendees..." 
-                class="w-full px-4 py-2 border border-green-200 rounded-lg mb-4 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
-            <table class="w-full">
-                <thead>
-                    <tr class="border-b-2 border-green-200">
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Full Name</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">ID Number</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Course</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Role</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date Attended</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time Attended</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="morningTableBody">
-                </tbody>
-            </table>
-            <p id="noMorning" class="text-gray-500 text-center py-8">No morning attendees yet.</p>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-green-200 bg-white sticky top-0">
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Full Name</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">ID Number</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Course</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date Attended</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time Attended</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="morningTableBody">
+                    </tbody>
+                </table>
+                <p id="noMorning" class="text-gray-500 text-center py-8">No morning attendees yet.</p>
+            </div>
         </div>
 
         <!-- Afternoon Attendees Table -->
-        <div id="afternoonTableContainer" class="bg-white rounded-2xl shadow-xl p-6 overflow-x-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-indigo-700">Afternoon Attendees</h2>
-                <button onclick="window.lockAfternoon()"
-                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
-                    Save
-                </button>
+        <div id="afternoonTableContainer" class="bg-white rounded-2xl shadow-xl">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-indigo-700">Afternoon Attendees</h2>
+                    <button onclick="window.lockAfternoon()"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                        Save
+                    </button>
+                </div>
+                <input type="text" id="afternoonSearch" placeholder="Search afternoon attendees..."
+                    class="w-full px-4 py-2 border border-green-200 rounded-lg mb-4 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
             </div>
-            <input type="text" id="afternoonSearch" placeholder="Search afternoon attendees..."
-                class="w-full px-4 py-2 border border-green-200 rounded-lg mb-4 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none">
-            <table class="w-full">
-                <thead>
-                    <tr class="border-b-2 border-green-200">
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Full Name</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">ID Number</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Course</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Role</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date Attended</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time Attended</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="afternoonTableBody">
-                </tbody>
-            </table>
-            <p id="noAfternoon" class="text-gray-500 text-center py-8">No afternoon attendees yet.</p>
+            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-green-200 bg-white sticky top-0">
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Full Name</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">ID Number</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Course</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date Attended</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Time Attended</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
+                            <th class="text-left py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="afternoonTableBody">
+                    </tbody>
+                </table>
+                <p id="noAfternoon" class="text-gray-500 text-center py-8">No afternoon attendees yet.</p>
+            </div>
         </div>
     </div>
     <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">

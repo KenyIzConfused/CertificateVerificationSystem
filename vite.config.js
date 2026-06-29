@@ -12,6 +12,7 @@ export default defineConfig({
         createAdmin: page('CreateAdmin.html'),
         eventCrud: page('EventCRUD/EventCRUD.html'),
         attendeeManagement: page('AttendeeManagement/AttendeeManagement.html'),
+        registerStudents: page('AttendeeManagement/Register.html'),
         superAdminDashboard: page('SuperAdminDashboard/SuperAdminDashboard.html'),
         loginAdmin: page('logIn/LogInAdmin.html'),
         loginSuperAdmin: page('logIn/LogInSuperAdmin.html'),

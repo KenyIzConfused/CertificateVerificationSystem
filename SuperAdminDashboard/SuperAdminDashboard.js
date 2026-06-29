@@ -157,25 +157,25 @@ window.handleLogout = async () => {
   } catch (error) {
     console.error('Logout error:', error);
   }
-  window.location.href = '../logIn/LogInAdmin.html?v=' + Date.now();
+  window.location.href = '../logIn/LogInSuperAdmin.html?v=' + Date.now();
 };
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    window.location.href = '../logIn/LogInAdmin.html';
+    window.location.href = '../logIn/LogInSuperAdmin.html';
     return;
   }
   
   const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
   if (!adminDoc.exists() || adminDoc.data().role !== 'super_admin') {
     await signOut(auth);
-    window.location.href = '../logIn/LogInAdmin.html';
+    window.location.href = '../logIn/LogInSuperAdmin.html';
     return;
   }
   
   if (adminDoc.data().status !== 'approved') {
     await signOut(auth);
-    window.location.href = '../logIn/LogInAdmin.html';
+    window.location.href = '../logIn/LogInSuperAdmin.html';
     return;
   }
 

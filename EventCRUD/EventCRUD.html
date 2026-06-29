@@ -63,8 +63,21 @@
 <body class="app-page min-h-screen p-0 text-brand-900 antialiased">
     <header class="w-full app-header">
         <div class="app-header__inner">
-            <div class="brand-text">
-                <span id="headerOrgName" class="brand-title">College Admin</span>
+            <div class="flex items-center gap-3">
+                <!-- Menu Button -->
+                <div class="relative">
+                    <button id="menuBtn" class="p-2 rounded-lg hover:bg-white/50 transition-colors">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <div id="menuDropdown" class="hidden absolute top-10 left-0 bg-white rounded-xl shadow-xl border border-gray-100 py-2 w-48 z-50">
+                        <button onclick="window.openRegister()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700">Register</button>
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <span id="headerOrgName" class="brand-title">College Admin</span>
+                </div>
             </div>
             <div class="app-header__actions">
                 <button onclick="window.handleLogout()" class="header-button dashboard-logout-button">Logout</button>
@@ -188,6 +201,19 @@
     <script type="module">
         import '../PopupSystem.js';
         import './EventCRUD.js?v=2';
+        
+        const menuBtn = document.getElementById('menuBtn');
+        const menuDropdown = document.getElementById('menuDropdown');
+        
+        if (menuBtn && menuDropdown) {
+          menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuDropdown.classList.toggle('hidden');
+          });
+          document.addEventListener('click', () => {
+            menuDropdown.classList.add('hidden');
+          });
+        }
     </script>
 </body>
 </html>

@@ -447,6 +447,10 @@ window.closeSettings = () => {
   }
 };
 
+window.openRegister = () => {
+  window.location.href = '../AttendeeManagement/Register.html';
+};
+
 const updateOrgDisplay = (collegeName) => {
   const headerDisplay = document.getElementById('headerOrgName');
   if (headerDisplay && collegeName) {
@@ -454,9 +458,12 @@ const updateOrgDisplay = (collegeName) => {
   }
 };
 
-document.getElementById('showCreateFormBtn').addEventListener('click', () => {
-  const panel = document.getElementById('createEventPanel');
-  panel.classList.remove('hidden');
-  panel.scrollIntoView({ behavior: 'smooth' });
-  document.getElementById('eventTitle').focus();
-});
+const showCreateFormBtn = document.getElementById('showCreateFormBtn');
+if (showCreateFormBtn) {
+  showCreateFormBtn.addEventListener('click', () => {
+    const panel = document.getElementById('createEventPanel');
+    panel.classList.remove('hidden');
+    panel.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('eventTitle').focus();
+  });
+}
