@@ -18,6 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+let currentUser = null;
 let allStudents = [];
 
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
@@ -32,17 +33,29 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
   const parts = [course, major, year].filter(Boolean);
   const combinedCourse = parts.join('-');
   
+  const adminUid = currentUser?.uid || '';
+  
   const confirmed = await showConfirm('Are you sure you want to register this student?');
   if (confirmed !== 1) return;
   
   try {
     showLoading('register');
     
+    const existingQuery = query(collection(db, 'RegisteredStudents'), where('idNumber', '==', studentIdNumber), where('adminId', '==', adminUid));
+    const existingSnapshot = await getDocs(existingQuery);
+    
+    if (!existingSnapshot.empty) {
+      hideLoading('register');
+      showAlert('This ID number is already registered', { type: 'warning' });
+      return;
+    }
+    
     const studentData = {
       fullName: studentName,
       idNumber: studentIdNumber,
       course: combinedCourse,
       role: 'Student',
+      adminId: adminUid,
       createdAt: serverTimestamp()
     };
     
@@ -169,25 +182,43 @@ document.getElementById('searchStudents').addEventListener('input', () => {
 });
 
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = '../logIn/LogInAdmin.html';
-    return;
-  }
-  
-  const orgName = localStorage.getItem('orgName');
-  const headerOrgName = document.getElementById('headerOrgName');
-  if (headerOrgName && orgName) {
-    headerOrgName.textContent = orgName;
-  }
-  
-  const q = query(collection(db, 'RegisteredStudents'));
-  onSnapshot(q, (snapshot) => {
-    allStudents = [];
-    snapshot.forEach((docSnap) => {
-      allStudents.push({ id: docSnap.id, ...docSnap.data() });
+    currentUser = user;
+    
+    if (!user) {
+      window.location.href = '../logIn/LogInAdmin.html';
+      return;
+    }
+    
+    const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
+    const adminData = adminDoc.exists() ? adminDoc.data() : {};
+    
+    if (adminData.status === 'rejected') {
+      await showAlert('Account Rejected');
+      await auth.signOut();
+      window.location.href = '../logIn/LogInAdmin.html';
+      return;
+    }
+    
+    if (adminData.status !== 'approved') {
+      await auth.signOut();
+      window.location.href = '../logIn/LogInAdmin.html';
+      return;
+    }
+    
+    const orgName = localStorage.getItem('orgName');
+    const headerOrgName = document.getElementById('headerOrgName');
+    if (headerOrgName && orgName) {
+      headerOrgName.textContent = orgName;
+    }
+    
+    const q = query(collection(db, 'RegisteredStudents'), where('adminId', '==', user.uid));
+    onSnapshot(q, (snapshot) => {
+      allStudents = [];
+      snapshot.forEach((docSnap) => {
+        allStudents.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      renderStudents(allStudents, document.getElementById('searchStudents').value);
     });
-    renderStudents(allStudents, document.getElementById('searchStudents').value);
-  });
 });
 
 window.handleLogout = async () => {

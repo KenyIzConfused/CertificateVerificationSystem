@@ -263,6 +263,13 @@ window.handleLogout = async () => {
       return;
     }
     
+    if (adminDoc.data().status === 'rejected') {
+      await showAlert('Account Rejected');
+      await signOut(auth);
+      window.location.href = '../logIn/LogInSuperAdmin.html';
+      return;
+    }
+    
     if (adminDoc.data().status !== 'approved') {
       await signOut(auth);
       window.location.href = '../logIn/LogInSuperAdmin.html';

@@ -356,6 +356,12 @@
                     await auth.signOut();
                     return;
                 }
+                if (adminData.status === 'rejected') {
+                    hideLoading('login');
+                    showAlert('Account Rejected', { type: 'error' });
+                    await auth.signOut();
+                    return;
+                }
                 if (adminData.role === 'super_admin') {
                     hideLoading('login');
                     showAlert('Please use Super Admin view', { type: 'info' });
@@ -375,7 +381,7 @@
             }
         });
         
-        document.getElementById('systemLoginFormElement').addEventListener('submit', async (e) => {
+document.getElementById('systemLoginFormElement').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('systemEmail').value;
             const password = document.getElementById('systemPassword').value;
@@ -390,9 +396,15 @@
                     await auth.signOut();
                     return;
                 }
-                if (adminDoc.data().status !== 'approved') {
+                if (adminDoc.data().status === 'pending') {
                     hideLoading('login');
                     showAlert('Account pending approval', { type: 'warning' });
+                    await auth.signOut();
+                    return;
+                }
+                if (adminDoc.data().status === 'rejected') {
+                    hideLoading('login');
+                    showAlert('Account Rejected', { type: 'error' });
                     await auth.signOut();
                     return;
                 }

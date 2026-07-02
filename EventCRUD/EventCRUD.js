@@ -396,13 +396,27 @@ window.cancelEdit = () => {
 };
 
 onAuthStateChanged(auth, async (user) => {
-  if (user) {
+    if (user) {
     currentUser = user;
-    initAutoFormat();
-    initTimeFormat();
     
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
+    
+    if (adminData.status === 'rejected') {
+      await showAlert('Account Rejected');
+      await auth.signOut();
+      window.location.href = '../logIn/LogInAdmin.html';
+      return;
+    }
+    
+    if (adminData.status !== 'approved') {
+      await auth.signOut();
+      window.location.href = '../logIn/LogInAdmin.html';
+      return;
+    }
+    
+    initAutoFormat();
+    initTimeFormat();
     
     if (adminData.collegeName) {
       localStorage.setItem('orgName', adminData.collegeName);

@@ -37,9 +37,16 @@ document.getElementById('superAdminLoginForm').addEventListener('submit', async 
       return;
     }
     
-    if (adminData.status !== 'approved') {
+    if (adminData.status === 'pending') {
       hideLoading('login');
       showAlert('Account pending approval. Please wait for approval.', { type: 'warning' });
+      await auth.signOut();
+      return;
+    }
+    
+    if (adminData.status === 'rejected') {
+      hideLoading('login');
+      await showAlert('Account Rejected');
       await auth.signOut();
       return;
     }

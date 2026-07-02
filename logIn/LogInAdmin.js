@@ -44,6 +44,13 @@ document.querySelector('form').addEventListener('submit', async (e) => {
       return;
     }
     
+    if (adminData.status === 'rejected') {
+      hideLoading('login');
+      await showAlert('Account Rejected');
+      await auth.signOut();
+      return;
+    }
+    
     if (adminData.role === 'super_admin') {
       hideLoading('login');
       showAlert('Please use the Super Admin Login page', { type: 'info' });

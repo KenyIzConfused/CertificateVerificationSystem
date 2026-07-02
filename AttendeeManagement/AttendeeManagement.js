@@ -112,7 +112,7 @@ document.getElementById('fetchStudentBtn').addEventListener('click', async () =>
   
   try {
     showLoading('fetchStudent');
-    const q = query(collection(db, 'RegisteredStudents'), where('idNumber', '==', idNumber));
+    const q = query(collection(db, 'RegisteredStudents'), where('idNumber', '==', idNumber), where('adminId', '==', currentUser?.uid || ''));
     const snapshot = await getDocs(q);
     
     if (snapshot.empty) {
@@ -176,6 +176,7 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
       timeAttended: timeAttended,
       session: session,
       uuid: certificateUuid,
+      adminId: currentUser?.uid || '',
       createdAt: serverTimestamp()
     };
     
@@ -618,17 +619,33 @@ function toCamelCase(str) {
 }
 
 onAuthStateChanged(auth, async (user) => {
-   console.log('Auth state changed:', user ? 'logged in' : 'logged out');
-   currentUser = user;
-   
-   initSearch();
-   initAutoFormat();
-   initDynamicDropdowns();
-   
-   if (!user) {
-     window.location.href = '../logIn/LogInAdmin.html';
-     return;
-   }
+  console.log('Auth state changed:', user ? 'logged in' : 'logged out');
+  currentUser = user;
+  
+  initSearch();
+  initAutoFormat();
+  initDynamicDropdowns();
+  
+  if (!user) {
+    window.location.href = '../logIn/LogInAdmin.html';
+    return;
+  }
+  
+  const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
+  const adminData = adminDoc.exists() ? adminDoc.data() : {};
+  
+  if (adminData.status === 'rejected') {
+    await showAlert('Account Rejected');
+    await auth.signOut();
+    window.location.href = '../logIn/LogInAdmin.html';
+    return;
+  }
+  
+  if (adminData.status !== 'approved') {
+    await auth.signOut();
+    window.location.href = '../logIn/LogInAdmin.html';
+    return;
+  }
   
   if (!currentEventId) {
     console.log('No event ID found, redirecting...');
@@ -671,7 +688,6 @@ onAuthStateChanged(auth, async (user) => {
       });
       renderAttendees(allAttendees, document.getElementById('morningSearch')?.value || '', document.getElementById('afternoonSearch')?.value || '');
     });
-    
     } catch (error) {
     console.error('Error loading event:', error);
     window.location.href = '../EventCRUD/EventCRUD.html';

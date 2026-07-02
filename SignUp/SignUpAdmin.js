@@ -40,8 +40,13 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     const emailSnapshot = await getDocs(emailQuery);
     
     if (!emailSnapshot.empty) {
+      const existingAdmin = emailSnapshot.docs[0].data();
       hideLoading('signup');
-      showAlert('This email is already registered.', { type: 'error' });
+      if (existingAdmin.status === 'rejected') {
+        showAlert('This email was previously rejected. Contact the System Admin for more information.', { type: 'error' });
+      } else {
+        showAlert('This email is already registered.', { type: 'error' });
+      }
       return;
     }
     
