@@ -6,28 +6,10 @@ const pageMeta = [
     hasToggle: true
   },
   {
-    match: (path) => path.endsWith('/logIn/LogInSuperAdmin.html'),
-    title: 'Welcome to Event Manager',
-    links: [
-      { label: 'College Admin Login', href: 'LogInAdmin.html' },
-      { label: 'College Admin Sign Up', href: '../SignUp/SignUpAdmin.html' }
-    ]
-  },
-  {
     match: (path) => path.endsWith('/SignUp/SignUpAdmin.html'),
     title: 'College Admin Sign Up',
     subtitle: 'Request access for your organization',
     links: [
-      { label: 'College Admin Login', href: '../logIn/LogInAdmin.html' },
-      { label: 'System Admin Login', href: '../logIn/LogInSuperAdmin.html' }
-    ]
-  },
-  {
-    match: (path) => path.endsWith('/SignUp/SignUpSuperAdmin.html'),
-    title: 'System Admin Sign Up',
-    subtitle: 'Restricted administrator registration',
-    links: [
-      { label: 'System Admin Login', href: '../logIn/LogInSuperAdmin.html' },
       { label: 'College Admin Login', href: '../logIn/LogInAdmin.html' }
     ]
   },
@@ -35,7 +17,7 @@ const pageMeta = [
     match: (path) => path.endsWith('/CreateAdmin.html'),
     title: 'Create System Admin',
     subtitle: 'Restricted setup',
-    links: [{ label: 'Back to Login', href: 'logIn/LogInSuperAdmin.html' }]
+    links: [{ label: 'Back to Login', href: 'logIn/LogInAdmin.html' }]
   },
   {
     match: (path) => path.endsWith('/EventCRUD/EventCRUD.html'),
@@ -51,11 +33,6 @@ const pageMeta = [
     match: (path) => path.endsWith('/AttendeeManagement/AttendeeManagement.html'),
     title: 'Manage Attendees',
     subtitle: 'Manage event attendance records'
-  },
-  {
-    match: (path) => path.endsWith('/SuperAdminDashboard/SuperAdminDashboard.html'),
-    title: 'Schedule Manager',
-    subtitle: 'Super Admin Dashboard'
   }
 ];
 

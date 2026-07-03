@@ -72,7 +72,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     });
     await sendEmailVerification(userCredential.user);
     hideLoading('signup');
-    showToast('Account created! Pending approval by Super Admin.');
+    showToast('Account created! Pending approval by System Admin.');
     window.location.href = '../logIn/LogInAdmin.html';
    } catch (error) {
     hideLoading('signup');

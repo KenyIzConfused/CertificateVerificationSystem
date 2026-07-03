@@ -51,9 +51,9 @@ document.querySelector('form').addEventListener('submit', async (e) => {
       return;
     }
     
-    if (adminData.role === 'super_admin') {
+    if (adminData.role === 'system_admin') {
       hideLoading('login');
-      showAlert('Please use the Super Admin Login page', { type: 'info' });
+      showAlert('Please use the System Admin login form', { type: 'info' });
       await auth.signOut();
       return;
     }

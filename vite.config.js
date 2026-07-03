@@ -13,11 +13,8 @@ export default defineConfig({
         eventCrud: page('EventCRUD/EventCRUD.html'),
         attendeeManagement: page('AttendeeManagement/AttendeeManagement.html'),
         registerStudents: page('AttendeeManagement/Register.html'),
-        superAdminDashboard: page('SuperAdminDashboard/SuperAdminDashboard.html'),
         loginAdmin: page('logIn/LogInAdmin.html'),
-        loginSuperAdmin: page('logIn/LogInSuperAdmin.html'),
-        signupAdmin: page('SignUp/SignUpAdmin.html'),
-        signupSuperAdmin: page('SignUp/SignUpSuperAdmin.html')
+        signupAdmin: page('SignUp/SignUpAdmin.html')
       }
     }
   }

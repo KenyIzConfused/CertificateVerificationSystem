@@ -362,9 +362,9 @@
                     await auth.signOut();
                     return;
                 }
-                if (adminData.role === 'super_admin') {
+                if (adminData.role === 'system_admin') {
                     hideLoading('login');
-                    showAlert('Please use Super Admin view', { type: 'info' });
+                    showAlert('Please use the System Admin login form', { type: 'info' });
                     await auth.signOut();
                     return;
                 }
@@ -390,7 +390,7 @@ document.getElementById('systemLoginFormElement').addEventListener('submit', asy
                 showLoading('login');
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const adminDoc = await getDoc(doc(db, 'Admin', userCredential.user.uid));
-                if (!adminDoc.exists() || adminDoc.data().role !== 'super_admin') {
+                if (!adminDoc.exists() || adminDoc.data().role !== 'system_admin') {
                     hideLoading('login');
                     showAlert('Unauthorized access', { type: 'error' });
                     await auth.signOut();
@@ -408,10 +408,10 @@ document.getElementById('systemLoginFormElement').addEventListener('submit', asy
                     await auth.signOut();
                     return;
                 }
-                sessionStorage.setItem('superAdminLoggedIn', 'true');
+                sessionStorage.setItem('systemAdminLoggedIn', 'true');
                 hideLoading('login');
                 showToast('Login successful!');
-                window.location.href = '../SuperAdminDashboard/SuperAdminDashboard.html';
+                window.location.href = '../EventCRUD/EventCRUD.html';
             } catch (error) {
                 hideLoading('login');
                 const errCode = (error.code || error.message || '').toLowerCase();
@@ -471,7 +471,7 @@ document.getElementById('systemLoginFormElement').addEventListener('submit', asy
                 await setDoc(doc(db, 'Admin', userCredential.user.uid), {
                     collegeName: fullName,
                     email: email,
-                    role: 'super_admin',
+                    role: 'system_admin',
                     status: 'pending',
                     createdAt: new Date()
                 });
