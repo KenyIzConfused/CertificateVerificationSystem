@@ -192,6 +192,8 @@ onAuthStateChanged(auth, async (user) => {
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
     
+    const isSystemAdmin = adminData.role === 'system_admin';
+    
     if (adminData.status === 'rejected') {
       await showAlert('Account Rejected');
       await auth.signOut();
@@ -205,10 +207,9 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
     
-    const orgName = localStorage.getItem('orgName');
     const headerOrgName = document.getElementById('headerOrgName');
-    if (headerOrgName && orgName) {
-      headerOrgName.textContent = orgName;
+    if (headerOrgName) {
+      headerOrgName.textContent = isSystemAdmin ? 'System Admin' : (localStorage.getItem('orgName') || '');
     }
     
     const q = query(collection(db, 'RegisteredStudents'), where('adminId', '==', user.uid));
@@ -225,6 +226,7 @@ window.handleLogout = async () => {
   try {
     await auth.signOut();
     sessionStorage.removeItem('adminLoggedIn');
+    sessionStorage.removeItem('systemAdminLoggedIn');
     localStorage.removeItem('orgName');
   } catch (error) {
     console.error('Logout error:', error);

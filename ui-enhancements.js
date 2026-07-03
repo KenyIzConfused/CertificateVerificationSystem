@@ -72,25 +72,28 @@ function createHeader(meta) {
   actions.className = 'app-header__actions';
   
   if (meta.hasToggle) {
-    const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'header-link';
-    toggleBtn.id = 'adminToggleBtn';
-    toggleBtn.textContent = 'System Admin';
-    toggleBtn.setAttribute('data-view', 'college');
-    toggleBtn.onclick = function() {
-      const currentView = this.getAttribute('data-view');
-      if (currentView === 'college') {
-        window.switchAdminView('system');
-        this.setAttribute('data-view', 'system');
-        this.textContent = 'College Admin';
-      } else {
-        window.switchAdminView('college');
-        this.setAttribute('data-view', 'college');
-        this.textContent = 'System Admin';
-      }
-    };
-    actions.appendChild(toggleBtn);
-  } else {
+     const existingToggle = header.querySelector('#adminToggleBtn');
+     if (!existingToggle) {
+       const toggleBtn = document.createElement('button');
+       toggleBtn.className = 'header-link';
+       toggleBtn.id = 'adminToggleBtn';
+       toggleBtn.textContent = 'System Admin';
+       toggleBtn.setAttribute('data-view', 'college');
+       toggleBtn.onclick = function() {
+         const currentView = this.getAttribute('data-view');
+         if (currentView === 'college') {
+           window.switchAdminView('system');
+           this.setAttribute('data-view', 'system');
+           this.textContent = 'College Admin';
+         } else {
+           window.switchAdminView('college');
+           this.setAttribute('data-view', 'college');
+           this.textContent = 'System Admin';
+         }
+       };
+       actions.appendChild(toggleBtn);
+     }
+   } else {
     meta.links.forEach((link) => {
       const action = document.createElement('a');
       action.className = 'header-link';

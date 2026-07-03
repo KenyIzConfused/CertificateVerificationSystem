@@ -634,6 +634,8 @@ onAuthStateChanged(auth, async (user) => {
   const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
   const adminData = adminDoc.exists() ? adminDoc.data() : {};
   
+  const isSystemAdmin = adminData.role === 'system_admin';
+  
   if (adminData.status === 'rejected') {
     await showAlert('Account Rejected');
     await auth.signOut();
@@ -645,6 +647,11 @@ onAuthStateChanged(auth, async (user) => {
     await auth.signOut();
     window.location.href = '../logIn/LogInAdmin.html';
     return;
+  }
+  
+  const headerOrgName = document.getElementById('headerOrgName');
+  if (headerOrgName) {
+    headerOrgName.textContent = isSystemAdmin ? 'System Admin' : (localStorage.getItem('orgName') || '');
   }
   
   if (!currentEventId) {
@@ -731,9 +738,15 @@ window.setupAutoLock = () => {
   }, 30000);
 };
 
-window.openSettings = () => {
-  const savedOrg = localStorage.getItem('orgName') || '';
-  document.getElementById('orgName').value = savedOrg;
+window.openSettings = async () => {
+  const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
+  const adminData = adminDoc.exists() ? adminDoc.data() : {};
+  const isSystemAdmin = adminData.role === 'system_admin';
+  const savedOrg = isSystemAdmin ? (adminData.fullName || adminData.collegeName || '') : (localStorage.getItem('orgName') || '');
+  const orgNameInput = document.getElementById('orgName');
+  const label = document.getElementById('settingsLabel');
+  if (label) label.textContent = isSystemAdmin ? 'Full Name' : 'College Name';
+  if (orgNameInput) orgNameInput.value = savedOrg;
   document.getElementById('settingsModal').classList.remove('hidden');
   document.getElementById('settingsModal').classList.add('flex');
 };
@@ -749,10 +762,12 @@ window.backToEvents = () => {
 
 document.getElementById('settingsForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
+  const adminData = adminDoc.exists() ? adminDoc.data() : {};
+  const isSystemAdmin = adminData.role === 'system_admin';
   const orgName = document.getElementById('orgName').value.trim();
-  const savedOrg = localStorage.getItem('orgName') || '';
-  
-  if (orgName === savedOrg) {
+  const currentName = isSystemAdmin ? (adminData.fullName || adminData.collegeName || '') : (localStorage.getItem('orgName') || '');
+  if (orgName === currentName) {
     showAlert('Already saved', { type: 'info' });
     return;
   }
@@ -762,9 +777,6 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
   
   try {
     showLoading('saveSettings');
-    const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
-    const adminData = adminDoc.exists() ? adminDoc.data() : {};
-    
     await updateDoc(doc(db, 'Admin', currentUser.uid), {
       collegeName: orgName
     });
@@ -783,6 +795,7 @@ window.handleLogout = async () => {
   try {
     await auth.signOut();
     sessionStorage.removeItem('adminLoggedIn');
+    sessionStorage.removeItem('systemAdminLoggedIn');
     localStorage.removeItem('orgName');
   } catch (error) {
     console.error('Logout error:', error);

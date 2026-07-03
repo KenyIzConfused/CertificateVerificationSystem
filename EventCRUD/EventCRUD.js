@@ -402,6 +402,8 @@ onAuthStateChanged(auth, async (user) => {
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
     
+    const isSystemAdmin = adminData.role === 'system_admin';
+    
     if (adminData.status === 'rejected') {
       await showAlert('Account Rejected');
       await auth.signOut();
@@ -418,7 +420,9 @@ onAuthStateChanged(auth, async (user) => {
     initAutoFormat();
     initTimeFormat();
     
-    if (adminData.collegeName) {
+    if (isSystemAdmin) {
+      updateOrgDisplay('System Admin');
+    } else if (adminData.collegeName) {
       localStorage.setItem('orgName', adminData.collegeName);
       updateOrgDisplay(adminData.collegeName);
     } else {
@@ -441,7 +445,12 @@ onAuthStateChanged(auth, async (user) => {
 window.openSettings = async () => {
   const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
   const adminData = adminDoc.exists() ? adminDoc.data() : {};
-  document.getElementById('collegeName').value = adminData.collegeName || '';
+  const isSystemAdmin = adminData.role === 'system_admin';
+  const label = document.getElementById('settingsLabel');
+  const input = document.getElementById('collegeName');
+  if (label) label.textContent = isSystemAdmin ? 'Full Name' : 'College Name';
+  if (input) input.placeholder = isSystemAdmin ? 'Enter full name' : 'Enter college name';
+  input.value = isSystemAdmin ? (adminData.fullName || adminData.collegeName || '') : (adminData.collegeName || '');
   document.getElementById('settingsModal').classList.remove('hidden');
   document.getElementById('settingsModal').classList.add('flex');
 };
@@ -450,6 +459,7 @@ window.handleLogout = async () => {
   try {
     await auth.signOut();
     sessionStorage.removeItem('adminLoggedIn');
+    sessionStorage.removeItem('systemAdminLoggedIn');
     localStorage.removeItem('orgName');
   } catch (error) {
     console.error('Logout error:', error);
@@ -470,8 +480,10 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
   const newName = document.getElementById('collegeName').value.trim();
   const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
   const adminData = adminDoc.exists() ? adminDoc.data() : {};
+  const isSystemAdmin = adminData.role === 'system_admin';
   
-  if (newName === (adminData.collegeName || '')) {
+  const currentName = isSystemAdmin ? (adminData.fullName || adminData.collegeName || '') : (adminData.collegeName || '');
+  if (newName === currentName) {
     showAlert('Already saved', { type: 'info' });
     return;
   }

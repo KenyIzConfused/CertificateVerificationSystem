@@ -310,17 +310,19 @@
             document.getElementById('formTitle').textContent = adminType === 'college' ? 'College Admin Login' : 'System Admin Login';
         }
 
-        function toggleAdminView() {
-            const toggleBtn = document.getElementById('adminToggleBtn');
-            const currentView = toggleBtn.getAttribute('data-view');
-            if (currentView === 'college') {
-                switchAdminView('system');
-                toggleBtn.setAttribute('data-view', 'system');
-            } else {
-                switchAdminView('college');
-                toggleBtn.setAttribute('data-view', 'college');
-            }
-        }
+function toggleAdminView() {
+             const toggleBtn = document.getElementById('adminToggleBtn');
+             const currentView = toggleBtn.getAttribute('data-view');
+             if (currentView === 'college') {
+                 switchAdminView('system');
+                 toggleBtn.setAttribute('data-view', 'system');
+                 toggleBtn.textContent = 'College Admin';
+             } else {
+                 switchAdminView('college');
+                 toggleBtn.setAttribute('data-view', 'college');
+                 toggleBtn.textContent = 'System Admin';
+             }
+         }
 
         window.togglePasswordVisibility = togglePasswordVisibility;
         window.switchAdminView = switchAdminView;
