@@ -192,7 +192,7 @@ onAuthStateChanged(auth, async (user) => {
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
     
-    const isSystemAdmin = adminData.role === 'system_admin';
+    const isSystemAdmin = adminData.role === 'system_admin' || adminData.role === 'super_admin';
     
     if (adminData.status === 'rejected') {
       await showAlert('Account Rejected');

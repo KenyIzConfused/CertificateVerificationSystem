@@ -33,6 +33,11 @@ const pageMeta = [
     match: (path) => path.endsWith('/AttendeeManagement/AttendeeManagement.html'),
     title: 'Manage Attendees',
     subtitle: 'Manage event attendance records'
+  },
+  {
+    match: (path) => path.endsWith('/SystemAdminDashboard/SystemAdminDashboard.html'),
+    title: 'System Admin Dashboard',
+    subtitle: 'Review and manage admin accounts'
   }
 ];
 

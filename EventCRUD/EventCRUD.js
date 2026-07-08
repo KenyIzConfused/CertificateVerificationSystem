@@ -402,7 +402,7 @@ onAuthStateChanged(auth, async (user) => {
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
     
-    const isSystemAdmin = adminData.role === 'system_admin';
+    const isSystemAdmin = adminData.role === 'system_admin' || adminData.role === 'super_admin';
     
     if (adminData.status === 'rejected') {
       await showAlert('Account Rejected');
@@ -445,7 +445,7 @@ onAuthStateChanged(auth, async (user) => {
 window.openSettings = async () => {
   const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
   const adminData = adminDoc.exists() ? adminDoc.data() : {};
-  const isSystemAdmin = adminData.role === 'system_admin';
+  const isSystemAdmin = adminData.role === 'system_admin' || adminData.role === 'super_admin';
   const label = document.getElementById('settingsLabel');
   const input = document.getElementById('collegeName');
   if (label) label.textContent = isSystemAdmin ? 'Full Name' : 'College Name';
@@ -480,7 +480,7 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
   const newName = document.getElementById('collegeName').value.trim();
   const adminDoc = await getDoc(doc(db, 'Admin', currentUser.uid));
   const adminData = adminDoc.exists() ? adminDoc.data() : {};
-  const isSystemAdmin = adminData.role === 'system_admin';
+  const isSystemAdmin = adminData.role === 'system_admin' || adminData.role === 'super_admin';
   
   const currentName = isSystemAdmin ? (adminData.fullName || adminData.collegeName || '') : (adminData.collegeName || '');
   if (newName === currentName) {

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'Helvetica Neue', 'Arial', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+  <script type="module" crossorigin src="/assets/systemAdminDashboard-BeRxxbLb.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/ui-enhancements-Dj7FcCUJ.js">
+  <link rel="modulepreload" crossorigin href="/assets/PopupSystem-BYvFFuLg.js">
+  <link rel="stylesheet" crossorigin href="/assets/ui-enhancements-DMlO68je.css">
+</head>
+<body class="app-page min-h-screen p-0 text-brand-900 antialiased">
+    <header class="app-header">
+        <div class="app-header__inner">
+            <div class="brand-text">
+                <span id="headerName" class="brand-title">System Admin</span>
+            </div>
+            <div class="app-header__actions">
+                <div class="relative">
+                    <button id="settingsBtn" class="header-button">
+                        Settings
+                        <svg class="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="settingsDropdown" class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-green-100/50 py-2 z-50 backdrop-blur-xl">
+                        <button onclick="window.openSettings()" class="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
+                            Change Name
+                        </button>
+                    </div>
+                </div>
+                <button onclick="window.handleLogout()" class="header-button">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-layout">
+        <section class="dashboard-card dashboard-history-card" aria-labelledby="approvalHistoryTitle">
+            <h2 id="approvalHistoryTitle" class="dashboard-card-title">Approval History</h2>
+            <div id="historyContainer" class="dashboard-history-list">
+                <p class="dashboard-empty-state">No history yet.</p>
+            </div>
+        </section>
+
+        <section class="dashboard-card dashboard-pending-card" aria-labelledby="pendingApprovalsTitle">
+            <h2 id="pendingApprovalsTitle" class="dashboard-card-title">Pending Approvals</h2>
+            <div id="pendingAdminsContainer" class="dashboard-pending-list">
+                <p class="dashboard-empty-state">No pending approvals.</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+            <form id="settingsForm" class="space-y-4">
+                <div class="space-y-2">
+                    <label for="adminName" id="settingsLabel" class="block text-sm font-semibold text-gray-700">Change Name</label>
+                    <input type="text" id="adminName"
+                        class="w-full px-4 py-3 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all outline-none"
+                        placeholder="Enter name">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="submit"
+                        class="flex-1 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg">
+                        Save
+                    </button>
+                    <button type="button" onclick="window.closeSettings()"
+                        class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

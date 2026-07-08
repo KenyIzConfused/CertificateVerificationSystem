@@ -14,7 +14,8 @@ export default defineConfig({
         attendeeManagement: page('AttendeeManagement/AttendeeManagement.html'),
         registerStudents: page('AttendeeManagement/Register.html'),
         loginAdmin: page('logIn/LogInAdmin.html'),
-        signupAdmin: page('SignUp/SignUpAdmin.html')
+        signupAdmin: page('SignUp/SignUpAdmin.html'),
+        systemAdminDashboard: page('SystemAdminDashboard/SystemAdminDashboard.html')
       }
     }
   }

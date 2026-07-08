@@ -30,7 +30,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
     const adminDoc = await getDoc(doc(db, 'Admin', userCredential.user.uid));
     if (!adminDoc.exists()) {
       hideLoading('login');
-      showAlert('Account not found', { type: 'error' });
+      showAlert('Account does not exist', { type: 'error' });
       await auth.signOut();
       return;
     }
@@ -51,7 +51,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
       return;
     }
     
-    if (adminData.role === 'system_admin') {
+    if (adminData.role === 'system_admin' || adminData.role === 'super_admin') {
       hideLoading('login');
       showAlert('Please use the System Admin login form', { type: 'info' });
       await auth.signOut();
@@ -69,7 +69,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
      hideLoading('login');
      console.error('Error:', error);
      const errCode = (error.code || error.message || '').toLowerCase();
-     const msg = errCode.includes('auth/wrong-password') || errCode.includes('wrong password') ? 'Wrong Password' : 'Invalid Input';
+      const msg = errCode.includes('auth/wrong-password') || errCode.includes('wrong password') || errCode.includes('auth/invalid-credential') ? 'Wrong Password' : 'Invalid Input';
      showAlert(msg, { type: 'error' });
    }
 });
