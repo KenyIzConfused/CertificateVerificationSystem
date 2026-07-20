@@ -191,6 +191,15 @@ function renderTable(attendeesList) {
           </span>
         </td>
         <td class="py-4 px-2">
+          <button onclick="window.showQRCode('${attendee.certificateId}', '${escapeHtml(attendee.fullName)}')"
+            class="action-item px-2 py-1 text-xs flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            QR
+          </button>
+        </td>
+        <td class="py-4 px-2">
           <div class="flex gap-1 flex-wrap">
             ${statusButtons}
             <button onclick="window.editAttendee('${attendee.id}')"
@@ -272,6 +281,46 @@ window.closeEditModal = () => {
   modal.classList.remove('flex');
 };
 
+window.showQRCode = (certificateId, attendeeName) => {
+  const modal = document.getElementById('qrModal');
+  const container = document.getElementById('qrCodeContainer');
+  const nameEl = document.getElementById('qrAttendeeName');
+  const idEl = document.getElementById('qrCertificateId');
+
+  container.innerHTML = '';
+  nameEl.textContent = attendeeName ? `Attendee: ${attendeeName}` : '';
+  idEl.textContent = certificateId ? `ID: ${certificateId}` : '';
+
+  if (certificateId && typeof QRCode !== 'undefined') {
+    QRCode.toCanvas(document.createElement('canvas'), certificateId, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#166534',
+        light: '#ffffff'
+      }
+    }, (error, canvas) => {
+      if (error) {
+        console.error('QR Code generation error:', error);
+        container.innerHTML = '<p class="text-red-400 text-sm">Failed to generate QR code</p>';
+        return;
+      }
+      container.appendChild(canvas);
+    });
+  } else {
+    container.innerHTML = '<p class="text-red-400 text-sm">QR library not loaded</p>';
+  }
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+};
+
+window.closeQRModal = () => {
+  const modal = document.getElementById('qrModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+};
+
 document.getElementById('editAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -307,6 +356,114 @@ window.deleteAttendee = async (attendeeId) => {
     } catch (error) {
         console.error('Error deleting attendee:', error);
         showAlert('Failed to delete attendee', { type: 'error' });
+    }
+};
+
+window.importAttendeesFromExcel = async (file) => {
+    if (!currentEvent) {
+        showAlert('Event not found', { type: 'error' });
+        return;
+    }
+
+    if (currentEvent.status === 'closed') {
+        showAlert('This event is closed. Attendees can no longer be added.', { type: 'error' });
+        return;
+    }
+
+    const importBtn = document.getElementById('importAttendeesBtn');
+    importBtn.disabled = true;
+    importBtn.textContent = 'Importing...';
+
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(arrayBuffer);
+
+        const worksheet = workbook.getWorksheet(1);
+        if (!worksheet) {
+            showAlert('No worksheet found in the Excel file', { type: 'error' });
+            return;
+        }
+
+        const rows = worksheet.getRows(1, worksheet.rowCount);
+        if (!rows || rows.length === 0) {
+            showAlert('The Excel file appears to be empty', { type: 'error' });
+            return;
+        }
+
+        const firstRowValues = rows[0].values || [];
+        const hasHeader = /name|full\s*name|attendee/i.test(String(firstRowValues[1] || firstRowValues[2] || ''));
+
+        const dataRows = hasHeader ? rows.slice(1) : rows;
+        const attendeesToAdd = [];
+
+        const existingIds = new Set(allAttendees.map(a => a.certificateId).filter(Boolean));
+
+        for (let i = 0; i < dataRows.length; i++) {
+            const row = dataRows[i];
+            const values = row.values || [];
+
+            const fullName = String(values[2] || values[1] || '').trim();
+            const course = String(values[3] || values[2] || '').trim();
+            const role = String(values[4] || values[3] || '').trim();
+            const dateAttended = String(values[5] || values[4] || '').trim();
+
+            if (!fullName) {
+                showAlert(`Row ${i + (hasHeader ? 2 : 1)}: Full Name is required`, { type: 'warning' });
+                continue;
+            }
+
+            let certificateId = generateShortId();
+            let attempts = 0;
+            const maxAttempts = 50;
+            while ((existingIds.has(certificateId) || attendeesToAdd.some(a => a.certificateId === certificateId)) && attempts < maxAttempts) {
+                certificateId = generateShortId();
+                attempts++;
+            }
+            if (attempts >= maxAttempts) {
+                showAlert(`Failed to generate unique ID for ${fullName}`, { type: 'error' });
+                continue;
+            }
+
+            existingIds.add(certificateId);
+
+            const attendeeData = {
+                fullName,
+                course: course || '',
+                role: role || '',
+                dateAttended: dateAttended || getTodayDateString(),
+                certificateId
+            };
+
+            attendeesToAdd.push(attendeeData);
+        }
+
+        if (attendeesToAdd.length === 0) {
+            showAlert('No valid attendees found to import', { type: 'warning' });
+            return;
+        }
+
+        const batch = writeBatch(db);
+        attendeesToAdd.forEach(attendeeData => {
+            const docRef = doc(collection(db, 'Events', currentEventId, 'Attendees'));
+            batch.set(docRef, attendeeData);
+        });
+
+        await batch.commit();
+        showToast(`Successfully imported ${attendeesToAdd.length} attendee(s)`);
+
+        document.getElementById('importFileInput').value = '';
+    } catch (error) {
+        console.error('Error importing Excel:', error);
+        showAlert(`Failed to import Excel: ${error.message || 'Unknown error'}`, { type: 'error' });
+    } finally {
+        importBtn.disabled = false;
+        importBtn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+            Import from Excel
+        `;
     }
 };
 
@@ -389,6 +546,16 @@ window.exportAttendeesToExcel = async () => {
 };
 
 document.getElementById('exportAttendeesBtn').addEventListener('click', window.exportAttendeesToExcel);
+
+document.getElementById('importAttendeesBtn').addEventListener('click', () => {
+    document.getElementById('importFileInput').click();
+});
+
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    window.importAttendeesFromExcel(file);
+});
 
 document.getElementById('attendeesSearch').addEventListener('input', (e) => {
   renderAttendees(allAttendees, e.target.value);

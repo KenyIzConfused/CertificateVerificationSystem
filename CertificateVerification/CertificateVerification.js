@@ -42,6 +42,49 @@ async function searchAllEventsForAttendee(certificateId) {
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('verifyForm');
     const verifyAnotherBtn = document.getElementById('verifyAnotherBtn');
+    const scanQRBtn = document.getElementById('scanQRBtn');
+    const stopScanBtn = document.getElementById('stopScanBtn');
+    const qrReader = document.getElementById('qrReader');
+    let html5QrcodeScanner = null;
+
+    if (scanQRBtn) {
+        scanQRBtn.addEventListener('click', () => {
+            qrReader.classList.remove('hidden');
+            qrReader.classList.add('block');
+            
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5QrcodeScanner('qr-reader', {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                });
+                
+                html5QrcodeScanner.render((decodedText) => {
+                    document.getElementById('certificateId').value = decodedText.toUpperCase();
+                    qrReader.classList.add('hidden');
+                    qrReader.classList.remove('block');
+                    if (html5QrcodeScanner) {
+                        html5QrcodeScanner.clear().catch(() => {});
+                        html5QrcodeScanner = null;
+                    }
+                    form.dispatchEvent(new Event('submit'));
+                }, (errorMessage) => {
+                    console.log('QR scan error:', errorMessage);
+                });
+            }
+        });
+    }
+
+    if (stopScanBtn) {
+        stopScanBtn.addEventListener('click', () => {
+            qrReader.classList.add('hidden');
+            qrReader.classList.remove('block');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(() => {});
+                html5QrcodeScanner = null;
+            }
+        });
+    }
     
     if (form) {
         form.addEventListener('submit', async (e) => {
@@ -50,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const certificateId = document.getElementById('certificateId').value.trim().toUpperCase();
             
             if (!certificateId) {
-                showAlert('Please enter a certificate ID', { type: 'warning' });
+                showAlert('Please enter a certificate ID or scan a QR code', { type: 'warning' });
                 return;
             }
             
@@ -63,12 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 document.getElementById('certName').textContent = result.attendee.fullName || '';
-                document.getElementById('certCourse').textContent = result.attendee.course || '';
-                document.getElementById('certRole').textContent = result.attendee.role || '';
-                document.getElementById('certDateAttended').textContent = result.attendee.dateAttended || '';
-                document.getElementById('certStatus').textContent = result.attendee.status ? result.attendee.status.charAt(0).toUpperCase() + result.attendee.status.slice(1) : '';
-                document.getElementById('certId').textContent = result.attendee.certificateId || '';
-                document.getElementById('certEvent').textContent = result.eventTitle;
+                document.getElementById('certEvent').textContent = result.eventTitle || '';
                 document.getElementById('verifyForm').classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
             } catch (error) {
