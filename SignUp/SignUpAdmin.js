@@ -1,21 +1,40 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, doc, setDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { doc, setDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showToast, showLoading, hideLoading } from '../PopupSystem.js';
+import { auth, db } from '../firebase.js';
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCKuHUI87RMQK70Cvxm4YO2Jl1UDdoeAfw",
-  authDomain: "certificateverification-8ef83.firebaseapp.com",
-  projectId: "certificateverification-8ef83",
-  storageBucket: "certificateverification-8ef83.firebasestorage.app",
-  messagingSenderId: "797766748638",
-  appId: "1:797766748638:web:2b716ec9e7c6f64c27b54f",
-  measurementId: "G-19BFPGEFEK"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+function getFirebaseErrorMessage(error) {
+  const errCode = (error.code || error.message || '').toLowerCase();
+  
+  if (errCode.includes('auth/email-already-in-use') || errCode.includes('email-already-in-use')) {
+    return 'This email is already registered.';
+  }
+  if (errCode.includes('auth/invalid-email') || errCode.includes('invalid-email')) {
+    return 'Invalid email format.';
+  }
+  if (errCode.includes('auth/weak-password') || errCode.includes('weak-password')) {
+    return 'Password should be at least 6 characters.';
+  }
+  if (errCode.includes('auth/network-request-failed') || errCode.includes('network-request-failed')) {
+    return 'Network error. Please check your internet connection.';
+  }
+  if (errCode.includes('auth/too-many-requests') || errCode.includes('too-many-requests')) {
+    return 'Too many attempts. Please try again later.';
+  }
+  if (errCode.includes('auth/operation-not-allowed') || errCode.includes('operation-not-allowed')) {
+    return 'Email/password sign-up is not enabled. Contact the System Admin.';
+  }
+  
+  if (errCode.includes('permission-denied') || errCode.includes('insufficient permission') || errCode.includes('missing or insufficient permissions')) {
+    return 'Permission denied. Please contact the System Admin to enable sign-up.';
+  }
+  
+  if (errCode.includes('unavailable') || errCode.includes('network')) {
+    return 'Service temporarily unavailable. Please try again.';
+  }
+  
+  return 'An unexpected error occurred. Please try again.';
+}
 
 document.querySelector('form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -27,6 +46,11 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   
   if (password !== confirmPassword) {
     showAlert('Passwords do not match', { type: 'warning' });
+    return;
+  }
+  
+  if (!collegeName || !email || !password) {
+    showAlert('Please fill in all fields', { type: 'warning' });
     return;
   }
   
@@ -63,20 +87,59 @@ document.querySelector('form').addEventListener('submit', async (e) => {
       return;
     }
     
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, 'Admin', userCredential.user.uid), {
-      collegeName: collegeName,
-      email: email,
-      status: 'pending',
-      createdAt: new Date()
-    });
-    await sendEmailVerification(userCredential.user);
+    let userCredential;
+    try {
+      userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    } catch (authError) {
+      hideLoading('signup');
+      showAlert(getFirebaseErrorMessage(authError), { type: 'error' });
+      return;
+    }
+    
+    await userCredential.user.getIdToken();
+    
+    let adminDocRef;
+    try {
+      adminDocRef = doc(db, 'Admin', userCredential.user.uid);
+      await setDoc(adminDocRef, {
+        collegeName: collegeName,
+        email: email,
+        status: 'pending',
+        createdAt: new Date()
+      });
+    } catch (firestoreError) {
+      hideLoading('signup');
+      console.error('Firestore write error:', firestoreError);
+      
+      try {
+        await userCredential.user.delete();
+      } catch (deleteError) {
+        console.error('Failed to cleanup auth user:', deleteError);
+      }
+      
+      if (firestoreError.code === 'permission-denied' || firestoreError.message?.toLowerCase().includes('permission')) {
+        showAlert('Permission denied. The System Admin needs to update Firestore security rules to allow new sign-ups.', { type: 'error' });
+      } else if (firestoreError.code === 'unavailable' || firestoreError.message?.toLowerCase().includes('unavailable')) {
+        showAlert('Firestore is temporarily unavailable. Please try again in a moment.', { type: 'error' });
+      } else {
+        showAlert('Failed to save account data. Error: ' + (firestoreError.message || 'Unknown error'), { type: 'error' });
+      }
+      return;
+    }
+    
+    try {
+      await sendEmailVerification(userCredential.user);
+    } catch (emailError) {
+      console.error('Email verification error:', emailError);
+    }
+    
     hideLoading('signup');
     showToast('Account created! Pending approval by System Admin.');
     window.location.href = '../logIn/LogInAdmin.html';
-   } catch (error) {
+     
+  } catch (error) {
     hideLoading('signup');
-    console.error('Error:', error);
-    showAlert('Invalid Input', { type: 'error' });
+    console.error('Unexpected error:', error);
+    showAlert(getFirebaseErrorMessage(error), { type: 'error' });
   }
 });

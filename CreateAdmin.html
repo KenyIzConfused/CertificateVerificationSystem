@@ -48,56 +48,76 @@
         </form>
         <div id="result" class="mt-4 text-sm hidden"></div>
     </div>
+    <script>
+        function togglePassword(fieldId, btn) {
+            const input = document.getElementById(fieldId);
+            const eyeOpen = btn.querySelector('svg:not([id*="-off"])');
+            const eyeOff = btn.querySelector('svg[id*="-off"]');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeOpen.classList.add('hidden');
+                eyeOff.classList.remove('hidden');
+            } else {
+                input.type = 'password';
+                eyeOpen.classList.remove('hidden');
+                eyeOff.classList.add('hidden');
+            }
+        }
+    </script>
     <script type="module" src="ui-enhancements.js"></script>
-        <script>
-            window.togglePassword = function(fieldId, btn) {
-                const input = document.getElementById(fieldId);
-                const eyeOpen = btn.querySelector('svg:not([id*="-off"])');
-                const eyeOff = btn.querySelector('svg[id*="-off"]');
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    eyeOpen.classList.add('hidden');
-                    eyeOff.classList.remove('hidden');
-                } else {
-                    input.type = 'password';
-                    eyeOpen.classList.remove('hidden');
-                    eyeOff.classList.add('hidden');
-                }
-            };
-        </script>
-        <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCKuHUI87RMQK70Cvxm4YO2Jl1UDdoeAfw",
-            authDomain: "certificateverification-8ef83.firebaseapp.com",
-            projectId: "certificateverification-8ef83",
-            storageBucket: "certificateverification-8ef83.firebasestorage.app",
-            messagingSenderId: "797766748638",
-            appId: "1:797766748638:web:2b716ec9e7c6f64c27b54f",
-            measurementId: "G-19BFPGEFEK"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <script type="module">
+        import { auth, db } from './firebase.js';
+        import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { showAlert, showLoading, hideLoading } from './PopupSystem.js';
 
         document.getElementById('createAdminForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const collegeName = document.getElementById('collegeName').value;
-            const email = document.getElementById('email').value;
+            const collegeName = document.getElementById('collegeName').value.trim();
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            
+
+            if (!collegeName || !email || !password) {
+                showAlert('Please fill in all fields', { type: 'warning' });
+                return;
+            }
+
+            showLoading('createAdmin');
+
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, password);
+                await cred.user.getIdToken();
                 await setDoc(doc(db, 'Admin', cred.user.uid), {
-                    collegeName, email, role: 'system_admin', status: 'approved', createdAt: new Date()
+                    collegeName,
+                    email,
+                    role: 'system_admin',
+                    status: 'approved',
+                    createdAt: new Date()
                 });
-                document.getElementById('result').innerHTML = `<p class="text-green-600">Created! Email: ${email}</p>`;
+                hideLoading('createAdmin');
+                showToast('System Admin created successfully!', 'success');
+                document.getElementById('createAdminForm').reset();
             } catch (err) {
-                document.getElementById('result').innerHTML = `<p class="text-red-600">${err.message}</p>`;
+                hideLoading('createAdmin');
+                console.error('Create admin error:', err);
+                let errorMessage = 'Failed to create admin.';
+                const errCode = (err.code || err.message || '').toLowerCase();
+                if (errCode.includes('permission-denied') || errCode.includes('insufficient permission') || errCode.includes('missing or insufficient permissions')) {
+                    errorMessage = 'Permission denied. Please update Firestore security rules to allow admin creation.';
+                } else if (errCode.includes('auth/email-already-in-use')) {
+                    errorMessage = 'This email is already registered.';
+                } else if (errCode.includes('auth/invalid-email')) {
+                    errorMessage = 'Invalid email format.';
+                } else if (errCode.includes('auth/weak-password')) {
+                    errorMessage = 'Password should be at least 6 characters.';
+                } else if (errCode.includes('network') || errCode.includes('unavailable')) {
+                    errorMessage = 'Network error. Please check your internet connection and try again.';
+                } else if (errCode.includes('auth/too-many-requests')) {
+                    errorMessage = 'Too many attempts. Please try again later.';
+                } else {
+                    errorMessage = err.message || 'An unexpected error occurred.';
+                }
+                showAlert(errorMessage, { type: 'error' });
             }
         });
     </script>
