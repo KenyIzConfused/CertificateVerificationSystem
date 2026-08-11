@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, writeBatch, autoId } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 import { showAlert, showToast, showConfirm } from '../PopupSystem.js';
 
@@ -389,6 +389,192 @@ window.exportAttendeesToExcel = async () => {
 };
 
 document.getElementById('exportAttendeesBtn').addEventListener('click', window.exportAttendeesToExcel);
+
+function getCellValue(values, colIndex) {
+  if (!colIndex || colIndex >= values.length) return '';
+  const val = values[colIndex];
+  if (val === undefined || val === null) return '';
+  return val.toString().trim();
+}
+
+function parseImportDate(val) {
+  if (!val) return '';
+  if (val instanceof Date) {
+    return val.toISOString().split('T')[0];
+  }
+  return val.toString().trim();
+}
+
+async function generateUniqueCertificateIdForBatch(baseList, usedIds) {
+  let id = generateShortId();
+  let attempts = 0;
+  const maxAttempts = 50;
+  while ((baseList.some(a => a.certificateId === id) || usedIds.has(id)) && attempts < maxAttempts) {
+    id = generateShortId();
+    attempts++;
+  }
+  return id;
+}
+
+async function parseAttendeesFromSheet(file) {
+  const workbook = new ExcelJS.Workbook();
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    await workbook.csv.load(file);
+  } else {
+    await workbook.xlsx.load(file);
+  }
+
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) {
+    showAlert('No worksheet found in the file.', { type: 'error' });
+    return null;
+  }
+
+  const rowCount = worksheet.rowCount;
+  const rows = worksheet.getRows(2, rowCount - 1);
+  if (!rows || rows.length === 0) {
+    showAlert('The sheet contains no data rows.', { type: 'error' });
+    return null;
+  }
+
+  const headerValues = worksheet.getRow(1).values;
+  const columnIndex = {};
+  headerValues.forEach((val, idx) => {
+    if (idx === 0 || !val) return;
+    const header = val.toString().toLowerCase().trim();
+    if (header.includes('name') || header.includes('attendee')) {
+      columnIndex.fullName = idx;
+    } else if (header.includes('course')) {
+      columnIndex.course = idx;
+    } else if (header.includes('role')) {
+      columnIndex.role = idx;
+    } else if (header.includes('date')) {
+      columnIndex.dateAttended = idx;
+    } else if (header.includes('status')) {
+      columnIndex.status = idx;
+    } else if (header.includes('cert')) {
+      columnIndex.certificateId = idx;
+    }
+  });
+
+  if (!columnIndex.fullName) {
+    showAlert('Could not detect an attendee "Name" column. Expected headers such as "Full Name" or "Attendee Name".', { type: 'error' });
+    return null;
+  }
+
+  const usedIds = new Set(allAttendees.map(a => a.certificateId).filter(Boolean));
+  const attendeesToImport = [];
+
+  rows.forEach((row) => {
+    if (!row) return;
+    const values = row.values;
+    const allEmpty = values.slice(1).every(v => v === undefined || v === null || (typeof v === 'string' && v.trim() === ''));
+    if (allEmpty) return;
+
+    const fullName = getCellValue(values, columnIndex.fullName);
+    if (!fullName) return;
+
+    let certificateId = getCellValue(values, columnIndex.certificateId);
+    if (!certificateId) {
+      certificateId = generateShortId();
+    }
+    while ((allAttendees.some(a => a.certificateId === certificateId) || usedIds.has(certificateId))) {
+      certificateId = generateShortId();
+    }
+    usedIds.add(certificateId);
+
+    const statusRaw = columnIndex.status ? getCellValue(values, columnIndex.status) : '';
+    let status = '';
+    if (statusRaw) {
+      const s = statusRaw.toLowerCase();
+      if (s === 'present' || s === 'absent' || s === 'late') status = s;
+    }
+
+    const dateValue = columnIndex.dateAttended ? values[columnIndex.dateAttended] : undefined;
+    const dateAttended = parseImportDate(dateValue) || getTodayDateString();
+
+    const attendee = {
+      fullName: fullName,
+      course: getCellValue(values, columnIndex.course),
+      role: getCellValue(values, columnIndex.role),
+      dateAttended: dateAttended,
+      certificateId: certificateId
+    };
+    if (status) attendee.status = status;
+    attendeesToImport.push(attendee);
+  });
+
+  if (attendeesToImport.length === 0) {
+    showAlert('No valid attendee rows were found to import.', { type: 'warning' });
+    return null;
+  }
+
+  return attendeesToImport;
+}
+
+const importSheetInput = document.getElementById('importSheetInput');
+const importSheetBtn = document.getElementById('importSheetBtn');
+
+importSheetBtn.addEventListener('click', () => {
+  importSheetInput.value = '';
+  importSheetInput.click();
+});
+
+importSheetInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['xlsx', 'xls', 'xlsb', 'csv'].includes(ext)) {
+    showAlert('Unsupported file type. Please upload an Excel (.xlsx/.xls/.xlsb) or CSV (.csv) file.', { type: 'error' });
+    importSheetInput.value = '';
+    return;
+  }
+
+  const originalLabel = importSheetBtn.innerHTML;
+  try {
+    importSheetBtn.disabled = true;
+    importSheetBtn.innerHTML = '<span class="animate-pulse">Reading file...</span>';
+
+    const attendeesToImport = await parseAttendeesFromSheet(file);
+    if (!attendeesToImport) return;
+
+    importSheetBtn.innerHTML = '<span class="animate-pulse">Loaded ' + attendeesToImport.length + ' rows</span>';
+
+    if (!currentEvent) {
+      showAlert('No event is selected. Cannot import attendees.', { type: 'error' });
+      return;
+    }
+    if (currentEvent.status === 'closed') {
+      showAlert('This event is closed. Attendees can no longer be imported.', { type: 'error' });
+      return;
+    }
+
+    const confirmed = await showConfirm(attendeesToImport.length + ' attendees found. Add them to the database?');
+    if (confirmed !== 1) return;
+
+    const batch = writeBatch(db);
+    attendeesToImport.forEach((attendee) => {
+      const docRef = doc(collection(db, 'Events', currentEventId, 'Attendees'), autoId());
+      batch.set(docRef, attendee);
+    });
+    await batch.commit();
+
+    showToast(attendeesToImport.length + ' attendees imported successfully!');
+  } catch (error) {
+    console.error('Error importing sheet:', error);
+    let msg = 'Failed to import sheet. Please try again.';
+    if (error.message && (error.message.includes('Signature') || error.message.includes('Invalid'))) {
+      msg = 'Invalid or unsupported Excel file. Please upload a valid .xlsx file.';
+    }
+    showAlert(msg, { type: 'error' });
+  } finally {
+    importSheetBtn.disabled = false;
+    importSheetBtn.innerHTML = originalLabel;
+    importSheetInput.value = '';
+  }
+});
 
 document.getElementById('attendeesSearch').addEventListener('input', (e) => {
   renderAttendees(allAttendees, e.target.value);
