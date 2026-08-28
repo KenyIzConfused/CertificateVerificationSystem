@@ -1,6 +1,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
 
 const themes = {
@@ -75,6 +77,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
+const functionsSDK = getFunctions(app);
 
 let currentUser = null;
 
@@ -255,6 +259,13 @@ window.handleEventUpdate = (events) => {
               </svg>
               Manage Attendees
             </button>
+            <button onclick="window.certificateManagement('${event.id}')"
+              class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+              </svg>
+              Certificate Management
+            </button>
             <button onclick="window.closeEvent('${event.id}')" 
               class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,8 +324,110 @@ window.exportSingleEvent = async (eventId, eventTitle) => {
   }
 };
 
-window.generateCertificates = () => {
+window.generateCertificates = async (eventId) => {
+  try {
+    const eventDoc = await getDoc(doc(db, 'Events', eventId));
+    if (!eventDoc.exists) {
+      showAlert('Event not found.', { type: 'error' });
+      return;
+    }
+    const fmtDoc = await getDoc(doc(db, 'Events', eventId, 'certificateFormats', 'default'));
+    if (!fmtDoc.exists) {
+      showAlert('No certificate format is set for this event. Add one first using "Add Certificate Format".', { type: 'warning' });
+      return;
+    }
+  } catch (e) {
+    console.error('Error checking event/format:', e);
+    showAlert('Failed to check event. Please try again.', { type: 'error' });
+    return;
+  }
+
+  const confirmed = await showConfirm('Generate and email certificates for all attendees with a saved email?');
+  if (confirmed !== 1) return;
+
+  try {
+    const generate = httpsCallable(functionsSDK, 'generateAndEmailCertificates');
+    const result = await generate({ eventId: eventId });
+    const data = result.data || {};
+    const summary = 'Certificates: ' + data.sent + ' sent, ' + data.skipped + ' skipped (no email), ' + data.failed + ' failed (of ' + data.total + ').';
+    if (data.failed > 0 || !data.smtpVerified) {
+      const detail = data.smtpError ? ' SMTP error: ' + data.smtpError : '';
+      showAlert(summary + detail, { type: 'error' });
+    } else {
+      showToast(summary);
+    }
+  } catch (error) {
+    console.error('Error generating certificates:', error);
+    let message = 'Failed to generate certificates.';
+    if (error.message && error.message.includes('certificate format')) {
+      message = 'No certificate format configured for this event. Add one first.';
+    }
+    showAlert(message, { type: 'error' });
+  }
 };
+
+window.addCertificateFormat = async (eventId) => {
+  document.getElementById('certFormatEventId').value = eventId;
+  document.getElementById('certFormatName').value = '';
+  document.getElementById('certTemplateFile').value = '';
+  const modal = document.getElementById('certFormatModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+};
+
+window.closeCertFormatModal = () => {
+  const modal = document.getElementById('certFormatModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+};
+
+document.getElementById('certFormatForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.querySelector('#certFormatForm button[type="submit"]');
+  if (!submitBtn || submitBtn.disabled) return;
+
+  const eventId = document.getElementById('certFormatEventId').value;
+  const formatName = document.getElementById('certFormatName').value;
+  const file = document.getElementById('certTemplateFile').files[0];
+
+  if (!file) {
+    showAlert('Please select a .docx template file.', { type: 'error' });
+    return;
+  }
+  if (!file.name.toLowerCase().endsWith('.docx')) {
+    showAlert('The template must be a .docx file.', { type: 'error' });
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Uploading...';
+
+  try {
+    const storagePath = 'certificate-format-templates/' + eventId + '/' + Date.now() + '_' + file.name;
+    const fileRef = ref(storage, storagePath);
+    await uploadBytes(fileRef, file);
+    const downloadURL = await getDownloadURL(fileRef);
+
+    await setDoc(doc(db, 'Events', eventId, 'certificateFormats', 'default'), {
+      formatName: formatName,
+      templateName: file.name,
+      templatePath: storagePath,
+      templateUrl: downloadURL,
+      placeholders: ['fullName', 'course', 'role', 'dateAttended', 'certificateId', 'eventTitle', 'eventDate', 'eventTime', 'eventLocation', 'duration', 'department'],
+      uploadedBy: (currentUser ? currentUser.uid : null),
+      createdAt: new Date()
+    });
+
+    showToast('Certificate format saved!');
+    window.closeCertFormatModal();
+  } catch (error) {
+    console.error('Error saving certificate format:', error);
+    showAlert('Failed to save certificate format. ' + (error.message || ''), { type: 'error' });
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save Format';
+  }
+});
 window.deleteEvent = async (eventId) => {
   const confirmed = await showConfirm('Are you sure you want to delete this event?');
   if (confirmed !== 1) return;

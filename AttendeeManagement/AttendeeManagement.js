@@ -1,22 +1,28 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, writeBatch, autoId } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 
 import { showAlert, showToast, showConfirm } from '../PopupSystem.js';
 
+let currentEventId = localStorage.getItem('currentEventId');
+let currentEvent = null;
+let allAttendees = [];
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
-  authDomain: "ipprc-certificate-verification.firebaseapp.com",
-  projectId: "ipprc-certificate-verification",
-  storageBucket: "ipprc-certificate-verification.firebasestorage.app",
-  messagingSenderId: "1056133117009",
-  appId: "1:1056133117009:web:a1fcd175977a76d27c7470",
-  measurementId: "G-R7PDE8B834"
+    apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
+    authDomain: "ipprc-certificate-verification.firebaseapp.com",
+    projectId: "ipprc-certificate-verification",
+    storageBucket: "ipprc-certificate-verification.firebasestorage.app",
+    messagingSenderId: "1056133117009",
+    appId: "1:1056133117009:web:a1fcd175977a76d27c7470",
+    measurementId: "G-R7PDE8B834"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const functionsSDK = getFunctions(app);
 
 function generateShortId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -79,33 +85,50 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   const attendeeName = document.getElementById('attendeeName').value;
   const course = document.getElementById('course').value;
   const role = document.getElementById('role').value;
+  const attendeeEmail = document.getElementById('attendeeEmail').value.trim();
   const dateAttended = getTodayDateString();
 
+  console.log('Adding attendee:', { attendeeName, course, role, attendeeEmail, dateAttended, eventId: currentEventId });
   try {
     const certificateId = await generateUniqueCertificateId(allAttendees);
-    await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), {
+    const attendeeData = {
       fullName: attendeeName,
       course: course,
       role: role,
       dateAttended: dateAttended,
+      email: attendeeEmail,
       certificateId: certificateId
-    });
-
-    console.log('Attendee added successfully');
+    };
+    console.log('Writing to Firestore:', attendeeData);
+    const docRef = await addDoc(collection(db, 'Events', currentEventId, 'Attendees'), attendeeData);
+    console.log('Attendee added successfully with ID:', docRef.id);
+    
+    // Verify the data was written by fetching it back
+    const verifyDoc = await getDoc(docRef);
+    console.log('Verification - document exists:', verifyDoc.exists(), 'data:', verifyDoc.data());
+    
+    // Also fetch all attendees to verify
+    const allDocs = await getDocs(collection(db, 'Events', currentEventId, 'Attendees'));
+    console.log('Total attendees in Firestore after add:', allDocs.size);
+    allDocs.forEach(d => console.log('  -', d.id, d.data()));
+    
     document.getElementById('addAttendeeForm').reset();
     showToast('Attendee added successfully!');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Add Attendee';
   } catch (error) {
     console.error('Error adding attendee:', error);
-    showAlert('Failed to add attendee. Please try again.', { type: 'error' });
+    showAlert('Failed to add attendee: ' + error.message, { type: 'error' });
     submitBtn.disabled = false;
     submitBtn.textContent = 'Add Attendee';
   }
 });
 
 function renderAttendees(attendeesList, searchTerm = '') {
+  console.log('renderAttendees called with:', attendeesList.length, 'attendees, searchTerm:', searchTerm);
   const filtered = filterAttendees(attendeesList, searchTerm);
+  console.log('After filtering:', filtered.length, 'attendees');
+  console.log('Filtered attendees:', filtered);
 
   console.log('Rendering attendees, count:', filtered.length);
   document.getElementById('attendeeCount').textContent = attendeesList.length;
@@ -138,7 +161,7 @@ function renderTable(attendeesList) {
 
   noAttendees.style.display = 'none';
 
-  tableBody.innerHTML = attendeesList.map(attendee => {
+  const html = attendeesList.map(attendee => {
     let statusClass = 'bg-gray-400/30 text-gray-200';
     let statusLabel = 'PENDING';
     const isStatusMarked = !!attendee.status;
@@ -179,6 +202,7 @@ function renderTable(attendeesList) {
         </td>
         <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
         <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
+        <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.email || '')}</td>
         <td class="py-4 px-2 text-green-200/80">${attendee.dateAttended}</td>
         <td class="py-4 px-2">
           <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${statusClass}">
@@ -212,6 +236,8 @@ function renderTable(attendeesList) {
       </tr>
     `;
   }).join('');
+  console.log('Setting table HTML, length:', html.length);
+  tableBody.innerHTML = html;
 }
 
 window.markPresent = async (attendeeId) => {
@@ -445,6 +471,8 @@ async function parseAttendeesFromSheet(file) {
     const header = val.toString().toLowerCase().trim();
     if (header.includes('name') || header.includes('attendee')) {
       columnIndex.fullName = idx;
+    } else if (header.includes('email') || header.includes('mail')) {
+      columnIndex.email = idx;
     } else if (header.includes('course')) {
       columnIndex.course = idx;
     } else if (header.includes('role')) {
@@ -498,6 +526,7 @@ async function parseAttendeesFromSheet(file) {
       fullName: fullName,
       course: getCellValue(values, columnIndex.course),
       role: getCellValue(values, columnIndex.role),
+      email: getCellValue(values, columnIndex.email),
       dateAttended: dateAttended,
       certificateId: certificateId
     };
@@ -556,7 +585,7 @@ importSheetInput.addEventListener('change', async (e) => {
 
     const batch = writeBatch(db);
     attendeesToImport.forEach((attendee) => {
-      const docRef = doc(collection(db, 'Events', currentEventId, 'Attendees'), autoId());
+      const docRef = doc(collection(db, 'Events', currentEventId, 'Attendees'));
       batch.set(docRef, attendee);
     });
     await batch.commit();
@@ -575,6 +604,37 @@ importSheetInput.addEventListener('change', async (e) => {
     importSheetInput.value = '';
   }
 });
+
+window.sendCertificates = async () => {
+  if (!currentEvent) {
+    showAlert('No event selected.', { type: 'error' });
+    return;
+  }
+  const confirmed = await showConfirm('Generate and email certificates for all attendees with a saved email?');
+  if (confirmed !== 1) return;
+
+  try {
+    const generate = httpsCallable(functionsSDK, 'generateAndEmailCertificates');
+    const result = await generate({ eventId: currentEventId });
+    const data = result.data || {};
+    const summary = 'Certificates: ' + data.sent + ' sent, ' + data.skipped + ' skipped (no email), ' + data.failed + ' failed (of ' + data.total + ').';
+    if (data.failed > 0 || !data.smtpVerified) {
+      const detail = data.smtpError ? ' SMTP error: ' + data.smtpError : '';
+      showAlert(summary + detail, { type: 'error' });
+    } else {
+      showToast(summary);
+    }
+  } catch (error) {
+    console.error('Error sending certificates:', error);
+    let message = 'Failed to send certificates.';
+    if (error.message && error.message.includes('certificate format')) {
+      message = 'No certificate format configured for this event. Add one in Event CRUD.';
+    }
+    showAlert(message, { type: 'error' });
+  }
+};
+
+document.getElementById('sendCertificatesBtn').addEventListener('click', window.sendCertificates);
 
 document.getElementById('attendeesSearch').addEventListener('input', (e) => {
   renderAttendees(allAttendees, e.target.value);
@@ -607,21 +667,23 @@ onAuthStateChanged(auth, async (user) => {
 
     console.log('Setting up listener for eventId:', currentEventId);
     const q = query(collection(db, 'Events', currentEventId, 'Attendees'));
-    onSnapshot(q, (snapshot) => {
-      console.log('Snapshot received, docs:', snapshot.size);
-      allAttendees = [];
-      snapshot.forEach((docSnap) => {
-        allAttendees.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
-    });
+    onSnapshot(q,
+      (snapshot) => {
+        console.log('Snapshot received, docs:', snapshot.size);
+        allAttendees = [];
+        snapshot.forEach((docSnap) => {
+          allAttendees.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        console.log('All attendees after snapshot:', allAttendees);
+        renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
+      },
+      (error) => {
+        console.error('onSnapshot error:', error);
+      }
+    );
 
   } catch (error) {
     console.error('Error loading event:', error);
     window.location.href = '../EventCRUD/EventCRUD.html';
   }
 });
-
-let currentEventId = localStorage.getItem('currentEventId');
-let currentEvent = null;
-let allAttendees = [];
