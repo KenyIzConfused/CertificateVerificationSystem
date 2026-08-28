@@ -501,7 +501,10 @@ window.editEvent = async (eventId) => {
   document.getElementById('cancelEditBtn').classList.remove('hidden');
 };
 
-window.cancelEdit = () => {
+window.certificateManagement = (eventId) => {
+  localStorage.setItem('certEventId', eventId);
+  window.location.href = '../CertificateManagement/CertificateManagement.html';
+};
   const form = document.getElementById('eventForm');
   delete form.dataset.editId;
   form.reset();

@@ -170,7 +170,7 @@ exports.generateAndEmailCertificates = onCall(
         });
 
         // Generate verification URL for QR code
-        const verificationUrl = 'https://ipprc-certificate-verification.web.app/CertificateVerification/CertificateVerification.html?id=' + certId;
+        const verificationUrl = 'https://certificate-verification-system-6nx90yh8u.vercel.app/CertificateVerification/CertificateVerification.html?id=' + certId;
 
         await transporter.sendMail({
           from: '"' + (event.department || 'Information Unit') + '" <' + creds.email + '>',
@@ -241,7 +241,7 @@ exports.generateQRCodes = onCall(
       .collection('Attendees').get();
     const attendees = attSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    const verificationBaseUrl = 'https://ipprc-certificate-verification.web.app/CertificateVerification/CertificateVerification.html?id=';
+    const verificationBaseUrl = 'https://certificate-verification-system-6nx90yh8u.vercel.app/CertificateVerification/CertificateVerification.html?id=';
     let updated = 0;
 
     for (const attendee of attendees) {
