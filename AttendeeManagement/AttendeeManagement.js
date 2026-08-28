@@ -634,8 +634,6 @@ window.sendCertificates = async () => {
   }
 };
 
-document.getElementById('sendCertificatesBtn').addEventListener('click', window.sendCertificates);
-
 document.getElementById('attendeesSearch').addEventListener('input', (e) => {
   renderAttendees(allAttendees, e.target.value);
 });
