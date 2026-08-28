@@ -505,6 +505,8 @@ window.certificateManagement = (eventId) => {
   localStorage.setItem('certEventId', eventId);
   window.location.href = '../CertificateManagement/CertificateManagement.html';
 };
+
+window.cancelEdit = () => {
   const form = document.getElementById('eventForm');
   delete form.dataset.editId;
   form.reset();
