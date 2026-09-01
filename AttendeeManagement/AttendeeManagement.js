@@ -60,7 +60,8 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('addAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const submitBtn = document.querySelector('#addAttendeeForm button[type="submit"]');
@@ -542,10 +543,11 @@ async function parseAttendeesFromSheet(file) {
   return attendeesToImport;
 }
 
-const importSheetInput = document.getElementById('importSheetInput');
-const importSheetBtn = document.getElementById('importSheetBtn');
+document.addEventListener('DOMContentLoaded', () => {
+  const importSheetInput = document.getElementById('importSheetInput');
+  const importSheetBtn = document.getElementById('importSheetBtn');
 
-importSheetBtn.addEventListener('click', () => {
+  importSheetBtn.addEventListener('click', () => {
   importSheetInput.value = '';
   importSheetInput.click();
 });
@@ -604,35 +606,6 @@ importSheetInput.addEventListener('change', async (e) => {
     importSheetInput.value = '';
   }
 });
-
-window.sendCertificates = async () => {
-  if (!currentEvent) {
-    showAlert('No event selected.', { type: 'error' });
-    return;
-  }
-  const confirmed = await showConfirm('Generate and email certificates for all attendees with a saved email?');
-  if (confirmed !== 1) return;
-
-  try {
-    const generate = httpsCallable(functionsSDK, 'generateAndEmailCertificates');
-    const result = await generate({ eventId: currentEventId });
-    const data = result.data || {};
-    const summary = 'Certificates: ' + data.sent + ' sent, ' + data.skipped + ' skipped (no email), ' + data.failed + ' failed (of ' + data.total + ').';
-    if (data.failed > 0 || !data.smtpVerified) {
-      const detail = data.smtpError ? ' SMTP error: ' + data.smtpError : '';
-      showAlert(summary + detail, { type: 'error' });
-    } else {
-      showToast(summary);
-    }
-  } catch (error) {
-    console.error('Error sending certificates:', error);
-    let message = 'Failed to send certificates.';
-    if (error.message && error.message.includes('certificate format')) {
-      message = 'No certificate format configured for this event. Add one in Event CRUD.';
-    }
-    showAlert(message, { type: 'error' });
-  }
-};
 
 document.getElementById('attendeesSearch').addEventListener('input', (e) => {
   renderAttendees(allAttendees, e.target.value);
