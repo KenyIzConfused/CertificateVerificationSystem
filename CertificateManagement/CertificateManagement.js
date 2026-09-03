@@ -1,7 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 import { showAlert, showToast } from '../PopupSystem.js';
 
@@ -18,11 +17,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
+// Firebase Storage removed - using localStorage instead (no billing required)
 
 const VERIFICATION_URL = 'https://certificate-verification-system-6nx90yh8u.vercel.app/CertificateVerification/CertificateVerification.html?id=';
 
-let currentEventId = localStorage.getItem('certEventId');
+let currentEventId = null;
 let currentEvent = null;
 let allAttendees = [];
 let templateBytes = null;
@@ -33,21 +32,36 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-async function generateQRCode(data) {
-    return new Promise((resolve, reject) => {
-        QRCode.toDataURL(data, { width: 150, margin: 2 }, (err, url) => {
-            if (err) reject(err);
-            else resolve(url);
-        });
-    });
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+function base64ToArrayBuffer(base64) {
+    const binary = atob(base64);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+function getTemplateCacheKey(eventId) {
+    return `cert_template_${eventId}`;
 }
 
 async function generateCertificate(attendee, templateBytes) {
-    const zip = new PizZip(templateBytes);
-    const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+    const zip = new window.PizZip(templateBytes);
+    const doc = new window.docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
     const renderData = {
-        fullName: attendee.fullName || '',
+        name: attendee.fullName || '',
         course: attendee.course || '',
         role: attendee.role || '',
         dateAttended: attendee.dateAttended || '',
@@ -55,7 +69,7 @@ async function generateCertificate(attendee, templateBytes) {
     };
 
     doc.render(renderData);
-    return doc.getZip().generate({ type: 'nodebuffer' });
+    return doc.getZip().generate({ type: 'uint8array' });
 }
 
 function downloadFile(buffer, filename) {
@@ -83,10 +97,6 @@ async function renderAttendees() {
     noAttendees.style.display = 'none';
 
     tableBody.innerHTML = allAttendees.map(attendee => {
-        const qrCodeHtml = attendee.qrCode
-            ? `<img src="${attendee.qrCode}" alt="QR" class="w-12 h-12">`
-            : `<span class="text-green-200/50 text-xs">No QR</span>`;
-
         return `
             <tr class="border-b border-green-400/20 hover:bg-white/10 transition-colors">
                 <td class="py-4 px-2">
@@ -99,7 +109,6 @@ async function renderAttendees() {
                         ${escapeHtml(attendee.certificateId || '')}
                     </span>
                 </td>
-                <td class="py-4 px-2">${qrCodeHtml}</td>
                 <td class="py-4 px-2">
                     <div class="flex gap-1 flex-wrap">
                         <button onclick="window.downloadCertificate('${attendee.id}')"
@@ -135,6 +144,139 @@ window.downloadCertificate = async (attendeeId) => {
     }
 };
 
+window.sendSingleCertificate = async (attendeeId) => {
+    window.closeSelectModal();
+    window.closeSendEmailModal();
+
+    if (!templateBytes) {
+        showAlert('Please upload a certificate template first.', { type: 'warning' });
+        return;
+    }
+
+    const attendee = allAttendees.find(a => a.id === attendeeId);
+    if (!attendee) {
+        showAlert('Attendee not found.', { type: 'error' });
+        return;
+    }
+
+    if (!attendee.email) {
+        showAlert(`${attendee.fullName} does not have an email address.`, { type: 'warning' });
+        return;
+    }
+
+    const statusEl = document.getElementById('actionStatus');
+    statusEl.classList.remove('hidden');
+    statusEl.textContent = `Generating certificate for ${attendee.fullName}...`;
+
+    try {
+        const certBuffer = await generateCertificate(attendee, templateBytes);
+        const blob = new Blob([certBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const url = URL.createObjectURL(blob);
+
+        const previewWindow = window.open(url, '_blank');
+        if (!previewWindow) {
+            downloadFile(certBuffer, `Certificate_${attendee.certificateId}_${attendee.fullName}.docx`);
+        }
+
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+        const subject = encodeURIComponent(`Your Certificate - ${currentEvent.title}`);
+        const body = encodeURIComponent(`Dear ${attendee.fullName},\n\nPlease find your certificate for "${currentEvent.title}" attached to this email.\n\nCertificate ID: ${attendee.certificateId}\n\nBest regards,\nInformation Unit (IPPRC)`);
+        const mailtoLink = `mailto:${encodeURIComponent(attendee.email)}?subject=${subject}&body=${body}`;
+
+        setTimeout(() => {
+            window.location.href = mailtoLink;
+        }, 500);
+
+        statusEl.textContent = `Certificate generated for ${attendee.fullName}! Check your email client.`;
+        showToast('Certificate generated! Your email client should open shortly.');
+    } catch (error) {
+        console.error('Error generating certificate:', error);
+        showAlert('Failed to generate certificate: ' + error.message, { type: 'error' });
+        statusEl.textContent = 'Failed to generate certificate.';
+    }
+};
+
+window.openSendEmailModal = () => {
+    if (!templateBytes) {
+        showAlert('Please upload a certificate template first.', { type: 'warning' });
+        return;
+    }
+
+    const list = document.getElementById('sendEmailList');
+    const attendeesWithEmail = allAttendees.filter(a => a.email);
+
+    if (attendeesWithEmail.length === 0) {
+        showAlert('No attendees with email addresses found.', { type: 'warning' });
+        return;
+    }
+
+    list.innerHTML = attendeesWithEmail.map(attendee => `
+        <button onclick="window.sendSingleCertificate('${attendee.id}')" class="action-item w-full p-3 text-left flex items-center justify-between hover:bg-green-400/20">
+            <div>
+                <div class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</div>
+                <div class="text-xs text-green-200/60">${escapeHtml(attendee.email)} • ${escapeHtml(attendee.course || '')} • ${escapeHtml(attendee.role || '')}</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-blue-400/30 text-blue-200">${escapeHtml(attendee.certificateId || '')}</span>
+        </button>
+    `).join('');
+
+    const statusEl = document.getElementById('sendEmailStatus');
+    statusEl.textContent = `Select an attendee to send their certificate via email (${attendeesWithEmail.length} with email):`;
+
+    const modal = document.getElementById('sendEmailModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+};
+
+window.closeSendEmailModal = () => {
+    const modal = document.getElementById('sendEmailModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+};
+
+window.sendAllEmails = async () => {
+    window.closeSendEmailModal();
+
+    if (!templateBytes) {
+        showAlert('Please upload a certificate template first.', { type: 'warning' });
+        return;
+    }
+
+    const attendeesWithEmail = allAttendees.filter(a => a.email);
+    if (attendeesWithEmail.length === 0) {
+        showAlert('No attendees with email addresses found.', { type: 'warning' });
+        return;
+    }
+
+    const statusEl = document.getElementById('actionStatus');
+    statusEl.classList.remove('hidden');
+    statusEl.textContent = `Generating ${attendeesWithEmail.length} certificates...`;
+
+    let generated = 0;
+    for (const attendee of attendeesWithEmail) {
+        try {
+            const certBuffer = await generateCertificate(attendee, templateBytes);
+            downloadFile(certBuffer, `Certificate_${attendee.certificateId}_${attendee.fullName}.docx`);
+
+            const subject = encodeURIComponent(`Your Certificate - ${currentEvent.title}`);
+            const body = encodeURIComponent(`Dear ${attendee.fullName},\n\nPlease find your certificate for "${currentEvent.title}" attached to this email.\n\nCertificate ID: ${attendee.certificateId}\n\nBest regards,\nInformation Unit (IPPRC)`);
+            const mailtoLink = `mailto:${encodeURIComponent(attendee.email)}?subject=${subject}&body=${body}`;
+            
+            setTimeout(() => {
+                window.location.href = mailtoLink;
+            }, generated * 800);
+
+            generated++;
+        } catch (error) {
+            console.error('Error generating certificate for', attendee.fullName, error);
+        }
+    }
+
+    statusEl.textContent = `Downloaded ${generated} certificates! Your email client should open shortly.`;
+    showToast(`Downloaded ${generated} certificates! Check your email client.`);
+};
+
 document.getElementById('uploadTemplateBtn').addEventListener('click', async () => {
     const fileInput = document.getElementById('templateFile');
     const statusEl = document.getElementById('templateStatus');
@@ -153,9 +295,8 @@ document.getElementById('uploadTemplateBtn').addEventListener('click', async () 
     try {
         templateBytes = await file.arrayBuffer();
 
-        // Upload to Firebase Storage
-        const storageRef = ref(storage, `templates/${currentEventId}/template.docx`);
-        await uploadBytes(storageRef, file);
+        // Cache template in localStorage for quick reuse (avoids Firebase Storage CORS fetch)
+        localStorage.setItem(getTemplateCacheKey(currentEventId), arrayBufferToBase64(templateBytes));
 
         statusEl.textContent = 'Template uploaded successfully!';
         statusEl.classList.remove('hidden');
@@ -166,37 +307,80 @@ document.getElementById('uploadTemplateBtn').addEventListener('click', async () 
     }
 });
 
-document.getElementById('generateQRCodesBtn').addEventListener('click', async () => {
-    const statusEl = document.getElementById('actionStatus');
-    statusEl.classList.remove('hidden');
-    statusEl.textContent = 'Generating QR codes...';
-
-    let generated = 0;
-
-    for (const attendee of allAttendees) {
-        if (!attendee.certificateId) continue;
-
-        try {
-            const verificationUrl = VERIFICATION_URL + attendee.certificateId;
-            const qrCodeDataUrl = await generateQRCode(verificationUrl);
-
-            // Save QR code to Firestore
-            await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendee.id), {
-                qrCode: qrCodeDataUrl,
-                verificationUrl: verificationUrl
-            });
-
-            attendee.qrCode = qrCodeDataUrl;
-            generated++;
-        } catch (error) {
-            console.error('Error generating QR for', attendee.fullName, error);
-        }
+window.openSelectAttendeeModal = () => {
+    if (!templateBytes) {
+        showAlert('Please upload a certificate template first.', { type: 'warning' });
+        return;
     }
 
-    statusEl.textContent = `Generated ${generated} QR codes!`;
-    showToast(`Generated ${generated} QR codes!`);
-    renderAttendees();
-});
+    const list = document.getElementById('attendeeSelectList');
+    if (allAttendees.length === 0) {
+        showAlert('No attendees to generate certificates for.', { type: 'warning' });
+        return;
+    }
+
+    list.innerHTML = allAttendees.map(attendee => `
+        <button onclick="window.generateSingleCertificate('${attendee.id}')" class="action-item w-full p-3 text-left flex items-center justify-between hover:bg-green-400/20">
+            <div>
+                <div class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</div>
+                <div class="text-xs text-green-200/60">${escapeHtml(attendee.course || '')} • ${escapeHtml(attendee.role || '')}</div>
+            </div>
+            <span class="text-xs px-2 py-1 rounded-full bg-blue-400/30 text-blue-200">${escapeHtml(attendee.certificateId || '')}</span>
+        </button>
+    `).join('');
+
+    const modal = document.getElementById('selectAttendeeModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+};
+
+window.closeSelectModal = () => {
+    const modal = document.getElementById('selectAttendeeModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+};
+
+window.generateSingleCertificate = async (attendeeId) => {
+    window.closeSelectModal();
+
+    if (!templateBytes) {
+        showAlert('Please upload a certificate template first.', { type: 'warning' });
+        return;
+    }
+
+    const attendee = allAttendees.find(a => a.id === attendeeId);
+    if (!attendee) {
+        showAlert('Attendee not found.', { type: 'error' });
+        return;
+    }
+
+    const statusEl = document.getElementById('actionStatus');
+    statusEl.classList.remove('hidden');
+    statusEl.textContent = `Generating certificate for ${attendee.fullName}...`;
+
+    try {
+        const certBuffer = await generateCertificate(attendee, templateBytes);
+        const blob = new Blob([certBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const url = URL.createObjectURL(blob);
+        const previewWindow = window.open(url, '_blank');
+
+        if (!previewWindow) {
+            downloadFile(certBuffer, `Certificate_${attendee.certificateId}_${attendee.fullName}.docx`);
+        }
+
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+        statusEl.textContent = `Certificate generated for ${attendee.fullName}!`;
+        showToast('Certificate generated! Check the new tab or your downloads.');
+    } catch (error) {
+        console.error('Error generating certificate:', error);
+        showAlert('Failed to generate certificate: ' + error.message, { type: 'error' });
+        statusEl.textContent = 'Failed to generate certificate.';
+    }
+};
+
+document.getElementById('generateSingleCertBtn').addEventListener('click', window.openSelectAttendeeModal);
+document.getElementById('sendSingleCertBtn').addEventListener('click', window.openSendEmailModal);
 
 document.getElementById('generateAllCertsBtn').addEventListener('click', async () => {
     if (!templateBytes) {
@@ -224,11 +408,48 @@ document.getElementById('generateAllCertsBtn').addEventListener('click', async (
     showToast(`Downloaded ${generated} certificates!`);
 });
 
+document.getElementById('sendAllCertsBtn').addEventListener('click', window.openSendEmailModal);
+
+window.generateAllFromModal = async () => {
+    window.closeSelectModal();
+
+    if (!templateBytes) {
+        showAlert('Please upload a certificate template first.', { type: 'warning' });
+        return;
+    }
+
+    if (allAttendees.length === 0) {
+        showAlert('No attendees to generate certificates for.', { type: 'warning' });
+        return;
+    }
+
+    const statusEl = document.getElementById('actionStatus');
+    statusEl.classList.remove('hidden');
+    statusEl.textContent = `Generating ${allAttendees.length} certificates...`;
+
+    let generated = 0;
+    for (const attendee of allAttendees) {
+        try {
+            const certBuffer = await generateCertificate(attendee, templateBytes);
+            downloadFile(certBuffer, `Certificate_${attendee.certificateId}_${attendee.fullName}.docx`);
+            generated++;
+        } catch (error) {
+            console.error('Error generating certificate for', attendee.fullName, error);
+        }
+    }
+
+    statusEl.textContent = `Downloaded ${generated} certificates!`;
+    showToast(`Downloaded ${generated} certificates!`);
+};
+
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         window.location.href = '../logIn/LogInAdmin.html';
         return;
     }
+
+    // Re-read event ID after auth state is confirmed
+    currentEventId = localStorage.getItem('certEventId');
 
     if (!currentEventId) {
         window.location.href = '../EventCRUD/EventCRUD.html';
@@ -246,16 +467,16 @@ onAuthStateChanged(auth, async (user) => {
         currentEvent = { id: eventDoc.id, ...eventDoc.data() };
         document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
 
-        // Load template if exists
-        try {
-            const templateRef = ref(storage, `templates/${currentEventId}/template.docx`);
-            const templateUrl = await getDownloadURL(templateRef);
-            const response = await fetch(templateUrl);
-            templateBytes = await response.arrayBuffer();
-            document.getElementById('templateStatus').textContent = 'Template loaded from storage.';
+        // Load template - check localStorage cache first (avoids CORS issues on local dev)
+        const cachedTemplate = localStorage.getItem(getTemplateCacheKey(currentEventId));
+        if (cachedTemplate) {
+            templateBytes = base64ToArrayBuffer(cachedTemplate);
+            document.getElementById('templateStatus').textContent = 'Template loaded from cache.';
             document.getElementById('templateStatus').classList.remove('hidden');
-        } catch (e) {
-            // No template uploaded yet
+        } else {
+            // No template available - user needs to upload one
+            document.getElementById('templateStatus').textContent = 'No template cached. Please upload a template.';
+            document.getElementById('templateStatus').classList.remove('hidden');
         }
 
         // Load attendees

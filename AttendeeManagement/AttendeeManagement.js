@@ -1,11 +1,10 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 
 import { showAlert, showToast, showConfirm } from '../PopupSystem.js';
 
-let currentEventId = localStorage.getItem('currentEventId');
+let currentEventId = null;
 let currentEvent = null;
 let allAttendees = [];
 
@@ -22,7 +21,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const functionsSDK = getFunctions(app);
 
 function generateShortId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -112,9 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const allDocs = await getDocs(collection(db, 'Events', currentEventId, 'Attendees'));
     console.log('Total attendees in Firestore after add:', allDocs.size);
     allDocs.forEach(d => console.log('  -', d.id, d.data()));
-    
+
     document.getElementById('addAttendeeForm').reset();
     showToast('Attendee added successfully!');
+    await loadAttendees();
     submitBtn.disabled = false;
     submitBtn.textContent = 'Add Attendee';
   } catch (error) {
@@ -123,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Add Attendee';
   }
+});
 });
 
 function renderAttendees(attendeesList, searchTerm = '') {
@@ -135,6 +135,21 @@ function renderAttendees(attendeesList, searchTerm = '') {
   document.getElementById('attendeeCount').textContent = attendeesList.length;
 
   renderTable(filtered);
+}
+
+async function loadAttendees() {
+  if (!currentEventId) return;
+  console.log('Reloading attendees for eventId:', currentEventId);
+  try {
+    const attendeesSnap = await getDocs(collection(db, 'Events', currentEventId, 'Attendees'));
+    allAttendees = [];
+    attendeesSnap.forEach((docSnap) => {
+      allAttendees.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
+  } catch (error) {
+    console.error('Error reloading attendees:', error);
+  }
 }
 
 function filterAttendees(attendeesList, searchTerm) {
@@ -247,6 +262,7 @@ window.markPresent = async (attendeeId) => {
       status: 'present'
     });
     showToast('Attendee marked as present');
+    await loadAttendees();
   } catch (error) {
     console.error('Error updating status:', error);
     showAlert('Failed to update status', { type: 'error' });
@@ -259,6 +275,7 @@ window.markAbsent = async (attendeeId) => {
       status: 'absent'
     });
     showToast('Attendee marked as absent');
+    await loadAttendees();
   } catch (error) {
     console.error('Error updating status:', error);
     showAlert('Failed to update status', { type: 'error' });
@@ -271,6 +288,7 @@ window.markLate = async (attendeeId) => {
       status: 'late'
     });
     showToast('Attendee marked as late');
+    await loadAttendees();
   } catch (error) {
     console.error('Error updating status:', error);
     showAlert('Failed to update status', { type: 'error' });
@@ -318,6 +336,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
     console.log('Attendee updated');
     window.closeEditModal();
     showToast('Attendee updated');
+    await loadAttendees();
   } catch (error) {
     console.error('Error updating attendee:', error);
     showAlert('Failed to update attendee', { type: 'error' });
@@ -331,6 +350,7 @@ window.deleteAttendee = async (attendeeId) => {
     try {
         await deleteDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId));
         showToast('Attendee deleted');
+        await loadAttendees();
     } catch (error) {
         console.error('Error deleting attendee:', error);
         showAlert('Failed to delete attendee', { type: 'error' });
@@ -593,6 +613,7 @@ importSheetInput.addEventListener('change', async (e) => {
     await batch.commit();
 
     showToast(attendeesToImport.length + ' attendees imported successfully!');
+    await loadAttendees();
   } catch (error) {
     console.error('Error importing sheet:', error);
     let msg = 'Failed to import sheet. Please try again.';
@@ -606,6 +627,7 @@ importSheetInput.addEventListener('change', async (e) => {
     importSheetInput.value = '';
   }
 });
+});
 
 document.getElementById('attendeesSearch').addEventListener('input', (e) => {
   renderAttendees(allAttendees, e.target.value);
@@ -618,6 +640,9 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = '../logIn/LogInAdmin.html';
     return;
   }
+
+  // Re-read event ID after auth state is confirmed
+  currentEventId = localStorage.getItem('currentEventId');
 
   if (!currentEventId) {
     console.log('No event ID found, redirecting...');
@@ -636,22 +661,20 @@ onAuthStateChanged(auth, async (user) => {
     currentEvent = { id: eventDoc.id, ...eventDoc.data() };
     document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
 
-    console.log('Setting up listener for eventId:', currentEventId);
-    const q = query(collection(db, 'Events', currentEventId, 'Attendees'));
-    onSnapshot(q,
-      (snapshot) => {
-        console.log('Snapshot received, docs:', snapshot.size);
-        allAttendees = [];
-        snapshot.forEach((docSnap) => {
-          allAttendees.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        console.log('All attendees after snapshot:', allAttendees);
-        renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
-      },
-      (error) => {
-        console.error('onSnapshot error:', error);
-      }
-    );
+    console.log('Loading attendees for eventId:', currentEventId);
+    try {
+      const attendeesSnap = await getDocs(collection(db, 'Events', currentEventId, 'Attendees'));
+      console.log('Attendees snapshot, docs:', attendeesSnap.size);
+      allAttendees = [];
+      attendeesSnap.forEach((docSnap) => {
+        allAttendees.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      console.log('All attendees loaded:', allAttendees);
+      renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
+    } catch (attendeeError) {
+      console.error('Error loading attendees:', attendeeError);
+      showAlert('Failed to load attendees: ' + attendeeError.message, { type: 'error' });
+    }
 
   } catch (error) {
     console.error('Error loading event:', error);

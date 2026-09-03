@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/KenyIzConfused/CertificateVerificationSystem#readme",
   "dependencies": {
+    "@google-cloud/storage": "^8.0.1",
     "docx": "^9.7.1",
     "docxtemplater": "^3.69.3",
     "nodemailer": "^9.0.5",
