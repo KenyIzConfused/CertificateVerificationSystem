@@ -79,6 +79,6 @@ Use these placeholders in your .docx template:
 7. Share the certificate ID (or verification URL) with recipients
 
 ## Notes
-- Templates are stored per-browser in localStorage (not synced across devices)
+- Templates are stored per-browser in IndexedDB (not synced across devices)
 - Firebase Storage and Cloud Functions are intentionally not used (to avoid billing)
 - Certificate generation runs entirely in the browser

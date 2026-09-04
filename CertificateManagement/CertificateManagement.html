@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.4/dist/pizzip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.46.0/build/docxtemplater.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/dist/email.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -183,23 +185,11 @@
                     </svg>
                     Generate Certificate
                 </button>
-                <button id="generateAllCertsBtn" class="btn-glass px-5 py-2.5 font-medium flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Download All Certificates
-                </button>
                 <button id="sendSingleCertBtn" class="btn-glass px-5 py-2.5 font-medium flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                     Send Certificate
-                </button>
-                <button id="sendAllCertsBtn" class="btn-glass px-5 py-2.5 font-medium flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    Send All Certificates
                 </button>
             </div>
             <p id="actionStatus" class="text-green-200/70 text-sm mt-3 hidden"></p>
@@ -252,6 +242,7 @@
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Full Name</th>
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Course</th>
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Role</th>
+                        <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Email</th>
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Certificate ID</th>
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Actions</th>
                     </tr>

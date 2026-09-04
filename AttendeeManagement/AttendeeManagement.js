@@ -303,6 +303,7 @@ window.editAttendee = async (attendeeId) => {
   document.getElementById('editName').value = attendee.fullName || '';
   document.getElementById('editCourse').value = attendee.course || '';
   document.getElementById('editRole').value = attendee.role || '';
+  document.getElementById('editEmail').value = attendee.email || '';
   document.getElementById('editDateAttended').value = attendee.dateAttended || '';
   document.getElementById('editStatus').value = attendee.status || '';
 
@@ -324,6 +325,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   const fullName = document.getElementById('editName').value;
   const course = document.getElementById('editCourse').value;
   const role = document.getElementById('editRole').value;
+  const email = document.getElementById('editEmail').value;
   const status = document.getElementById('editStatus').value;
 
   try {
@@ -331,6 +333,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
       fullName,
       course,
       role,
+      email,
       status
     });
     console.log('Attendee updated');
