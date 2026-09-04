@@ -21,9 +21,11 @@ A web-based system for managing events, attendees, and generating verifiable cer
 
 ### Certificate Management
 - Upload certificate templates (.docx files with placeholders)
-- Templates are stored locally in the browser (no cloud storage required)
+- Templates are stored locally in the browser via IndexedDB (no cloud storage required)
 - Generate certificates for individual attendees (opens in new tab)
-- Download all certificates at once
+- Generate all certificates at once and download as a single ZIP file
+- Send certificates individually via email using EmailJS
+- Send all certificates at once via email with ZIP attachment (EmailJS)
 - Each certificate includes attendee-specific data and a verification URL
 
 ### Certificate Verification (Public)
@@ -51,12 +53,14 @@ Use these placeholders in your .docx template:
 - **Backend Services (Free Tier):**
   - Firebase Authentication – admin login/signup
   - Cloud Firestore – events, attendees, admins data
+  - EmailJS – client-side email sending (200 emails/month free)
 - **Client-side Libraries:**
   - PizZip – .docx file parsing
   - Docxtemplater – template rendering
   - ExcelJS – Excel import/export
   - QRCode.js – QR code generation
-- **No billing required:** All features use free-tier Firebase services
+  - JSZip – batch certificate ZIP packaging
+- **No billing required:** Core features use free-tier Firebase + EmailJS services
 
 ## Project Structure
 ```
@@ -75,10 +79,16 @@ Use these placeholders in your .docx template:
 3. Create an event
 4. Add attendees (manually or via Excel import)
 5. Upload a certificate template
-6. Generate and download certificates
-7. Share the certificate ID (or verification URL) with recipients
+6. Generate and download certificates individually or as a ZIP
+7. (Optional) Configure EmailJS in `CertificateManagement.js` to send certificates via email:
+   - Create an account at [emailjs.com](https://www.emailjs.com/)
+   - Add an email service and create an email template
+   - Replace the placeholder values in `EMAILJS_CONFIG` with your Service ID, Template ID, and Public Key
+8. Share the certificate ID (or verification URL) with recipients
 
 ## Notes
 - Templates are stored per-browser in IndexedDB (not synced across devices)
 - Firebase Storage and Cloud Functions are intentionally not used (to avoid billing)
-- Certificate generation runs entirely in the browser
+- Certificate generation and ZIP packaging run entirely in the browser
+- Email sending uses EmailJS client-side SDK (free tier: 200 emails/month). If EmailJS is not configured, the app falls back to opening the user's default mail client via `mailto:` links
+- EmailJS attachments require a paid plan; current free-tier implementation sends certificate details and verification links in the email body
