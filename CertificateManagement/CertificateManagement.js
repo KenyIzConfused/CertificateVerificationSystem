@@ -104,6 +104,7 @@ async function generateCertificate(attendee, templateBytes) {
 
     const renderData = {
         name: attendee.fullName || '',
+        fullName: attendee.fullName || '',
         course: attendee.course || '',
         role: attendee.role || '',
         dateAttended: attendee.dateAttended || '',

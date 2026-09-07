@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Certificate - {{event_title}}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: system-ui, sans-serif, Arial;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+        <div style="background: linear-gradient(135deg, #16a34a, #15803d); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">Information Unit (IPPRC)</h1>
+            <p style="color: #e0f2fe; margin: 10px 0 0 0; font-size: 14px;">Certificate of Participation</p>
+        </div>
+        <div style="padding: 30px;">
+            <p style="color: #334155; font-size: 15px; line-height: 1.6;">
+                Dear <strong>{{to_name}}</strong>,
+            </p>
+            <p style="color: #475569; line-height: 1.6; margin-top: 15px;">
+                Congratulations! Please find below your certificate details for <strong>"{{event_title}}"</strong>.
+            </p>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 18px; border-radius: 8px; margin: 20px 0;">
+                <h2 style="color: #16a34a; margin: 0 0 12px 0; font-size: 16px;">Certificate Details</h2>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Name:</td>
+                        <td style="padding: 8px 0; color: #1e293b;">{{to_name}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Course:</td>
+                        <td style="padding: 8px 0; color: #1e293b;">{{course}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Role:</td>
+                        <td style="padding: 8px 0; color: #1e293b;">{{role}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Date Attended:</td>
+                        <td style="padding: 8px 0; color: #1e293b;">{{date_attended}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; color: #64748b; font-weight: 600;">Certificate ID:</td>
+                        <td style="padding: 8px 0; color: #1e293b; font-family: monospace;">{{certificate_id}}</td>
+                    </tr>
+                </table>
+            </div>
+            <p style="color: #475569; line-height: 1.6;">
+                You can verify the authenticity of this certificate at any time:
+            </p>
+            <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; text-align: center; margin: 15px 0; border: 1px solid #bbf7d0;">
+                <a href="{{verification_url}}" style="color: #16a34a; text-decoration: none; font-weight: 600;">Verify Certificate</a>
+            </div>
+            <p style="color: #475569; line-height: 1.6;">
+                A .docx version of this certificate is also available as a ZIP download, accessible through your Certificate Management dashboard.
+            </p>
+            <p style="color: #475569; line-height: 1.6;">
+                If you have any questions, please don't hesitate to contact us.
+            </p>
+            <p style="color: #64748b; margin-top: 25px; font-size: 14px;">
+                Best regards,<br>
+                <strong>Information Unit (IPPRC)</strong>
+            </p>
+        </div>
+        <div style="background: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #94a3b8;">
+            Certificate ID: {{certificate_id}} | Event: {{event_title}}
+        </div>
+    </div>
+</body>
+</html>

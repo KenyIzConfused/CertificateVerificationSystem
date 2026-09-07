@@ -25,7 +25,7 @@ A web-based system for managing events, attendees, and generating verifiable cer
 - Generate certificates for individual attendees (opens in new tab)
 - Generate all certificates at once and download as a single ZIP file
 - Send certificates individually via email using EmailJS
-- Send all certificates at once via email with ZIP attachment (EmailJS)
+- Send all certificates at once via email (EmailJS)
 - Each certificate includes attendee-specific data and a verification URL
 
 ### Certificate Verification (Public)
@@ -67,9 +67,13 @@ Use these placeholders in your .docx template:
 ├── index.html                  – Landing page
 ├── AttendeeManagement/         – Attendee CRUD
 ├── CertificateManagement/      – Certificate generation
+│   ├── emailjs-template.html   – EmailJS HTML template for certificate emails
+│   ├── CertificateManagement.html
+│   └── CertificateManagement.js
 ├── CertificateVerification/    – Public verification page
 ├── EventCRUD/                  – Event management
 ├── logIn/                      – Login, signup, password reset
+├── scripts/                    – Utility scripts (CORS, setup)
 └── PopupSystem.js              – Shared modal/toast utilities
 ```
 
