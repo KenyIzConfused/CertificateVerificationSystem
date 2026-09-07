@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showToast } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -17,19 +17,24 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-document.querySelector('form').addEventListener('submit', async (e) => {
+const form = document.querySelector('form');
+const submitBtn = form.querySelector('button[type="submit"]');
+
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
-   
+    
   const adminName = document.getElementById('adminName').value;
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
-   
+    
   if (password !== confirmPassword) {
     showAlert('Passwords do not match', { type: 'warning' });
     return;
   }
-   
+
+  setButtonLoading(submitBtn, true, 'Creating account...');
+
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await setDoc(doc(db, 'Admin', userCredential.user.uid), {
@@ -43,5 +48,7 @@ document.querySelector('form').addEventListener('submit', async (e) => {
   } catch (error) {
     console.error('Error:', error);
     showAlert('Sign up failed: ' + error.message, { type: 'error' });
+  } finally {
+    setButtonLoading(submitBtn, false);
   }
 });

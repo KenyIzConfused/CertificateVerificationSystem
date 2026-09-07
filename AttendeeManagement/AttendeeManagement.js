@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-import { showAlert, showToast, showConfirm } from '../PopupSystem.js';
+import { showAlert, showToast, showConfirm, setButtonLoading } from '../PopupSystem.js';
 
 let currentEventId = null;
 let currentEvent = null;
@@ -64,23 +64,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const submitBtn = document.querySelector('#addAttendeeForm button[type="submit"]');
   if (submitBtn.disabled) return;
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Adding...';
   
   if (!currentEvent) {
     showAlert('Event not found', { type: 'error' });
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Add Attendee';
     return;
   }
-
+  
   if (currentEvent.status === 'closed') {
     showAlert('This event is closed. Attendees can no longer be added.', { type: 'error' });
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Add Attendee';
     return;
   }
-
+  
   const attendeeName = document.getElementById('attendeeName').value;
   const course = document.getElementById('course').value;
   const role = document.getElementById('role').value;
@@ -88,6 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dateAttended = getTodayDateString();
 
   console.log('Adding attendee:', { attendeeName, course, role, attendeeEmail, dateAttended, eventId: currentEventId });
+  setButtonLoading(submitBtn, true, 'Adding...');
+
   try {
     const certificateId = await generateUniqueCertificateId(allAttendees);
     const attendeeData = {
@@ -114,13 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('addAttendeeForm').reset();
     showToast('Attendee added successfully!');
     await loadAttendees();
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Add Attendee';
   } catch (error) {
     console.error('Error adding attendee:', error);
     showAlert('Failed to add attendee: ' + error.message, { type: 'error' });
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Add Attendee';
+  } finally {
+    setButtonLoading(submitBtn, false);
   }
 });
 });
@@ -321,12 +315,15 @@ window.closeEditModal = () => {
 document.getElementById('editAttendeeForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const editSubmitBtn = document.querySelector('#editAttendeeForm button[type="submit"]');
   const attendeeId = document.getElementById('editAttendeeId').value;
   const fullName = document.getElementById('editName').value;
   const course = document.getElementById('editCourse').value;
   const role = document.getElementById('editRole').value;
   const email = document.getElementById('editEmail').value;
   const status = document.getElementById('editStatus').value;
+  
+  setButtonLoading(editSubmitBtn, true, 'Updating...');
 
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
@@ -343,6 +340,8 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   } catch (error) {
     console.error('Error updating attendee:', error);
     showAlert('Failed to update attendee', { type: 'error' });
+  } finally {
+    setButtonLoading(editSubmitBtn, false);
   }
 });
 
@@ -586,27 +585,35 @@ importSheetInput.addEventListener('change', async (e) => {
     return;
   }
 
-  const originalLabel = importSheetBtn.innerHTML;
-  try {
-    importSheetBtn.disabled = true;
-    importSheetBtn.innerHTML = '<span class="animate-pulse">Reading file...</span>';
+   try {
+    setButtonLoading(importSheetBtn, true, 'Reading file...');
 
     const attendeesToImport = await parseAttendeesFromSheet(file);
-    if (!attendeesToImport) return;
+    if (!attendeesToImport) {
+      setButtonLoading(importSheetBtn, false);
+      return;
+    }
 
-    importSheetBtn.innerHTML = '<span class="animate-pulse">Loaded ' + attendeesToImport.length + ' rows</span>';
+    importSheetBtn.dataset.originalText = `<span class="spinner"></span>Loaded ${attendeesToImport.length} rows`;
+    importSheetBtn.innerHTML = importSheetBtn.dataset.originalText;
 
     if (!currentEvent) {
       showAlert('No event is selected. Cannot import attendees.', { type: 'error' });
+      setButtonLoading(importSheetBtn, false);
       return;
     }
     if (currentEvent.status === 'closed') {
       showAlert('This event is closed. Attendees can no longer be imported.', { type: 'error' });
+      setButtonLoading(importSheetBtn, false);
       return;
     }
 
     const confirmed = await showConfirm(attendeesToImport.length + ' attendees found. Add them to the database?');
-    if (confirmed !== 1) return;
+    if (confirmed !== 1) {
+      setButtonLoading(importSheetBtn, false);
+      importSheetInput.value = '';
+      return;
+    }
 
     const batch = writeBatch(db);
     attendeesToImport.forEach((attendee) => {
@@ -625,8 +632,7 @@ importSheetInput.addEventListener('change', async (e) => {
     }
     showAlert(msg, { type: 'error' });
   } finally {
-    importSheetBtn.disabled = false;
-    importSheetBtn.innerHTML = originalLabel;
+    setButtonLoading(importSheetBtn, false);
     importSheetInput.value = '';
   }
 });

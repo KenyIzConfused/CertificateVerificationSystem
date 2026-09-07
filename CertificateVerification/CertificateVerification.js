@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert } from '../PopupSystem.js';
+import { showAlert, setButtonLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -42,6 +42,7 @@ async function searchAllEventsForAttendee(certificateId) {
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('verifyForm');
     const verifyAnotherBtn = document.getElementById('verifyAnotherBtn');
+    const verifyBtn = form.querySelector('button[type="submit"]');
     
     if (form) {
         form.addEventListener('submit', async (e) => {
@@ -54,6 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
+            setButtonLoading(verifyBtn, true, 'Verifying...');
+
             try {
                 const result = await searchAllEventsForAttendee(certificateId);
                 
@@ -74,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Error verifying certificate:', error);
                 showAlert(`Failed to verify certificate: ${error.message || 'Unknown error'}`, { type: 'error' });
+            } finally {
+                setButtonLoading(verifyBtn, false);
             }
         });
     }

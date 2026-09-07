@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-import { showAlert, showToast } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -155,8 +155,8 @@ async function renderAttendees() {
                 </td>
                 <td class="py-4 px-2">
                     <div class="flex gap-1 flex-wrap">
-                        <button onclick="window.downloadCertificate('${attendee.id}')"
-                            class="action-item px-2 py-1 text-xs flex items-center gap-1">
+                    <button onclick="window.downloadCertificate('${attendee.id}', this)"
+                        class="action-item px-2 py-1 text-xs flex items-center gap-1">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3"></path>
                             </svg>
@@ -169,14 +169,19 @@ async function renderAttendees() {
     }).join('');
 }
 
-window.downloadCertificate = async (attendeeId) => {
+window.downloadCertificate = async (attendeeId, btn) => {
+    if (btn) setButtonLoading(btn, true, 'Generating...');
     if (!templateBytes) {
         showAlert('Please upload a certificate template first.', { type: 'warning' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
     const attendee = allAttendees.find(a => a.id === attendeeId);
-    if (!attendee) return;
+    if (!attendee) {
+        if (btn) setButtonLoading(btn, false);
+        return;
+    }
 
     try {
         const certBuffer = await generateCertificate(attendee, templateBytes);
@@ -185,26 +190,32 @@ window.downloadCertificate = async (attendeeId) => {
     } catch (error) {
         console.error('Error generating certificate:', error);
         showAlert('Failed to generate certificate', { type: 'error' });
+    } finally {
+        if (btn) setButtonLoading(btn, false);
     }
 };
 
-window.sendSingleCertificate = async (attendeeId) => {
+window.sendSingleCertificate = async (attendeeId, btn) => {
+    if (btn) setButtonLoading(btn, true, 'Generating...');
     window.closeSelectModal();
     window.closeSendEmailModal();
 
     if (!templateBytes) {
         showAlert('Please upload a certificate template first.', { type: 'warning' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
     const attendee = allAttendees.find(a => a.id === attendeeId);
     if (!attendee) {
         showAlert('Attendee not found.', { type: 'error' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
     if (!attendee.email) {
         showAlert(`${attendee.fullName} does not have an email address.`, { type: 'warning' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
@@ -249,6 +260,8 @@ window.sendSingleCertificate = async (attendeeId) => {
         console.error('Error generating certificate:', error);
         showAlert('Failed to generate certificate: ' + error.message, { type: 'error' });
         statusEl.textContent = 'Failed to generate certificate.';
+    } finally {
+        if (btn) setButtonLoading(btn, false);
     }
 };
 
@@ -267,7 +280,7 @@ window.openSendEmailModal = () => {
     }
 
     list.innerHTML = attendeesWithEmail.map(attendee => `
-        <button onclick="window.sendSingleCertificate('${attendee.id}')" class="action-item w-full p-3 text-left flex items-center justify-between hover:bg-green-400/20">
+        <button onclick="window.sendSingleCertificate('${attendee.id}', this)" class="action-item w-full p-3 text-left flex items-center justify-between hover:bg-green-400/20">
             <div>
                 <div class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</div>
                 <div class="text-xs text-green-200/60">${escapeHtml(attendee.email)} • ${escapeHtml(attendee.course || '')} • ${escapeHtml(attendee.role || '')}</div>
@@ -290,17 +303,20 @@ window.closeSendEmailModal = () => {
     modal.classList.remove('flex');
 };
 
-window.sendAllEmails = async () => {
+window.sendAllEmails = async (btn) => {
+    if (btn) setButtonLoading(btn, true, 'Sending...');
     window.closeSendEmailModal();
 
     if (!templateBytes) {
         showAlert('Please upload a certificate template first.', { type: 'warning' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
     const attendeesWithEmail = allAttendees.filter(a => a.email);
     if (attendeesWithEmail.length === 0) {
         showAlert('No attendees with email addresses found.', { type: 'warning' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
@@ -368,41 +384,48 @@ window.sendAllEmails = async () => {
         console.error('Error creating ZIP:', error);
         statusEl.textContent = 'Failed to create ZIP.';
         showAlert('Failed to create ZIP file', { type: 'error' });
+    } finally {
+        if (btn) setButtonLoading(btn, false);
     }
 };
 
-document.getElementById('uploadTemplateBtn').addEventListener('click', async () => {
-    const fileInput = document.getElementById('templateFile');
-    const statusEl = document.getElementById('templateStatus');
-    const file = fileInput.files[0];
+const uploadBtn = document.getElementById('uploadTemplateBtn');
+if (uploadBtn) uploadBtn.addEventListener('click', async () => {
+        const fileInput = document.getElementById('templateFile');
+        const statusEl = document.getElementById('templateStatus');
+        const file = fileInput.files[0];
 
-    if (!file) {
-        showAlert('Please select a .docx file', { type: 'warning' });
-        return;
-    }
-
-    if (!file.name.toLowerCase().endsWith('.docx')) {
-        showAlert('Please upload a .docx file', { type: 'error' });
-        return;
-    }
-
-    try {
-        templateBytes = await file.arrayBuffer();
-
-        try {
-            await saveTemplateToIndexedDb(currentEventId, templateBytes);
-        } catch (idbError) {
-            console.error('Failed to cache template in IndexedDB:', idbError);
+        if (!file) {
+            showAlert('Please select a .docx file', { type: 'warning' });
+            return;
         }
 
-        statusEl.textContent = 'Template uploaded successfully!';
-        statusEl.classList.remove('hidden');
-        showToast('Template uploaded!');
-    } catch (error) {
-        console.error('Error uploading template:', error);
-        showAlert('Failed to upload template', { type: 'error' });
-    }
-});
+        if (!file.name.toLowerCase().endsWith('.docx')) {
+            showAlert('Please upload a .docx file', { type: 'error' });
+            return;
+        }
+
+        setButtonLoading(uploadBtn, true, 'Uploading...');
+
+        try {
+            templateBytes = await file.arrayBuffer();
+
+            try {
+                await saveTemplateToIndexedDb(currentEventId, templateBytes);
+            } catch (idbError) {
+                console.error('Failed to cache template in IndexedDB:', idbError);
+            }
+
+            statusEl.textContent = 'Template uploaded successfully!';
+            statusEl.classList.remove('hidden');
+            showToast('Template uploaded!');
+        } catch (error) {
+            console.error('Error uploading template:', error);
+            showAlert('Failed to upload template', { type: 'error' });
+        } finally {
+            setButtonLoading(uploadBtn, false);
+        }
+    });
 
 window.openSelectAttendeeModal = () => {
     if (!templateBytes) {
@@ -417,7 +440,7 @@ window.openSelectAttendeeModal = () => {
     }
 
     list.innerHTML = allAttendees.map(attendee => `
-        <button onclick="window.generateSingleCertificate('${attendee.id}')" class="action-item w-full p-3 text-left flex items-center justify-between hover:bg-green-400/20">
+        <button onclick="window.generateSingleCertificate('${attendee.id}', this)" class="action-item w-full p-3 text-left flex items-center justify-between hover:bg-green-400/20">
             <div>
                 <div class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</div>
                 <div class="text-xs text-green-200/60">${escapeHtml(attendee.course || '')} • ${escapeHtml(attendee.role || '')}</div>
@@ -437,16 +460,19 @@ window.closeSelectModal = () => {
     modal.classList.remove('flex');
 };
 
-window.generateAllFromModal = async () => {
+window.generateAllFromModal = async (btn) => {
+    if (btn) setButtonLoading(btn, true, 'Generating...');
     window.closeSelectModal();
 
     if (!templateBytes) {
         showAlert('Please upload a certificate template first.', { type: 'warning' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
     if (allAttendees.length === 0) {
         showAlert('No attendees to generate certificates for.', { type: 'warning' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
@@ -486,20 +512,25 @@ window.generateAllFromModal = async () => {
         console.error('Error creating ZIP:', error);
         statusEl.textContent = 'Failed to create ZIP.';
         showAlert('Failed to create ZIP file', { type: 'error' });
+    } finally {
+        if (btn) setButtonLoading(btn, false);
     }
 };
 
-window.generateSingleCertificate = async (attendeeId) => {
+window.generateSingleCertificate = async (attendeeId, btn) => {
+    if (btn) setButtonLoading(btn, true, 'Generating...');
     window.closeSelectModal();
 
     if (!templateBytes) {
         showAlert('Please upload a certificate template first.', { type: 'warning' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
     const attendee = allAttendees.find(a => a.id === attendeeId);
     if (!attendee) {
         showAlert('Attendee not found.', { type: 'error' });
+        if (btn) setButtonLoading(btn, false);
         return;
     }
 
@@ -525,6 +556,8 @@ window.generateSingleCertificate = async (attendeeId) => {
         console.error('Error generating certificate:', error);
         showAlert('Failed to generate certificate: ' + error.message, { type: 'error' });
         statusEl.textContent = 'Failed to generate certificate.';
+    } finally {
+        if (btn) setButtonLoading(btn, false);
     }
 };
 

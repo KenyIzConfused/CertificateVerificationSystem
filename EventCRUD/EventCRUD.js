@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showConfirm, showToast } from '../PopupSystem.js';
+import { showAlert, showConfirm, showToast, setButtonLoading } from '../PopupSystem.js';
 
 const themes = {
   green: {
@@ -116,8 +116,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
   
   try {
     if (editId) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Updating...';
+      setButtonLoading(submitBtn, true, 'Updating...');
       await updateDoc(doc(db, 'Events', editId), {
         title: eventTitle,
         description: eventDescription,
@@ -134,8 +133,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
       document.querySelector('#eventForm button[type="submit"]').textContent = 'Create Event';
       document.getElementById('cancelEditBtn').classList.add('hidden');
     } else {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Creating...';
+      setButtonLoading(submitBtn, true, 'Creating...');
       await addDoc(collection(db, 'Events'), {
         adminId: currentUser.uid,
         title: eventTitle,
@@ -152,14 +150,12 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
       showToast('Event created successfully!');
       document.getElementById('eventForm').reset();
       document.getElementById('createEventPanel').classList.add('hidden');
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Create Event';
     }
   } catch (error) {
     console.error('Error saving event:', error);
     showAlert(editId ? 'Failed to update event' : 'Failed to create event', { type: 'error' });
-    submitBtn.disabled = false;
-    submitBtn.textContent = editId ? 'Update Event' : 'Create Event';
+  } finally {
+    setButtonLoading(submitBtn, false);
   }
 });
 

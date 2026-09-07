@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-import { showAlert, showToast } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -18,6 +18,7 @@ const auth = getAuth(app);
 
 const form = document.getElementById('forgotPasswordForm');
 const emailInput = document.getElementById('email');
+const submitBtn = form.querySelector('button[type="submit"]');
 
 if (form) {
   form.addEventListener('submit', async (e) => {
@@ -27,13 +28,16 @@ if (form) {
       showAlert('Please enter your email address', { type: 'warning' });
       return;
     }
+    setButtonLoading(submitBtn, true, 'Sending...');
     try {
       await sendPasswordResetEmail(auth, email);
       showToast('Password reset email sent! Please check your inbox and spam folder.');
       form.reset();
-} catch (error) {
-       console.error('Password reset error:', error);
-       showAlert('Failed to send reset email. Please try again.', { type: 'error' });
+    } catch (error) {
+        console.error('Password reset error:', error);
+        showAlert('Failed to send reset email. Please try again.', { type: 'error' });
+    } finally {
+        setButtonLoading(submitBtn, false);
     }
   });
 }

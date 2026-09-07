@@ -168,6 +168,39 @@
                 </button>
             </div>
             <p id="templateStatus" class="text-green-200/70 text-sm mt-3 hidden"></p>
+
+            <!-- Template Guide Box -->
+            <div class="mt-6 p-4 bg-green-900/20 border border-green-400/30 rounded-xl">
+                <h3 class="text-green-100 font-semibold mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 11a1 1 0 100-2 1 1 0 000 2z"></path>
+                    </svg>
+                    Template Placeholders Guide
+                </h3>
+                <p class="text-green-200/60 text-xs mb-3">Use these placeholders in your .docx template. They will be replaced with attendee data automatically.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                    <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
+                        <span class="font-mono text-green-300">{name}</span>
+                        <span class="text-green-200/60 block mt-0.5">Attendee's full name (alias: {fullName})</span>
+                    </div>
+                    <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
+                        <span class="font-mono text-green-300">{course}</span>
+                        <span class="text-green-200/60 block mt-0.5">Course or program name</span>
+                    </div>
+                    <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
+                        <span class="font-mono text-green-300">{role}</span>
+                        <span class="text-green-200/60 block mt-0.5">Attendee's role (e.g., Student, Speaker)</span>
+                    </div>
+                    <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
+                        <span class="font-mono text-green-300">{dateAttended}</span>
+                        <span class="text-green-200/60 block mt-0.5">Date the event was attended</span>
+                    </div>
+                    <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
+                        <span class="font-mono text-green-300">{certificateId}</span>
+                        <span class="text-green-200/60 block mt-0.5">Unique certificate ID</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Actions Section -->
@@ -208,7 +241,7 @@
                 <div class="space-y-2 max-h-96 overflow-y-auto" id="sendEmailList">
                 </div>
                 <div class="flex gap-3 pt-4 mt-4 border-t border-green-400/20">
-                    <button type="button" onclick="window.sendAllEmails()" class="flex-1 btn-3d text-white font-semibold py-3 rounded-xl">Send All With Email</button>
+                    <button type="button" onclick="window.sendAllEmails(this)" class="flex-1 btn-3d text-white font-semibold py-3 rounded-xl">Send All With Email</button>
                     <button type="button" onclick="window.closeSendEmailModal()" class="flex-1 btn-glass py-3 rounded-xl">Cancel</button>
                 </div>
             </div>
@@ -227,7 +260,7 @@
                 <div class="space-y-2 max-h-96 overflow-y-auto" id="attendeeSelectList">
                 </div>
                 <div class="flex gap-3 pt-4 mt-4 border-t border-green-400/20">
-                    <button type="button" onclick="window.generateAllFromModal()" class="flex-1 btn-3d text-white font-semibold py-3 rounded-xl">Generate All</button>
+                    <button type="button" onclick="window.generateAllFromModal(this)" class="flex-1 btn-3d text-white font-semibold py-3 rounded-xl">Generate All</button>
                     <button type="button" onclick="window.closeSelectModal()" class="flex-1 btn-glass py-3 rounded-xl">Cancel</button>
                 </div>
             </div>

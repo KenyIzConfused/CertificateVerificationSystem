@@ -58,6 +58,26 @@ function injectStyles() {
     transition: all 0.2s ease;
     box-shadow: 0 3px 0 #dc2626;
 }
+
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 0.4em;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 `;
         document.head.appendChild(style);
     }
@@ -193,3 +213,17 @@ export function showToast(message, type = 'success', duration = 3000) {
 
 window.showAlert = showAlert;
 window.showConfirm = showConfirm;
+window.setButtonLoading = setButtonLoading;
+
+export function setButtonLoading(btn, isLoading, loadingText = 'Processing...') {
+    if (isLoading) {
+        btn.disabled = true;
+        btn.classList.add('btn-loading');
+        btn.dataset.originalText = btn.innerHTML;
+        btn.innerHTML = `<span class="spinner"></span>${loadingText}`;
+    } else {
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+        btn.innerHTML = btn.dataset.originalText || btn.innerHTML;
+    }
+}

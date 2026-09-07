@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-import { showAlert, showToast } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -26,6 +26,7 @@ if (!oobCode) {
 const form = document.getElementById('resetPasswordForm');
 const newPasswordInput = document.getElementById('newPassword');
 const confirmPasswordInput = document.getElementById('confirmPassword');
+const submitBtn = form.querySelector('button[type="submit"]');
 
 if (form) {
   form.addEventListener('submit', async (e) => {
@@ -45,6 +46,7 @@ if (form) {
       showAlert('Invalid reset link. Please request a new one.', { type: 'error' });
       return;
     }
+    setButtonLoading(submitBtn, true, 'Resetting...');
     try {
       await confirmPasswordReset(auth, oobCode, newPassword);
       showToast('Password reset successful! You can now login.');
@@ -54,6 +56,8 @@ if (form) {
     } catch (error) {
       console.error('Reset password error:', error);
       showAlert('Failed to reset password. Please try again.', { type: 'error' });
+    } finally {
+      setButtonLoading(submitBtn, false);
     }
   });
 }

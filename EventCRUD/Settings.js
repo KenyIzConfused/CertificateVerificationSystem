@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showToast } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
 
 const themes = {
   green: {
@@ -101,6 +101,8 @@ async function loadSettings() {
 document.getElementById('settingsForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const submitBtn = document.querySelector('#settingsForm button[type="submit"]');
+
   if (!currentUser) {
     showAlert('Please log in first', { type: 'warning' });
     return;
@@ -114,6 +116,8 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
     showAlert('Please enter an Information Unit / Department name', { type: 'warning' });
     return;
   }
+
+  setButtonLoading(submitBtn, true, 'Saving...');
 
   try {
     await setDoc(doc(db, 'Admin', currentUser.uid), {
@@ -129,6 +133,8 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
   } catch (error) {
     console.error('Error saving settings:', error);
     showAlert('Failed to save settings', { type: 'error' });
+  } finally {
+    setButtonLoading(submitBtn, false);
   }
 });
 
