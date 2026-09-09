@@ -211,6 +211,73 @@ export function showToast(message, type = 'success', duration = 3000) {
   });
 }
 
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, doc, onSnapshot, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getAuth, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
+  authDomain: "ipprc-certificate-verification.firebaseapp.com",
+  projectId: "ipprc-certificate-verification",
+  storageBucket: "ipprc-certificate-verification.firebasestorage.app",
+  messagingSenderId: "1056133117009",
+  appId: "1:1056133117009:web:a1fcd175977a76d27c7470",
+  measurementId: "G-R7PDE8B834"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let currentSessionUnsubscribe = null;
+
+export async function registerSession(user) {
+  if (!user) return;
+  
+  const sessionId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
+  sessionStorage.setItem('sessionId', sessionId);
+  
+  try {
+    await setDoc(doc(db, 'adminSessions', user.uid), {
+      sessionId,
+      lastLogin: new Date(),
+      userAgent: navigator.userAgent
+    }, { merge: true });
+  } catch (error) {
+    console.error('Failed to register session:', error);
+  }
+}
+
+export function startSessionEnforcement(user) {
+  stopSessionEnforcement();
+  
+  if (!user) return;
+  
+  const sessionId = sessionStorage.getItem('sessionId');
+  if (!sessionId) return;
+  
+  currentSessionUnsubscribe = onSnapshot(doc(db, 'adminSessions', user.uid), (snapshot) => {
+    if (!snapshot.exists()) return;
+    
+    const data = snapshot.data();
+    if (data.sessionId !== sessionId) {
+      console.warn('Session conflict detected - signing out');
+      signOut(auth).then(() => {
+        window.location.href = '/admin-login';
+      }).catch(() => {
+        window.location.href = '/admin-login';
+      });
+    }
+  });
+}
+
+export function stopSessionEnforcement() {
+  if (currentSessionUnsubscribe) {
+    currentSessionUnsubscribe();
+    currentSessionUnsubscribe = null;
+  }
+}
+
 window.showAlert = showAlert;
 window.showConfirm = showConfirm;
 window.setButtonLoading = setButtonLoading;

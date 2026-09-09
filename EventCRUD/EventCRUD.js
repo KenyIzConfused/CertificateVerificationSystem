@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showConfirm, showToast, setButtonLoading } from '../PopupSystem.js';
+import { showAlert, showConfirm, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
 
 const themes = {
   green: {
@@ -419,6 +419,8 @@ window.cancelEdit = () => {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
+    await registerSession(user);
+    startSessionEnforcement(user);
     
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
@@ -452,6 +454,7 @@ onAuthStateChanged(auth, async (user) => {
       window.handleEventUpdate(eventsWithCounts);
     });
   } else {
+    stopSessionEnforcement();
     window.location.href = '/admin-login';
   }
 });

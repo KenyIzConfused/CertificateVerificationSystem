@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -566,9 +566,13 @@ document.getElementById('sendSingleCertBtn').addEventListener('click', window.op
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
+        stopSessionEnforcement();
         window.location.href = '/admin-login';
         return;
     }
+
+    await registerSession(user);
+    startSessionEnforcement(user);
 
     // Re-read event ID after auth state is confirmed
     currentEventId = localStorage.getItem('certEventId');

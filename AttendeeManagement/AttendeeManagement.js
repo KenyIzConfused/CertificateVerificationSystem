@@ -2,7 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-import { showAlert, showToast, showConfirm, setButtonLoading } from '../PopupSystem.js';
+import { showAlert, showToast, showConfirm, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
 
 let currentEventId = null;
 let currentEvent = null;
@@ -646,9 +646,13 @@ onAuthStateChanged(auth, async (user) => {
   console.log('Auth state changed:', user ? 'logged in' : 'logged out');
 
   if (!user) {
+    stopSessionEnforcement();
     window.location.href = '/admin-login';
     return;
   }
+
+  await registerSession(user);
+  startSessionEnforcement(user);
 
   // Re-read event ID after auth state is confirmed
   currentEventId = localStorage.getItem('currentEventId');

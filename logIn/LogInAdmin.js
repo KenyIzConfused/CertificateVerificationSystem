@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading, registerSession } from '../PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -30,8 +30,9 @@ loginForm.addEventListener('submit', async (e) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     sessionStorage.setItem('adminLoggedIn', 'true');
-      showToast('Login successful!');
-      window.location.href = '/event-crud';
+    await registerSession(userCredential.user);
+    showToast('Login successful!');
+    window.location.href = '/event-crud';
   } catch (error) {
     console.error('Login error:', error);
     if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email') {

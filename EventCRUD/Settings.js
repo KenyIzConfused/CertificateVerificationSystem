@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
 
 const themes = {
   green: {
@@ -144,10 +144,13 @@ document.getElementById('themeSelect').addEventListener('change', (e) => {
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
+    stopSessionEnforcement();
     window.location.href = '/admin-login';
     return;
   }
 
   currentUser = user;
+  await registerSession(user);
+  startSessionEnforcement(user);
   await loadSettings();
 });
