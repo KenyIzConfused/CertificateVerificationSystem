@@ -1,0 +1,14 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/event-crud", "destination": "/EventCRUD/EventCRUD.html" },
+    { "source": "/certificate-management", "destination": "/CertificateManagement/CertificateManagement.html" },
+    { "source": "/attendee-management", "destination": "/AttendeeManagement/AttendeeManagement.html" },
+    { "source": "/admin-login", "destination": "/logIn/LogInAdmin.html" },
+    { "source": "/verify-certificate", "destination": "/CertificateVerification/CertificateVerification.html" },
+    { "source": "/signup", "destination": "/SignUp/SignUpAdmin.html" },
+    { "source": "/forgot-password", "destination": "/logIn/ForgotPassword.html" },
+    { "source": "/reset-password", "destination": "/logIn/ResetPassword.html" },
+    { "source": "/settings", "destination": "/EventCRUD/Settings.html" }
+  ]
+}

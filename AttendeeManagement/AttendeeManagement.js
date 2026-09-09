@@ -646,7 +646,7 @@ onAuthStateChanged(auth, async (user) => {
   console.log('Auth state changed:', user ? 'logged in' : 'logged out');
 
   if (!user) {
-    window.location.href = '../logIn/LogInAdmin.html';
+    window.location.href = '/admin-login';
     return;
   }
 
@@ -655,7 +655,7 @@ onAuthStateChanged(auth, async (user) => {
 
   if (!currentEventId) {
     console.log('No event ID found, redirecting...');
-    window.location.href = '../EventCRUD/EventCRUD.html';
+    window.location.href = '/event-crud';
     return;
   }
 
@@ -663,7 +663,7 @@ onAuthStateChanged(auth, async (user) => {
     const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
     if (!eventDoc.exists()) {
       showAlert('Event not found', { type: 'error' });
-      window.location.href = '../EventCRUD/EventCRUD.html';
+      window.location.href = '/event-crud';
       return;
     }
 
@@ -687,6 +687,6 @@ onAuthStateChanged(auth, async (user) => {
 
   } catch (error) {
     console.error('Error loading event:', error);
-    window.location.href = '../EventCRUD/EventCRUD.html';
+    window.location.href = '/event-crud';
   }
 });

@@ -31,7 +31,7 @@ loginForm.addEventListener('submit', async (e) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     sessionStorage.setItem('adminLoggedIn', 'true');
       showToast('Login successful!');
-      window.location.href = '../EventCRUD/EventCRUD.html';
+      window.location.href = '/event-crud';
   } catch (error) {
     console.error('Login error:', error);
     if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email') {

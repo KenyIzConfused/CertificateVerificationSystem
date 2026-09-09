@@ -369,7 +369,7 @@ window.closeEvent = async (eventId) => {
 
 window.manageAttendees = (eventId) => {
   localStorage.setItem('currentEventId', eventId);
-  window.location.href = '../AttendeeManagement/AttendeeManagement.html';
+  window.location.href = '/attendee-management';
 };
 
 window.editEvent = async (eventId) => {
@@ -404,7 +404,7 @@ window.editEvent = async (eventId) => {
 
 window.certificateManagement = (eventId) => {
   localStorage.setItem('certEventId', eventId);
-  window.location.href = '../CertificateManagement/CertificateManagement.html';
+  window.location.href = '/certificate-management';
 };
 
 window.cancelEdit = () => {
@@ -452,6 +452,6 @@ onAuthStateChanged(auth, async (user) => {
       window.handleEventUpdate(eventsWithCounts);
     });
   } else {
-    window.location.href = '../logIn/LogInAdmin.html';
+    window.location.href = '/admin-login';
   }
 });

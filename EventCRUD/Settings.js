@@ -129,7 +129,7 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
 
     applyTheme(selectedTheme);
     showToast('Settings saved successfully');
-    window.location.href = './EventCRUD.html';
+    window.location.href = '/event-crud';
   } catch (error) {
     console.error('Error saving settings:', error);
     showAlert('Failed to save settings', { type: 'error' });
@@ -144,7 +144,7 @@ document.getElementById('themeSelect').addEventListener('change', (e) => {
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    window.location.href = '../logIn/LogInAdmin.html';
+    window.location.href = '/admin-login';
     return;
   }
 

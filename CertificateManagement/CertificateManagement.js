@@ -566,7 +566,7 @@ document.getElementById('sendSingleCertBtn').addEventListener('click', window.op
 
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
-        window.location.href = '../logIn/LogInAdmin.html';
+        window.location.href = '/admin-login';
         return;
     }
 
@@ -574,7 +574,7 @@ onAuthStateChanged(auth, async (user) => {
     currentEventId = localStorage.getItem('certEventId');
 
     if (!currentEventId) {
-        window.location.href = '../EventCRUD/EventCRUD.html';
+        window.location.href = '/event-crud';
         return;
     }
 
@@ -582,7 +582,7 @@ onAuthStateChanged(auth, async (user) => {
         const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
         if (!eventDoc.exists()) {
             showAlert('Event not found', { type: 'error' });
-            window.location.href = '../EventCRUD/EventCRUD.html';
+            window.location.href = '/event-crud';
             return;
         }
 
@@ -611,6 +611,6 @@ onAuthStateChanged(auth, async (user) => {
         renderAttendees();
     } catch (error) {
         console.error('Error loading event:', error);
-        window.location.href = '../EventCRUD/EventCRUD.html';
+        window.location.href = '/event-crud';
     }
 });

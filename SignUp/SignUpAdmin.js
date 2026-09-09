@@ -44,7 +44,7 @@ form.addEventListener('submit', async (e) => {
     });
     await sendEmailVerification(userCredential.user);
     showToast('Account created! Please verify your email.');
-    window.location.href = '../logIn/LogInAdmin.html';
+    window.location.href = '/admin-login';
   } catch (error) {
     console.error('Error:', error);
     showAlert('Sign up failed: ' + error.message, { type: 'error' });
