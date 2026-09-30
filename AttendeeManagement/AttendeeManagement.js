@@ -102,13 +102,66 @@ document.getElementById('addAttendeeForm').addEventListener('submit', async (e) 
   }
 });
 
+const ATTENDEES_PER_PAGE = 10;
+let currentAttendeesPage = 1;
+
+function totalPagesFor(count, perPage) {
+  return Math.max(1, Math.ceil(count / perPage));
+}
+
+function renderAttendeesPagination(filteredCount) {
+  const pagination = document.getElementById('attendeesPagination');
+  const pageInfo = document.getElementById('attendeesPageInfo');
+  const prevBtn = document.getElementById('attendeesPrevBtn');
+  const nextBtn = document.getElementById('attendeesNextBtn');
+
+  if (filteredCount === 0) {
+    pagination.classList.add('hidden');
+    return;
+  }
+
+  pagination.classList.remove('hidden');
+  const totalPages = totalPagesFor(filteredCount, ATTENDEES_PER_PAGE);
+  const start = (currentAttendeesPage - 1) * ATTENDEES_PER_PAGE + 1;
+  const end = Math.min(currentAttendeesPage * ATTENDEES_PER_PAGE, filteredCount);
+  pageInfo.textContent = `Page ${currentAttendeesPage} of ${totalPages} (${start}-${end} of ${filteredCount})`;
+
+  prevBtn.disabled = currentAttendeesPage <= 1;
+  nextBtn.disabled = currentAttendeesPage >= totalPages;
+  prevBtn.classList.toggle('opacity-50', prevBtn.disabled);
+  prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
+  nextBtn.classList.toggle('opacity-50', nextBtn.disabled);
+  nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
+}
+
+function goToAttendeesPage(page) {
+  const searchTerm = document.getElementById('attendeesSearch')?.value || '';
+  const filteredCount = filterAttendees(allAttendees, searchTerm).length;
+  const totalPages = totalPagesFor(filteredCount, ATTENDEES_PER_PAGE);
+  currentAttendeesPage = Math.min(Math.max(1, page), totalPages);
+  renderAttendees(allAttendees, searchTerm);
+}
+
+document.getElementById('attendeesPrevBtn').addEventListener('click', () => goToAttendeesPage(currentAttendeesPage - 1));
+document.getElementById('attendeesNextBtn').addEventListener('click', () => goToAttendeesPage(currentAttendeesPage + 1));
+
 function renderAttendees(attendeesList, searchTerm = '') {
   const filtered = filterAttendees(attendeesList, searchTerm);
 
   console.log('Rendering attendees, count:', filtered.length);
   document.getElementById('attendeeCount').textContent = attendeesList.length;
 
-  renderTable(filtered);
+  const totalPages = totalPagesFor(filtered.length, ATTENDEES_PER_PAGE);
+  if (currentAttendeesPage > totalPages) {
+    currentAttendeesPage = totalPages;
+  }
+  currentAttendeesPage = Math.min(Math.max(1, currentAttendeesPage), totalPages);
+
+  const startIndex = (currentAttendeesPage - 1) * ATTENDEES_PER_PAGE;
+  const paginated = filtered.slice(startIndex, startIndex + ATTENDEES_PER_PAGE);
+
+  renderTable(paginated);
+  renderAttendeesPagination(filtered.length);
 }
 
 function filterAttendees(attendeesList, searchTerm) {
@@ -370,6 +423,7 @@ window.exportAttendeesToExcel = async () => {
 document.getElementById('exportAttendeesBtn').addEventListener('click', window.exportAttendeesToExcel);
 
 document.getElementById('attendeesSearch').addEventListener('input', (e) => {
+  currentAttendeesPage = 1;
   renderAttendees(allAttendees, e.target.value);
 });
 

@@ -259,7 +259,16 @@
         <div>
             <h2 class="text-2xl font-bold text-green-100 mb-6">NVSU Events</h2>
             <div id="eventsStack" class="space-y-4">
-                <p id="noEvents" class="text-green-200/60 text-center py-8 liquid-panel p-6 rounded-xl">No events created yet.</p>
+            </div>
+            <p id="noEvents" class="hidden text-green-200/60 text-center py-8 liquid-panel p-6 rounded-xl">No events created yet.</p>
+
+            <!-- Events Pagination -->
+            <div id="eventsPagination" class="hidden mt-6 flex flex-wrap items-center justify-center gap-2">
+                <button id="eventsPrevBtn" type="button"
+                    class="btn-glass px-4 py-2 text-sm font-semibold">Previous</button>
+                <span id="eventsPageInfo" class="px-4 py-2 text-sm font-semibold text-green-200/80"></span>
+                <button id="eventsNextBtn" type="button"
+                    class="btn-glass px-4 py-2 text-sm font-semibold">Next</button>
             </div>
         </div>
     </div>

@@ -163,23 +163,78 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-window.handleEventUpdate = (events) => {
+const EVENTS_PER_PAGE = 10;
+let allEvents = [];
+let currentEventsPage = 1;
+
+function totalPagesFor(count, perPage) {
+  return Math.max(1, Math.ceil(count / perPage));
+}
+
+function renderEventsPagination() {
+  const pagination = document.getElementById('eventsPagination');
+  const pageInfo = document.getElementById('eventsPageInfo');
+  const prevBtn = document.getElementById('eventsPrevBtn');
+  const nextBtn = document.getElementById('eventsNextBtn');
+
+  const totalPages = totalPagesFor(allEvents.length, EVENTS_PER_PAGE);
+
+  if (allEvents.length === 0) {
+    pagination.classList.add('hidden');
+    return;
+  }
+
+  pagination.classList.remove('hidden');
+  const start = (currentEventsPage - 1) * EVENTS_PER_PAGE + 1;
+  const end = Math.min(currentEventsPage * EVENTS_PER_PAGE, allEvents.length);
+  pageInfo.textContent = `Page ${currentEventsPage} of ${totalPages} (${start}-${end} of ${allEvents.length})`;
+
+  prevBtn.disabled = currentEventsPage <= 1;
+  nextBtn.disabled = currentEventsPage >= totalPages;
+  prevBtn.classList.toggle('opacity-50', prevBtn.disabled);
+  prevBtn.classList.toggle('cursor-not-allowed', prevBtn.disabled);
+  nextBtn.classList.toggle('opacity-50', nextBtn.disabled);
+  nextBtn.classList.toggle('cursor-not-allowed', nextBtn.disabled);
+}
+
+function goToEventsPage(page) {
+  const totalPages = totalPagesFor(allEvents.length, EVENTS_PER_PAGE);
+  currentEventsPage = Math.min(Math.max(1, page), totalPages);
+  window.handleEventUpdate(allEvents, true);
+}
+
+document.getElementById('eventsPrevBtn').addEventListener('click', () => goToEventsPage(currentEventsPage - 1));
+document.getElementById('eventsNextBtn').addEventListener('click', () => goToEventsPage(currentEventsPage + 1));
+
+window.handleEventUpdate = (events, isPageChange = false) => {
   events.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+  allEvents = events;
   const eventsStack = document.getElementById('eventsStack');
   const eventCount = document.getElementById('eventCount');
   const noEvents = document.getElementById('noEvents');
-  
+
   eventCount.textContent = events.length;
-  
+
   if (events.length === 0) {
-    noEvents.style.display = 'block';
+    currentEventsPage = 1;
+    noEvents.classList.remove('hidden');
     eventsStack.innerHTML = '';
+    renderEventsPagination();
     return;
   }
-  
-  noEvents.style.display = 'none';
-  
-  eventsStack.innerHTML = events.map(event => {
+
+  const totalPages = totalPagesFor(events.length, EVENTS_PER_PAGE);
+  if (!isPageChange && currentEventsPage > totalPages) {
+    currentEventsPage = totalPages;
+  }
+  currentEventsPage = Math.min(Math.max(1, currentEventsPage), totalPages);
+
+  const startIndex = (currentEventsPage - 1) * EVENTS_PER_PAGE;
+  const paginatedEvents = events.slice(startIndex, startIndex + EVENTS_PER_PAGE);
+
+  noEvents.classList.add('hidden');
+
+  eventsStack.innerHTML = paginatedEvents.map(event => {
     const statusClass = event.status === 'active' ? 'bg-green-400/30 text-green-200' : 'bg-gray-400/30 text-gray-200';
     const statusLabel = (event.status || 'active').toUpperCase();
 
@@ -263,6 +318,8 @@ window.handleEventUpdate = (events) => {
       </div>
     `;
   }).join('');
+
+  renderEventsPagination();
 };
 
 window.exportSingleEvent = async (eventId, eventTitle) => {
