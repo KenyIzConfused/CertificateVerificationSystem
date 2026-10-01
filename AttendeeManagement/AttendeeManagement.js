@@ -7,6 +7,9 @@ import { showAlert, showToast, showConfirm, setButtonLoading, registerSession, s
 let currentEventId = null;
 let currentEvent = null;
 let allAttendees = [];
+let filteredAttendees = [];
+let attendeesPage = 1;
+const ATTENDEES_PER_PAGE = 5;
 
 const firebaseConfig = {
     apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -113,23 +116,79 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (error) {
     console.error('Error adding attendee:', error);
     showAlert('Failed to add attendee: ' + error.message, { type: 'error' });
-  } finally {
+} finally {
     setButtonLoading(submitBtn, false);
   }
 });
 });
 
 function renderAttendees(attendeesList, searchTerm = '') {
-  console.log('renderAttendees called with:', attendeesList.length, 'attendees, searchTerm:', searchTerm);
-  const filtered = filterAttendees(attendeesList, searchTerm);
-  console.log('After filtering:', filtered.length, 'attendees');
-  console.log('Filtered attendees:', filtered);
-
-  console.log('Rendering attendees, count:', filtered.length);
-  document.getElementById('attendeeCount').textContent = attendeesList.length;
-
-  renderTable(filtered);
+  allAttendees = attendeesList;
+  const term = (searchTerm || document.getElementById('attendeesSearch')?.value || '').trim();
+  if (!term) {
+    filteredAttendees = allAttendees.slice();
+  } else {
+    filteredAttendees = filterAttendees(allAttendees, term);
+  }
+  if (attendeesPage > totalPagesAttendees()) attendeesPage = 1;
+  renderAttendeePage();
 }
+
+function totalPagesAttendees() {
+  return Math.max(1, Math.ceil(filteredAttendees.length / ATTENDEES_PER_PAGE));
+}
+
+function renderAttendeePage() {
+  const tableBody = document.getElementById('attendeesTableBody');
+  const noAttendees = document.getElementById('noAttendees');
+  const pagination = document.getElementById('attendeesPagination');
+  const pageInfo = document.getElementById('attendeesPageInfo');
+  const countEl = document.getElementById('attendeeCount');
+
+  if (countEl) countEl.textContent = allAttendees.length;
+
+  if (filteredAttendees.length === 0) {
+    noAttendees?.classList.remove('hidden');
+    noAttendees.textContent = allAttendees.length === 0 ? 'No attendees yet.' : 'No attendees match your search.';
+    tableBody.innerHTML = '';
+    pagination?.classList.add('hidden');
+    return;
+  }
+
+  noAttendees?.classList.add('hidden');
+  const start = (attendeesPage - 1) * ATTENDEES_PER_PAGE;
+  const pageRows = filteredAttendees.slice(start, start + ATTENDEES_PER_PAGE).map(renderAttendeeRow).join('');
+  tableBody.innerHTML = pageRows;
+
+  const total = totalPagesAttendees();
+  pagination?.classList.remove('hidden');
+  if (pageInfo) pageInfo.textContent = `Page ${attendeesPage} of ${total}  •  ${filteredAttendees.length} attendee${filteredAttendees.length === 1 ? '' : 's'}`;
+
+  const prevBtn = document.getElementById('attendeesPrevBtn');
+  const nextBtn = document.getElementById('attendeesNextBtn');
+  if (prevBtn) {
+    prevBtn.disabled = attendeesPage === 1;
+    prevBtn.classList.toggle('opacity-40', attendeesPage === 1);
+    prevBtn.classList.toggle('cursor-not-allowed', attendeesPage === 1);
+    prevBtn.classList.toggle('pointer-events-none', attendeesPage === 1);
+  }
+  if (nextBtn) {
+    nextBtn.disabled = attendeesPage === total;
+    nextBtn.classList.toggle('opacity-40', attendeesPage === total);
+    nextBtn.classList.toggle('cursor-not-allowed', attendeesPage === total);
+    nextBtn.classList.toggle('pointer-events-none', attendeesPage === total);
+  }
+}
+
+window.changeAttendeePage = (dir) => {
+  const total = totalPagesAttendees();
+  let next = attendeesPage + dir;
+  if (next < 1) next = 1;
+  if (next > total) next = total;
+  attendeesPage = next;
+  renderAttendeePage();
+  document.getElementById('attendeesTableBody').scrollIntoView({ behavior: 'smooth' });
+};
 
 async function loadAttendees() {
   if (!currentEventId) return;
@@ -159,35 +218,23 @@ function filterAttendees(attendeesList, searchTerm) {
   );
 }
 
-function renderTable(attendeesList) {
-  const tableBody = document.getElementById('attendeesTableBody');
-  const noAttendees = document.getElementById('noAttendees');
+function renderAttendeeRow(attendee) {
+  let statusClass = 'bg-gray-400/30 text-gray-200';
+  let statusLabel = 'PENDING';
+  const isStatusMarked = !!attendee.status;
 
-  if (attendeesList.length === 0) {
-    noAttendees.style.display = 'block';
-    tableBody.innerHTML = '';
-    return;
+  if (attendee.status === 'present') {
+    statusClass = 'bg-green-400/30 text-green-200';
+    statusLabel = 'PRESENT';
+  } else if (attendee.status === 'late') {
+    statusClass = 'bg-orange-400/30 text-orange-200';
+    statusLabel = 'LATE';
+  } else if (attendee.status === 'absent') {
+    statusClass = 'bg-red-400/30 text-red-200';
+    statusLabel = 'ABSENT';
   }
 
-  noAttendees.style.display = 'none';
-
-  const html = attendeesList.map(attendee => {
-    let statusClass = 'bg-gray-400/30 text-gray-200';
-    let statusLabel = 'PENDING';
-    const isStatusMarked = !!attendee.status;
-    
-    if (attendee.status === 'present') {
-      statusClass = 'bg-green-400/30 text-green-200';
-      statusLabel = 'PRESENT';
-    } else if (attendee.status === 'late') {
-      statusClass = 'bg-orange-400/30 text-orange-200';
-      statusLabel = 'LATE';
-    } else if (attendee.status === 'absent') {
-      statusClass = 'bg-red-400/30 text-red-200';
-      statusLabel = 'ABSENT';
-    }
-    
-    const statusButtons = isStatusMarked ? '' : `
+  const statusButtons = isStatusMarked ? '' : `
             <button onclick="window.markPresent('${attendee.id}')"
               class="action-item px-2 py-1 text-xs flex items-center gap-1">
               <span class="w-2 h-2 bg-green-400 rounded-full"></span>
@@ -204,8 +251,8 @@ function renderTable(attendeesList) {
               Late
             </button>
     `;
-    
-    return `
+
+  return `
       <tr class="border-b border-green-400/20 hover:bg-white/10 transition-colors">
         <td class="py-4 px-2">
           <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
@@ -245,9 +292,6 @@ function renderTable(attendeesList) {
         </td>
       </tr>
     `;
-  }).join('');
-  console.log('Setting table HTML, length:', html.length);
-  tableBody.innerHTML = html;
 }
 
 window.markPresent = async (attendeeId) => {
@@ -639,7 +683,20 @@ importSheetInput.addEventListener('change', async (e) => {
 });
 
 document.getElementById('attendeesSearch').addEventListener('input', (e) => {
+  attendeesPage = 1;
   renderAttendees(allAttendees, e.target.value);
+});
+
+const attendeesPrevBtn = document.getElementById('attendeesPrevBtn');
+if (attendeesPrevBtn) attendeesPrevBtn.addEventListener('click', () => window.changeAttendeePage(-1));
+const attendeesNextBtn = document.getElementById('attendeesNextBtn');
+if (attendeesNextBtn) attendeesNextBtn.addEventListener('click', () => window.changeAttendeePage(1));
+
+document.addEventListener('keydown', (e) => {
+  const searchEl = document.getElementById('attendeesSearch');
+  if (searchEl && document.activeElement === searchEl) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); window.changeAttendeePage(-1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); window.changeAttendeePage(1); }
 });
 
 onAuthStateChanged(auth, async (user) => {
@@ -647,7 +704,7 @@ onAuthStateChanged(auth, async (user) => {
 
   if (!user) {
     stopSessionEnforcement();
-    window.location.href = '/admin-login';
+    window.location.href = '../logIn/LogInAdmin.html';
     return;
   }
 
@@ -659,15 +716,21 @@ onAuthStateChanged(auth, async (user) => {
 
   if (!currentEventId) {
     console.log('No event ID found, redirecting...');
-    window.location.href = '/event-crud';
+    window.location.href = '../EventCRUD/EventCRUD.html';
     return;
   }
 
-  try {
+try {
     const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
     if (!eventDoc.exists()) {
       showAlert('Event not found', { type: 'error' });
-      window.location.href = '/event-crud';
+      window.location.href = '../EventCRUD/EventCRUD.html';
+      return;
+    }
+
+    if (eventDoc.data().adminId !== user.uid) {
+      showAlert('Access denied: this event belongs to another admin.', { type: 'error' });
+      window.location.href = '../EventCRUD/EventCRUD.html';
       return;
     }
 
@@ -691,6 +754,6 @@ onAuthStateChanged(auth, async (user) => {
 
   } catch (error) {
     console.error('Error loading event:', error);
-    window.location.href = '/event-crud';
+    window.location.href = '../EventCRUD/EventCRUD.html';
   }
 });

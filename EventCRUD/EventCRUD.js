@@ -77,6 +77,11 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
+let currentAdminName = '';
+let allEvents = [];
+let filteredEvents = [];
+let currentPage = 1;
+const EVENTS_PER_PAGE = 2;
 
 document.getElementById('menuBtn').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -92,6 +97,24 @@ document.addEventListener('click', () => {
 });
 
 loadTheme();
+
+const eventsSearch = document.getElementById('eventsSearch');
+if (eventsSearch) {
+  eventsSearch.addEventListener('input', () => {
+    currentPage = 1;
+    applyFilter();
+  });
+}
+const prevPageBtn = document.getElementById('prevPageBtn');
+if (prevPageBtn) prevPageBtn.addEventListener('click', () => window.changePage(-1));
+const nextPageBtn = document.getElementById('nextPageBtn');
+if (nextPageBtn) nextPageBtn.addEventListener('click', () => window.changePage(1));
+
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('eventsSearch') && document.activeElement === document.getElementById('eventsSearch')) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); window.changePage(-1); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); window.changePage(1); }
+});
 
 document.getElementById('eventForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -136,6 +159,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
       setButtonLoading(submitBtn, true, 'Creating...');
       await addDoc(collection(db, 'Events'), {
         adminId: currentUser.uid,
+        adminName: currentAdminName,
         title: eventTitle,
         description: eventDescription,
         date: eventDate,
@@ -170,27 +194,11 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-window.handleEventUpdate = (events) => {
-  events.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
-  const eventsStack = document.getElementById('eventsStack');
-  const eventCount = document.getElementById('eventCount');
-  const noEvents = document.getElementById('noEvents');
-  
-  eventCount.textContent = events.length;
-  
-  if (events.length === 0) {
-    noEvents.style.display = 'block';
-    eventsStack.innerHTML = '';
-    return;
-  }
-  
-  noEvents.style.display = 'none';
-  
-  eventsStack.innerHTML = events.map(event => {
-    const statusClass = event.status === 'active' ? 'bg-green-400/30 text-green-200' : 'bg-gray-400/30 text-gray-200';
-    const statusLabel = (event.status || 'active').toUpperCase();
+function renderEventCard(event) {
+  const statusClass = event.status === 'active' ? 'bg-green-400/30 text-green-200' : 'bg-gray-400/30 text-gray-200';
+  const statusLabel = (event.status || 'active').toUpperCase();
 
-    return `
+  return `
       <div class="liquid-panel p-6 border-l-4 border-green-400/50">
         <div>
           <h3 class="text-2xl font-bold text-green-100">${escapeHtml(event.title)}</h3>
@@ -233,6 +241,11 @@ window.handleEventUpdate = (events) => {
           <span class="inline-block mt-5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-400/30 text-blue-200 ml-2">
             Attendees: ${event.attendeeCount || 0}
           </span>
+          ${event.adminName ? `
+          <span class="inline-block mt-5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-400/30 text-purple-200 ml-2" title="Created by">
+            By ${escapeHtml(event.adminName)}
+          </span>
+          ` : ''}
         </div>
 
         <div class="mt-6 pt-5 border-t border-green-400/20">
@@ -276,7 +289,89 @@ window.handleEventUpdate = (events) => {
         </div>
       </div>
     `;
-  }).join('');
+}
+
+function applyFilter() {
+  const q = (document.getElementById('eventsSearch')?.value || '').toLowerCase().trim();
+  if (!q) {
+    filteredEvents = allEvents.slice();
+  } else {
+    filteredEvents = allEvents.filter(e =>
+      (e.title || '').toLowerCase().includes(q) ||
+      (e.description || '').toLowerCase().includes(q) ||
+      (e.location || '').toLowerCase().includes(q) ||
+      (e.department || '').toLowerCase().includes(q) ||
+      (e.speaker || '').toLowerCase().includes(q) ||
+      (e.adminName || '').toLowerCase().includes(q)
+    );
+  }
+  // Newest first (oldest last)
+  filteredEvents.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  if (currentPage > totalPages()) currentPage = 1;
+  renderPage();
+}
+
+function totalPages() {
+  return Math.max(1, Math.ceil(filteredEvents.length / EVENTS_PER_PAGE));
+}
+
+function renderPage() {
+  const eventsStack = document.getElementById('eventsStack');
+  const eventCount = document.getElementById('eventCount');
+  const noEvents = document.getElementById('noEvents');
+  const paginationControls = document.getElementById('paginationControls');
+  const pageInfo = document.getElementById('pageInfo');
+
+  eventCount.textContent = allEvents.length;
+
+  if (filteredEvents.length === 0) {
+    noEvents?.classList.remove('hidden');
+    noEvents.textContent = allEvents.length === 0
+      ? 'No events created yet.'
+      : 'No events match your search.';
+    eventsStack.innerHTML = '';
+    paginationControls?.classList.add('hidden');
+    return;
+  }
+
+  noEvents?.classList.add('hidden');
+  const start = (currentPage - 1) * EVENTS_PER_PAGE;
+  const pageEvents = filteredEvents.slice(start, start + EVENTS_PER_PAGE);
+  eventsStack.innerHTML = pageEvents.map(renderEventCard).join('');
+
+  const total = totalPages();
+  paginationControls?.classList.remove('hidden');
+  if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${total}  •  ${filteredEvents.length} event${filteredEvents.length === 1 ? '' : 's'}`;
+
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  if (prevBtn) {
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.classList.toggle('opacity-40', currentPage === 1);
+    prevBtn.classList.toggle('cursor-not-allowed', currentPage === 1);
+    prevBtn.classList.toggle('pointer-events-none', currentPage === 1);
+  }
+  if (nextBtn) {
+    nextBtn.disabled = currentPage === total;
+    nextBtn.classList.toggle('opacity-40', currentPage === total);
+    nextBtn.classList.toggle('cursor-not-allowed', currentPage === total);
+    nextBtn.classList.toggle('pointer-events-none', currentPage === total);
+  }
+}
+
+window.handleEventUpdate = (events) => {
+  allEvents = events;
+  applyFilter();
+};
+
+window.changePage = (dir) => {
+  const total = totalPages();
+  let next = currentPage + dir;
+  if (next < 1) next = 1;
+  if (next > total) next = total;
+  currentPage = next;
+  renderPage();
+  document.getElementById('eventsStack').scrollIntoView({ behavior: 'smooth' });
 };
 
 window.exportSingleEvent = async (eventId, eventTitle) => {
@@ -332,8 +427,17 @@ window.closeCertFormatModal = () => {
 window.deleteEvent = async (eventId) => {
   const confirmed = await showConfirm('Are you sure you want to delete this event?');
   if (confirmed !== 1) return;
-  
+
   try {
+    const eventDoc = await getDoc(doc(db, 'Events', eventId));
+    if (!eventDoc.exists()) {
+      showAlert('Event not found', { type: 'error' });
+      return;
+    }
+    if (eventDoc.data().adminId !== currentUser.uid) {
+      showAlert('Access denied.', { type: 'error' });
+      return;
+    }
     const attendeesQuery = query(collection(db, 'Events', eventId, 'Attendees'));
     const snapshot = await getDocs(attendeesQuery);
     
@@ -354,8 +458,17 @@ window.deleteEvent = async (eventId) => {
 window.closeEvent = async (eventId) => {
   const confirmed = await showConfirm('Are you sure you want to close this event? This will mark it as completed.');
   if (confirmed !== 1) return;
-  
+
   try {
+    const eventDoc = await getDoc(doc(db, 'Events', eventId));
+    if (!eventDoc.exists()) {
+      showAlert('Event not found', { type: 'error' });
+      return;
+    }
+    if (eventDoc.data().adminId !== currentUser.uid) {
+      showAlert('Access denied.', { type: 'error' });
+      return;
+    }
     await updateDoc(doc(db, 'Events', eventId), {
       status: 'completed',
       closedAt: new Date()
@@ -369,13 +482,17 @@ window.closeEvent = async (eventId) => {
 
 window.manageAttendees = (eventId) => {
   localStorage.setItem('currentEventId', eventId);
-  window.location.href = '/attendee-management';
+  window.location.href = '../AttendeeManagement/AttendeeManagement.html';
 };
 
 window.editEvent = async (eventId) => {
   const eventDoc = await getDoc(doc(db, 'Events', eventId));
   if (!eventDoc.exists()) {
     showAlert('Event not found', { type: 'error' });
+    return;
+  }
+  if (eventDoc.data().adminId !== currentUser.uid) {
+    showAlert('Access denied.', { type: 'error' });
     return;
   }
   const event = eventDoc.data();
@@ -404,7 +521,7 @@ window.editEvent = async (eventId) => {
 
 window.certificateManagement = (eventId) => {
   localStorage.setItem('certEventId', eventId);
-  window.location.href = '/certificate-management';
+  window.location.href = '../CertificateManagement/CertificateManagement.html';
 };
 
 window.cancelEdit = () => {
@@ -416,6 +533,26 @@ window.cancelEdit = () => {
   document.getElementById('cancelEditBtn').classList.add('hidden');
 };
 
+async function backfillAdminNames(adminUid, adminName) {
+  try {
+    const snap = await getDocs(query(collection(db, 'Events'), where('adminId', '==', adminUid)));
+    const batch = writeBatch(db);
+    let changed = 0;
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (!data.adminName) {
+        batch.update(docSnap.ref, { adminName: adminName });
+        changed++;
+      }
+    });
+    if (changed > 0) {
+      await batch.commit();
+    }
+  } catch (error) {
+    console.error('Error backfilling admin names:', error);
+  }
+}
+
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -425,6 +562,7 @@ onAuthStateChanged(auth, async (user) => {
     const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
     const adminData = adminDoc.exists() ? adminDoc.data() : {};
     const adminName = adminData.adminName || user.email;
+    currentAdminName = adminName;
     const departmentName = adminData.departmentName || adminData.department || 'Information Unit';
     document.getElementById('departmentName').textContent = departmentName;
     document.title = `${departmentName}: Event CRUD`;
@@ -434,6 +572,8 @@ onAuthStateChanged(auth, async (user) => {
       applyTheme(adminData.selectedTheme);
     }
     
+    backfillAdminNames(user.uid, currentAdminName);
+
     const q = query(collection(db, 'Events'), where('adminId', '==', user.uid));
     onSnapshot(q, async (snapshot) => {
       const events = [];
@@ -455,6 +595,6 @@ onAuthStateChanged(auth, async (user) => {
     });
   } else {
     stopSessionEnforcement();
-    window.location.href = '/admin-login';
+    window.location.href = '../logIn/LogInAdmin.html';
   }
 });

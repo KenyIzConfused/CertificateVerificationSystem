@@ -263,9 +263,9 @@ export function startSessionEnforcement(user) {
     if (data.sessionId !== sessionId) {
       console.warn('Session conflict detected - signing out');
       signOut(auth).then(() => {
-        window.location.href = '/admin-login';
+        window.location.href = '../logIn/LogInAdmin.html';
       }).catch(() => {
-        window.location.href = '/admin-login';
+        window.location.href = '../logIn/LogInAdmin.html';
       });
     }
   });

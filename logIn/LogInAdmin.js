@@ -32,7 +32,7 @@ loginForm.addEventListener('submit', async (e) => {
     sessionStorage.setItem('adminLoggedIn', 'true');
     await registerSession(userCredential.user);
     showToast('Login successful!');
-    window.location.href = '/event-crud';
+    window.location.href = '../EventCRUD/EventCRUD.html';
   } catch (error) {
     console.error('Login error:', error);
     if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email') {

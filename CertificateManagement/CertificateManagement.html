@@ -137,13 +137,13 @@
                 <p id="eventInfo" class="text-green-200/70 mt-1"></p>
             </div>
             <div class="flex flex-wrap gap-3">
-                <a href="/attendee-management" class="btn-glass px-5 py-2.5 font-medium flex items-center gap-2">
+                <a href="../AttendeeManagement/AttendeeManagement.html" class="btn-glass px-5 py-2.5 font-medium flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     Manage Attendees
                 </a>
-                <a href="/event-crud" class="btn-glass px-5 py-2.5 font-medium flex items-center gap-2">
+                <a href="../EventCRUD/EventCRUD.html" class="btn-glass px-5 py-2.5 font-medium flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
@@ -268,7 +268,18 @@
 
         <!-- Attendees Table -->
         <div class="liquid-panel p-6 overflow-x-auto liquid-glow">
-            <h2 class="text-2xl font-bold text-green-100 mb-6">Attendees</h2>
+            <h2 class="text-2xl font-bold text-green-100 mb-4">Attendees</h2>
+
+            <div class="liquid-panel p-4 mb-4">
+                <div class="relative">
+                    <input type="text" id="certSearch" placeholder="Search attendees by name, course, role, email, or certificate ID..."
+                        class="w-full pl-10 pr-4 py-3 liquid-input rounded-lg text-sm outline-none">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-green-200/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
             <table class="w-full liquid-table">
                 <thead>
                     <tr class="border-b-2 border-green-400/30">
@@ -283,7 +294,23 @@
                 <tbody id="attendeesTableBody">
                 </tbody>
             </table>
-            <p id="noAttendees" class="text-green-200/60 text-center py-8">No attendees yet.</p>
+            <p id="noAttendees" class="hidden text-green-200/60 text-center py-8">No attendees yet.</p>
+
+            <div id="certPagination" class="hidden mt-6 flex items-center justify-center gap-3 flex-wrap">
+                <button id="certPrevBtn" class="btn-glass px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:transform-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Previous
+                </button>
+                <span id="certPageInfo" class="text-green-100 text-base font-semibold px-4 py-2 liquid-panel rounded-xl text-center min-w-[140px]"></span>
+                <button id="certNextBtn" class="btn-glass px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:transform-none">
+                    Next
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 

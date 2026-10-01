@@ -24,6 +24,9 @@ const VERIFICATION_URL = 'https://certificate-verification-system-6nx90yh8u.verc
 let currentEventId = null;
 let currentEvent = null;
 let allAttendees = [];
+let filteredCertAttendees = [];
+let certPage = 1;
+const CERTS_PER_PAGE = 5;
 let templateBytes = null;
 
 const EMAILJS_CONFIG = {
@@ -127,47 +130,104 @@ function downloadFile(buffer, filename) {
     URL.revokeObjectURL(url);
 }
 
-async function renderAttendees() {
+function renderCertAttendeeRow(attendee) {
+    return `
+        <tr class="border-b border-green-400/20 hover:bg-white/10 transition-colors">
+            <td class="py-4 px-2">
+                <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
+            </td>
+            <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
+            <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
+            <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.email || '')}</td>
+            <td class="py-4 px-2">
+                <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-400/30 text-blue-200">
+                    ${escapeHtml(attendee.certificateId || '')}
+                </span>
+            </td>
+            <td class="py-4 px-2">
+                <div class="flex gap-1 flex-wrap">
+                    <button onclick="window.downloadCertificate('${attendee.id}', this)"
+                        class="action-item px-2 py-1 text-xs flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3"></path>
+                        </svg>
+                        Download
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+function filterCertAttendees(searchTerm) {
+    if (!searchTerm) return allAttendees.slice();
+    const term = searchTerm.toLowerCase();
+    return allAttendees.filter(a =>
+        (a.fullName || '').toLowerCase().includes(term) ||
+        (a.course || '').toLowerCase().includes(term) ||
+        (a.role || '').toLowerCase().includes(term) ||
+        (a.email || '').toLowerCase().includes(term) ||
+        (a.certificateId || '').toLowerCase().includes(term)
+    );
+}
+
+function totalPagesCert() {
+    return Math.max(1, Math.ceil(filteredCertAttendees.length / CERTS_PER_PAGE));
+}
+
+function renderCertAttendees() {
     const tableBody = document.getElementById('attendeesTableBody');
     const noAttendees = document.getElementById('noAttendees');
+    const pagination = document.getElementById('certPagination');
+    const pageInfo = document.getElementById('certPageInfo');
+    const searchEl = document.getElementById('certSearch');
 
-    if (allAttendees.length === 0) {
-        noAttendees.style.display = 'block';
+    const term = (searchEl?.value || '').trim();
+    filteredCertAttendees = filterCertAttendees(term);
+
+    if (filteredCertAttendees.length === 0) {
+        noAttendees?.classList.remove('hidden');
+        noAttendees.textContent = allAttendees.length === 0 ? 'No attendees yet.' : 'No attendees match your search.';
         tableBody.innerHTML = '';
+        pagination?.classList.add('hidden');
         return;
     }
 
-    noAttendees.style.display = 'none';
+    noAttendees?.classList.add('hidden');
+    if (certPage > totalPagesCert()) certPage = 1;
+    const start = (certPage - 1) * CERTS_PER_PAGE;
+    const pageRows = filteredCertAttendees.slice(start, start + CERTS_PER_PAGE).map(renderCertAttendeeRow).join('');
+    tableBody.innerHTML = pageRows;
 
-    tableBody.innerHTML = allAttendees.map(attendee => {
-        return `
-            <tr class="border-b border-green-400/20 hover:bg-white/10 transition-colors">
-                <td class="py-4 px-2">
-                    <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
-                </td>
-                <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
-                <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
-                <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.email || '')}</td>
-                <td class="py-4 px-2">
-                    <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-400/30 text-blue-200">
-                        ${escapeHtml(attendee.certificateId || '')}
-                    </span>
-                </td>
-                <td class="py-4 px-2">
-                    <div class="flex gap-1 flex-wrap">
-                    <button onclick="window.downloadCertificate('${attendee.id}', this)"
-                        class="action-item px-2 py-1 text-xs flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3"></path>
-                            </svg>
-                            Download
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
+    const total = totalPagesCert();
+    pagination?.classList.remove('hidden');
+    if (pageInfo) pageInfo.textContent = `Page ${certPage} of ${total}  •  ${filteredCertAttendees.length} attendee${filteredCertAttendees.length === 1 ? '' : 's'}`;
+
+    const prevBtn = document.getElementById('certPrevBtn');
+    const nextBtn = document.getElementById('certNextBtn');
+    if (prevBtn) {
+        prevBtn.disabled = certPage === 1;
+        prevBtn.classList.toggle('opacity-40', certPage === 1);
+        prevBtn.classList.toggle('cursor-not-allowed', certPage === 1);
+        prevBtn.classList.toggle('pointer-events-none', certPage === 1);
+    }
+    if (nextBtn) {
+        nextBtn.disabled = certPage === total;
+        nextBtn.classList.toggle('opacity-40', certPage === total);
+        nextBtn.classList.toggle('cursor-not-allowed', certPage === total);
+        nextBtn.classList.toggle('pointer-events-none', certPage === total);
+    }
 }
+
+window.changeCertPage = (dir) => {
+    const total = totalPagesCert();
+    let next = certPage + dir;
+    if (next < 1) next = 1;
+    if (next > total) next = total;
+    certPage = next;
+    renderCertAttendees();
+    document.getElementById('attendeesTableBody').scrollIntoView({ behavior: 'smooth' });
+};
 
 window.downloadCertificate = async (attendeeId, btn) => {
     if (btn) setButtonLoading(btn, true, 'Generating...');
@@ -564,10 +624,29 @@ window.generateSingleCertificate = async (attendeeId, btn) => {
 document.getElementById('generateSingleCertBtn').addEventListener('click', window.openSelectAttendeeModal);
 document.getElementById('sendSingleCertBtn').addEventListener('click', window.openSendEmailModal);
 
+const certSearchEl = document.getElementById('certSearch');
+if (certSearchEl) {
+    certSearchEl.addEventListener('input', () => {
+        certPage = 1;
+        renderCertAttendees();
+    });
+}
+const certPrevBtn = document.getElementById('certPrevBtn');
+if (certPrevBtn) certPrevBtn.addEventListener('click', () => window.changeCertPage(-1));
+const certNextBtn = document.getElementById('certNextBtn');
+if (certNextBtn) certNextBtn.addEventListener('click', () => window.changeCertPage(1));
+
+document.addEventListener('keydown', (e) => {
+    const searchEl = document.getElementById('certSearch');
+    if (searchEl && document.activeElement === searchEl) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); window.changeCertPage(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); window.changeCertPage(1); }
+});
+
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         stopSessionEnforcement();
-        window.location.href = '/admin-login';
+        window.location.href = '../logIn/LogInAdmin.html';
         return;
     }
 
@@ -578,7 +657,7 @@ onAuthStateChanged(auth, async (user) => {
     currentEventId = localStorage.getItem('certEventId');
 
     if (!currentEventId) {
-        window.location.href = '/event-crud';
+        window.location.href = '../EventCRUD/EventCRUD.html';
         return;
     }
 
@@ -586,7 +665,13 @@ onAuthStateChanged(auth, async (user) => {
         const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
         if (!eventDoc.exists()) {
             showAlert('Event not found', { type: 'error' });
-            window.location.href = '/event-crud';
+            window.location.href = '../EventCRUD/EventCRUD.html';
+            return;
+        }
+
+        if (eventDoc.data().adminId !== user.uid) {
+            showAlert('Access denied: this event belongs to another admin.', { type: 'error' });
+            window.location.href = '../EventCRUD/EventCRUD.html';
             return;
         }
 
@@ -612,9 +697,9 @@ onAuthStateChanged(auth, async (user) => {
             allAttendees.push({ id: docSnap.id, ...docSnap.data() });
         });
 
-        renderAttendees();
+        renderCertAttendees();
     } catch (error) {
         console.error('Error loading event:', error);
-        window.location.href = '/event-crud';
+        window.location.href = '../EventCRUD/EventCRUD.html';
     }
 });

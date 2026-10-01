@@ -8,6 +8,10 @@ A web-based system for managing events, attendees, and generating verifiable cer
 - Create, edit, and close events
 - View all events with status (active/completed)
 - Each event has a unique ID and tracks the number of attendees
+- Each event records which admin created it ("Created By" badge)
+- Search events by title, description, venue, department, speaker, or creator
+- Pagination: 2 events per page with Previous/Next controls (newest first)
+- Arrow-key navigation (← / →) between pages
 
 ### Attendee Management
 - Add attendees manually (name, course, role, email)
@@ -18,6 +22,8 @@ A web-based system for managing events, attendees, and generating verifiable cer
 - Search/filter attendees by name, course, role, date, status, or certificate ID
 - Export attendee list to Excel (.xlsx) with formatted headers
 - Each attendee gets an auto-generated 7-character unique Certificate ID
+- Pagination: 5 attendees per page with Previous/Next controls
+- Arrow-key navigation (← / →) between pages
 
 ### Certificate Management
 - Upload certificate templates (.docx files with placeholders)
@@ -27,6 +33,9 @@ A web-based system for managing events, attendees, and generating verifiable cer
 - Send certificates individually via email using EmailJS
 - Send all certificates at once via email (EmailJS)
 - Each certificate includes attendee-specific data and a verification URL
+- Search attendees by name, course, role, email, or certificate ID
+- Pagination: 5 attendees per page with Previous/Next controls
+- Arrow-key navigation (← / →) between pages
 
 ### Certificate Verification (Public)
 - Anyone with a Certificate ID can verify authenticity
@@ -38,7 +47,17 @@ A web-based system for managing events, attendees, and generating verifiable cer
 - Admin signup with email/password
 - Admin login
 - Password reset via email
-- Each admin manages their own events (data isolation)
+- Each admin manages their own events (data isolation) — events, attendees, and certificates are scoped to the admin who created them
+- Session enforcement (auto-logout after inactivity)
+
+## Recent Changes
+- **Pretty-URL navigation:** All links now use relative paths (`logIn/LogInAdmin.html`, `EventCRUD/EventCRUD.html`, etc.) so the app works identically on a local static server (Live Server / `python -m http.server`) and when deployed to Firebase Hosting / Vercel. The rewrite rules in `firebase.json` and `vercel.json` are kept so pretty URLs (`/admin-login`, `/verify-certificate`) still resolve on production.
+- **Event isolation:** Each event stores the creating admin's UID (`adminId`) and display name (`adminName`). The Event CRUD list now filters to the logged-in admin only, and Attendee Management / Certificate Management reject events belonging to another admin.
+- **Created By tracking:** New events record the creator's name; existing events are backfilled on login. Each event card shows a purple "By <name>" badge.
+- **Event pagination & search:** Events are paginated (2 per page, newest first) with a live search bar, Previous/Next controls, and arrow-key navigation.
+- **Attendee pagination & search:** Attendees are paginated (5 per page) with a live search bar, Previous/Next controls, and arrow-key navigation.
+- **Certificate pagination & search:** Certificates are paginated (5 per page) with a live search bar, Previous/Next controls, and arrow-key navigation.
+- **Firestore security rules:** Added an `adminSessions` rule so each admin can read/write their own session doc (fixes the "Missing or insufficient permissions" error on session registration). Events/attendees/certificate formats remain scoped to the event owner.
 
 ### Certificate Placeholders
 Use these placeholders in your .docx template:

@@ -51,7 +51,7 @@ if (form) {
       await confirmPasswordReset(auth, oobCode, newPassword);
       showToast('Password reset successful! You can now login.');
       setTimeout(() => {
-        window.location.href = '/admin-login';
+        window.location.href = 'LogInAdmin.html';
       }, 1500);
     } catch (error) {
       console.error('Reset password error:', error);
