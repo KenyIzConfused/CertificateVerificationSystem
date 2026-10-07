@@ -33,7 +33,6 @@ loginForm.addEventListener('submit', async (e) => {
     
     // Verify the account has admin privileges (custom claim).
     if (!(await requireAdmin())) {
-      showAlert('This account does not have admin access. Contact an administrator.', { type: 'error' });
       return;
     }
 

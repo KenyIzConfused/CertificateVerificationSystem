@@ -63,6 +63,7 @@ A web-based system for managing events, attendees, and generating verifiable cer
 - **Bulk-read restriction (rules):** `Events` and `Attendees` use `allow get: if true; allow list: if request.auth != null` — single documents stay readable for public verification, but anonymous users can no longer list/scan whole collections.
 - **Invite-only signup + custom claims:** `createAdmin`, `generateInviteCode`, and `ensureAdminClaim` Cloud Functions gate admin creation behind one-time invite codes and set an `admin` custom claim. All admin pages and the login flow verify the claim (existing admins are backfilled automatically on first load). The `inviteCodes` collection has no client access.
 - **App Check (optional):** `AppCheck.js` wires reCAPTCHA v3; paste the site key to enable, then turn on enforcement in Firebase Console → App Check. Off by default (no-op).
+- **Clean URLs:** `UrlCleaner.js` swaps `.html` addresses for pretty slugs (`/event-crud`, `/verify-certificate`, …) in the address bar via `history.replaceState`. Pretty URLs are served by the rewrite rules in `firebase.json` (Firebase Hosting) and `vercel.json` (Vercel); locally, use `node scripts/dev-server.js`, which applies the same rewrites (`python -m http.server` does not).
 
 ### Certificate Placeholders
 Use these placeholders in your .docx template:
@@ -102,6 +103,7 @@ Use these placeholders in your .docx template:
 ├── scripts/                    – Utility scripts (CORS, setup)
 ├── AppCheck.js                 – Optional Firebase App Check (reCAPTCHA v3) wiring
 ├── FirebaseAdmin.js            – Shared admin claim guard + callable function refs
+├── UrlCleaner.js               – Hides .html in the address bar (pretty URLs)
 ├── PopupSystem.js              – Shared modal/toast utilities
 ├── firestore.rules             – Firestore security rules
 └── storage.rules               – Storage security rules
@@ -129,6 +131,11 @@ firebase functions:shell
 > await admin.firestore().collection('Admin').doc(u.uid).set({ adminName: 'First Admin', email: 'you@example.com', createdAt: admin.firestore.FieldValue.serverTimestamp() })
 ```
 After that, admins mint invite codes in **Settings → Generate Invite Code**; each code works once.
+
+## Local development
+Two options:
+- **Recommended (pretty URLs work):** `node scripts/dev-server.js` — a zero-dependency Node server with the same rewrites as production. Open http://localhost:8080.
+- **`python -m http.server` / VS Code Live Server:** works, but only the `.html` links resolve (no rewrites), so the address bar shows `.html` paths.
 
 ## Deployment
 Deploy in this order after any change to `functions/` or the rules:

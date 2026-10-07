@@ -179,7 +179,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   if (!(await requireAdmin())) {
-    showAlert('Access denied: admin privileges required.', { type: 'error' });
     window.location.href = '../logIn/LogInAdmin.html';
     return;
   }
