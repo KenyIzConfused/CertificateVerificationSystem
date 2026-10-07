@@ -74,12 +74,21 @@ Use these placeholders in your .docx template:
 - `{dateAttended}` – Date of attendance
 - `{certificateId}` – Unique certificate ID
 
+## Security
+What was hardened in this project (and how it works now):
+- **Event ownership:** only the admin who created an event can edit, delete, or close it. The Firestore rules check the *stored* `adminId` (not the value sent in the request), so a logged-in user cannot take over another admin's event by forging `adminId` in the payload.
+- **Data isolation:** each admin sees only their own events; Attendee Management and Certificate Management reject events belonging to other admins.
+- **Bulk-read restriction:** anonymous visitors can read single documents (needed for public verification) but cannot list/scan whole collections — this blocks bulk scraping of attendee data.
+- **Public verification privacy:** when the `verifyCertificate` Cloud Function is deployed, the public page receives only the seven display fields (name, course, role, date attended, status, certificate ID, event title) — attendee emails and document IDs never leave the server. Without the function, the page automatically falls back to a direct Firestore scan.
+- **Admin access:** login and all admin pages verify the `Admin` document directly in Firestore, so the app runs on Authentication + Firestore alone — no Cloud Function deploy required.
+- **Optional hardening (off by default):** invite-code signup with an `admin` custom claim, and Firebase App Check (reCAPTCHA v3). Both are implemented in `functions/index.js` / `AppCheck.js` and activate when the functions are deployed / a site key is added.
+
 ## Technical Stack
 - **Frontend:** HTML, Tailwind CSS, vanilla JavaScript (ES modules)
 - **Backend Services (Free Tier):**
-  - Firebase Authentication – admin login/signup (with `admin` custom claims)
+  - Firebase Authentication – admin login/signup
   - Cloud Firestore – events, attendees, admins data
-  - Cloud Functions (Node.js) – public certificate verification, invite-code admin provisioning, QR code + email generation
+  - Cloud Functions (Node.js, optional) – privacy-hardened certificate verification, invite-code signup, QR code + email generation
   - EmailJS – client-side email sending (200 emails/month free)
 - **Client-side Libraries:**
   - PizZip – .docx file parsing
@@ -99,11 +108,11 @@ Use these placeholders in your .docx template:
 │   └── CertificateManagement.js
 ├── CertificateVerification/    – Public verification page
 ├── EventCRUD/                  – Event management (incl. Settings)
-├── functions/                  – Cloud Functions (verification, admin provisioning)
+├── functions/                  – Cloud Functions, optional (verification, invite signup)
 ├── logIn/                      – Login, signup, password reset
-├── scripts/                    – Utility scripts (CORS, setup)
+├── scripts/                    – Utility scripts (CORS, setup, dev-server)
 ├── AppCheck.js                 – Optional Firebase App Check (reCAPTCHA v3) wiring
-├── FirebaseAdmin.js            – Shared admin claim guard + callable function refs
+├── FirebaseAdmin.js            – Shared admin access guard (reads the Admin document)
 ├── UrlCleaner.js               – Hides .html in the address bar (pretty URLs)
 ├── PopupSystem.js              – Shared modal/toast utilities
 ├── firestore.rules             – Firestore security rules
@@ -112,7 +121,7 @@ Use these placeholders in your .docx template:
 
 ## Setup
 1. Open `index.html` in a browser (or deploy to Firebase Hosting)
-2. Sign up as an admin (requires an invite code — see below for the first admin)
+2. Sign up as an admin (the first signup creates the first admin account)
 3. Create an event
 4. Add attendees (manually or via Excel import)
 5. Upload a certificate template
@@ -132,7 +141,7 @@ Two options:
 - **`python -m http.server` / VS Code Live Server:** works, but only the `.html` links resolve (no rewrites), so the address bar shows `.html` paths.
 
 ## Deployment
-The app runs on Authentication + Firestore alone; Cloud Functions are optional (needed only for invite-code signup, and for the email/QR generation features). When deploying them:
+The app runs on Authentication + Firestore alone; Cloud Functions are optional (needed only for invite-code signup, the email/QR generation features, and the privacy-hardened verification path). When deploying them:
 ```
 firebase deploy --only functions          # new/changed Cloud Functions first
 firebase deploy --only hosting            # then the static pages
