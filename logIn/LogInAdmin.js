@@ -31,7 +31,7 @@ loginForm.addEventListener('submit', async (e) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     
-    // Verify the account has admin privileges (custom claim).
+    // Verify the account has an admin record.
     if (!(await requireAdmin())) {
       return;
     }

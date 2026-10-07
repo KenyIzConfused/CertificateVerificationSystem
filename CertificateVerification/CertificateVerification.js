@@ -1,5 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import '../AppCheck.js';
 import { showAlert, setButtonLoading } from '../PopupSystem.js';
 
@@ -15,7 +16,53 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app);
+const db = getFirestore(app);
 const verifyCertificateFn = httpsCallable(functions, 'verifyCertificate');
+
+// Fallback scan, used only when the verifyCertificate Cloud
+// Function is unavailable (not deployed). Reads documents
+// directly from Firestore.
+async function searchAllEventsForAttendee(certificateId) {
+    const searchId = certificateId.toUpperCase();
+    const eventsSnapshot = await getDocs(collection(db, 'Events'));
+
+    for (const eventDoc of eventsSnapshot.docs) {
+        const attendeesSnapshot = await getDocs(collection(db, 'Events', eventDoc.id, 'Attendees'));
+
+        for (const attendeeDoc of attendeesSnapshot.docs) {
+            const attendee = attendeeDoc.data();
+            const storedId = (attendee.certificateId || '').toUpperCase();
+
+            if (storedId === searchId) {
+                return {
+                    attendee: attendee,
+                    eventId: eventDoc.id,
+                    eventTitle: eventDoc.data().title || '',
+                    found: true
+                };
+            }
+        }
+    }
+    return { found: false };
+}
+
+// Primary path: the verifyCertificate Cloud Function (returns
+// only display fields - never emails). If the function is not
+// deployed, falls back to a direct Firestore scan.
+async function verifyCertificate(certificateId) {
+    try {
+        const result = await verifyCertificateFn({ certificateId });
+        const data = result.data || {};
+        return {
+            found: !!data.found,
+            eventTitle: data.eventTitle || '',
+            attendee: data.attendee || {}
+        };
+    } catch (error) {
+        console.warn('verifyCertificate function unavailable, falling back to local scan:', error);
+        return searchAllEventsForAttendee(certificateId);
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('verifyForm');
@@ -36,15 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
             setButtonLoading(verifyBtn, true, 'Verifying...');
 
             try {
-                const result = await verifyCertificateFn({ certificateId });
-                const data = result.data || {};
+                const result = await verifyCertificate(certificateId);
                 
-                if (!data.found) {
+                if (!result.found) {
                     showAlert('Certificate Not Found', { type: 'error' });
                     return;
                 }
                 
-                const attendee = data.attendee || {};
+                const attendee = result.attendee || {};
                 
                 document.getElementById('certName').textContent = attendee.fullName || '';
                 document.getElementById('certCourse').textContent = attendee.course || '';
@@ -52,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('certDateAttended').textContent = attendee.dateAttended || '';
                 document.getElementById('certStatus').textContent = attendee.status ? attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1) : '';
                 document.getElementById('certId').textContent = attendee.certificateId || '';
-                document.getElementById('certEvent').textContent = data.eventTitle || '';
+                document.getElementById('certEvent').textContent = result.eventTitle || '';
                 document.getElementById('verifyForm').classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
             } catch (error) {
