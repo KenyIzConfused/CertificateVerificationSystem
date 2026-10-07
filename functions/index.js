@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const Docxtemplater = require('docxtemplater');
 const PizZip = require('pizzip');
 const QRCode = require('qrcode');
+const crypto = require('crypto');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -209,6 +210,58 @@ exports.generateAndEmailCertificates = onCall(
   }
 );
 
+// Public certificate verification - callable by anyone (no login required).
+// Scans events/attendees server-side (Admin SDK bypasses Firestore rules) and
+// returns only the display fields, never email or other private attendee data.
+exports.verifyCertificate = onCall(
+  {
+    timeoutSeconds: 60,
+    memory: '512MiB'
+  },
+  async (request) => {
+    const { certificateId } = request.data || {};
+    if (typeof certificateId !== 'string' || !certificateId.trim()) {
+      throw new HttpsError('invalid-argument', 'certificateId is required.');
+    }
+
+    const searchId = certificateId.trim().toUpperCase();
+    if (searchId.length > 64 || !/^[A-Z0-9-]+$/.test(searchId)) {
+      throw new HttpsError('invalid-argument', 'certificateId is invalid.');
+    }
+
+    const eventsSnap = await db.collection('Events').get();
+
+    for (const eventDoc of eventsSnap.docs) {
+      const event = eventDoc.data() || {};
+      const attSnap = await db
+        .collection('Events').doc(eventDoc.id)
+        .collection('Attendees').get();
+
+      for (const attDoc of attSnap.docs) {
+        const attendee = attDoc.data() || {};
+        const storedId = (attendee.certificateId || '').toUpperCase();
+
+        if (storedId === searchId) {
+          return {
+            found: true,
+            eventTitle: event.title || '',
+            attendee: {
+              fullName: attendee.fullName || '',
+              course: attendee.course || '',
+              role: attendee.role || '',
+              dateAttended: attendee.dateAttended || '',
+              status: attendee.status || '',
+              certificateId: attendee.certificateId || ''
+            }
+          };
+        }
+      }
+    }
+
+    return { found: false };
+  }
+);
+
 // Generate and store QR codes for all attendees of an event
 exports.generateQRCodes = onCall(
   {
@@ -260,6 +313,171 @@ exports.generateQRCodes = onCall(
     }
 
     return { total: attendees.length, updated: updated };
+  }
+);
+
+// ---------------------------------------------------------------------------
+// Admin access control (invite-code signup + custom claims)
+// ---------------------------------------------------------------------------
+
+const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const INVITE_CODE_LENGTH = 10;
+
+function randomInviteCode() {
+  const buf = crypto.randomBytes(INVITE_CODE_LENGTH);
+  let code = '';
+  for (let i = 0; i < INVITE_CODE_LENGTH; i++) {
+    code += INVITE_CODE_ALPHABET[buf[i] % INVITE_CODE_ALPHABET.length];
+  }
+  return code;
+}
+
+// Mint a one-time invite code. Callable by signed-in admins only
+// (verified via the admin custom claim, not Firestore rules).
+exports.generateInviteCode = onCall(
+  {
+    timeoutSeconds: 30,
+    memory: '256MiB'
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'You must be logged in.');
+    }
+
+    const user = await admin.auth().getUser(request.auth.uid);
+    const claims = user.customClaims || {};
+    if (!claims.admin) {
+      throw new HttpsError('permission-denied', 'Admin privileges required.');
+    }
+
+    const code = randomInviteCode();
+    await db.collection('inviteCodes').doc(code).set({
+      used: false,
+      usedBy: null,
+      createdBy: request.auth.uid,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { code };
+  }
+);
+
+// Create a new admin account using a one-time invite code.
+// Callable by anyone: the invite code is the gate. Creates the user,
+// sets the admin custom claim, and writes the Admin document.
+exports.createAdmin = onCall(
+  {
+    timeoutSeconds: 60,
+    memory: '256MiB'
+  },
+  async (request) => {
+    const { inviteCode, adminName, email, password } = request.data || {};
+
+    if (typeof inviteCode !== 'string' || !/^[A-Z2-9]{10}$/.test(inviteCode.trim().toUpperCase())) {
+      throw new HttpsError('invalid-argument', 'A valid 10-character invite code is required.');
+    }
+    if (typeof adminName !== 'string' || !adminName.trim()) {
+      throw new HttpsError('invalid-argument', 'adminName is required.');
+    }
+    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      throw new HttpsError('invalid-argument', 'A valid email is required.');
+    }
+    if (typeof password !== 'string' || password.length < 6) {
+      throw new HttpsError('invalid-argument', 'Password must be at least 6 characters.');
+    }
+
+    const code = inviteCode.trim().toUpperCase();
+    const codeRef = db.collection('inviteCodes').doc(code);
+
+    const codeSnap = await codeRef.get();
+    const codeData = codeSnap.exists ? codeSnap.data() : null;
+    if (!codeData || codeData.used) {
+      throw new HttpsError('permission-denied', 'Invalid or already-used invite code.');
+    }
+
+    const cleanEmail = email.trim();
+    const cleanName = adminName.trim();
+
+    // Reject duplicate accounts.
+    try {
+      await admin.auth().getUserByEmail(cleanEmail);
+      throw new HttpsError('already-exists', 'An account with this email already exists.');
+    } catch (e) {
+      if (e instanceof HttpsError) throw e;
+      if (e.code !== 'auth/user-not-found') {
+        throw new HttpsError('internal', 'Could not verify email.');
+      }
+    }
+
+    let userRecord;
+    try {
+      userRecord = await admin.auth().createUser({
+        email: cleanEmail,
+        password: password,
+        displayName: cleanName
+      });
+    } catch (e) {
+      throw new HttpsError('internal', 'Account creation failed: ' + (e.message || 'unknown error'));
+    }
+
+    await admin.auth().setCustomUserClaims(userRecord.uid, { admin: true });
+    await db.collection('Admin').doc(userRecord.uid).set({
+      adminName: cleanName,
+      email: cleanEmail,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdVia: 'invite'
+    });
+
+    // Mark the code used (transaction re-checks to prevent double-use).
+    try {
+      await db.runTransaction(async (t) => {
+        const snap = await t.get(codeRef);
+        const data = snap.exists ? snap.data() : null;
+        if (!data || data.used) {
+          throw new HttpsError('permission-denied', 'Invalid or already-used invite code.');
+        }
+        t.update(codeRef, {
+          used: true,
+          usedBy: userRecord.uid,
+          usedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      });
+    } catch (e) {
+      if (e instanceof HttpsError) throw e;
+      // Non-HttpsError transaction failure: account exists but code unmarked.
+      console.error('Invite code mark-used failed:', e);
+      throw new HttpsError('internal', 'Account created but invite code could not be confirmed.');
+    }
+
+    return { uid: userRecord.uid };
+  }
+);
+
+// Ensure a signed-in user has the admin custom claim if they have an Admin
+// document. Used both as the page guard and to backfill claims for accounts
+// created before custom claims existed. Returns { admin: true|false }.
+exports.ensureAdminClaim = onCall(
+  {
+    timeoutSeconds: 30,
+    memory: '256MiB'
+  },
+  async (request) => {
+    if (!request.auth) {
+      return { admin: false };
+    }
+
+    const adminDoc = await db.collection('Admin').doc(request.auth.uid).get();
+    if (!adminDoc.exists) {
+      return { admin: false };
+    }
+
+    const user = await admin.auth().getUser(request.auth.uid);
+    const claims = user.customClaims || {};
+    if (!claims.admin) {
+      await admin.auth().setCustomUserClaims(request.auth.uid, { admin: true });
+    }
+
+    return { admin: true };
   }
 );
 

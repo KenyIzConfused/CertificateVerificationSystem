@@ -2,6 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
+import { requireAdmin, generateInviteCodeFn } from '../FirebaseAdmin.js';
 
 const themes = {
   green: {
@@ -142,9 +143,43 @@ document.getElementById('themeSelect').addEventListener('change', (e) => {
   applyTheme(e.target.value);
 });
 
+document.getElementById('generateInviteBtn').addEventListener('click', async () => {
+  if (!currentUser) {
+    showAlert('Please log in first', { type: 'warning' });
+    return;
+  }
+
+  const inviteBtn = document.getElementById('generateInviteBtn');
+  setButtonLoading(inviteBtn, true, 'Generating...');
+
+  try {
+    const result = await generateInviteCodeFn();
+    const code = result.data && result.data.code;
+    if (!code) {
+      showAlert('Failed to generate invite code', { type: 'error' });
+      return;
+    }
+    document.getElementById('inviteCodeValue').textContent = code;
+    document.getElementById('inviteCodeResult').classList.remove('hidden');
+    showToast('Invite code generated');
+  } catch (error) {
+    console.error('Error generating invite code:', error);
+    const message = (error && error.message) ? error.message : 'Unknown error';
+    showAlert('Failed to generate invite code: ' + message, { type: 'error' });
+  } finally {
+    setButtonLoading(inviteBtn, false);
+  }
+});
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     stopSessionEnforcement();
+    window.location.href = '../logIn/LogInAdmin.html';
+    return;
+  }
+
+  if (!(await requireAdmin())) {
+    showAlert('Access denied: admin privileges required.', { type: 'error' });
     window.location.href = '../logIn/LogInAdmin.html';
     return;
   }

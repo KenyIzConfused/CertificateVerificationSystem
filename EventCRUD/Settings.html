@@ -176,6 +176,19 @@
                 <p class="text-sm text-green-200/50">These details are saved for future dashboard updates and do not affect existing events.</p>
             </div>
 
+            <div class="space-y-2 pt-2">
+                <label class="block text-sm font-semibold text-green-200">Admin Invite Code</label>
+                <p class="text-sm text-green-200/50">Generate a one-time invite code to create a new admin account on the Sign Up page. Codes are shown only once and expire after first use.</p>
+                <button type="button" id="generateInviteBtn"
+                    class="w-full btn-glass py-3 font-semibold rounded-xl">
+                    Generate Invite Code
+                </button>
+                <div id="inviteCodeResult" class="hidden mt-2 p-4 rounded-xl border border-green-400/30" style="background: color-mix(in srgb, var(--theme-primary) 12%, transparent);">
+                    <p class="text-xs text-green-200/60 uppercase tracking-wide mb-1">New invite code (one-time use)</p>
+                    <p id="inviteCodeValue" class="text-2xl font-mono font-bold text-green-100 tracking-widest"></p>
+                </div>
+            </div>
+
             <div class="flex flex-col sm:flex-row gap-3 pt-2">
                 <button type="submit"
                     class="flex-1 btn-3d text-white font-semibold py-3.5 rounded-xl">

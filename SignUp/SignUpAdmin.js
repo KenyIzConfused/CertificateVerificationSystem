@@ -1,7 +1,7 @@
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
+import { createAdminFn } from '../FirebaseAdmin.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -15,7 +15,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
 const form = document.querySelector('form');
 const submitBtn = form.querySelector('button[type="submit"]');
@@ -23,11 +22,17 @@ const submitBtn = form.querySelector('button[type="submit"]');
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
     
-  const adminName = document.getElementById('adminName').value;
-  const email = document.getElementById('email').value;
+  const inviteCode = document.getElementById('inviteCode').value.trim().toUpperCase();
+  const adminName = document.getElementById('adminName').value.trim();
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
     
+  if (!inviteCode) {
+    showAlert('Please enter your invite code', { type: 'warning' });
+    return;
+  }
+
   if (password !== confirmPassword) {
     showAlert('Passwords do not match', { type: 'warning' });
     return;
@@ -36,18 +41,13 @@ form.addEventListener('submit', async (e) => {
   setButtonLoading(submitBtn, true, 'Creating account...');
 
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, 'Admin', userCredential.user.uid), {
-      adminName: adminName,
-      email: email,
-      createdAt: new Date()
-    });
-    await sendEmailVerification(userCredential.user);
-    showToast('Account created! Please verify your email.');
+    await createAdminFn({ inviteCode, adminName, email, password });
+    showToast('Account created! You can now log in.');
     window.location.href = '../logIn/LogInAdmin.html';
   } catch (error) {
     console.error('Error:', error);
-    showAlert('Sign up failed: ' + error.message, { type: 'error' });
+    const message = (error && error.message) ? error.message : 'Sign up failed.';
+    showAlert('Sign up failed: ' + message, { type: 'error' });
   } finally {
     setButtonLoading(submitBtn, false);
   }

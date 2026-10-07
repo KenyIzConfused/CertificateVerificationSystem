@@ -1,5 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+import '../AppCheck.js';
 import { showAlert, setButtonLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
@@ -13,31 +14,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-async function searchAllEventsForAttendee(certificateId) {
-    const searchId = certificateId.toUpperCase();
-    const eventsSnapshot = await getDocs(collection(db, 'Events'));
-    
-    for (const eventDoc of eventsSnapshot.docs) {
-        const attendeesSnapshot = await getDocs(collection(db, 'Events', eventDoc.id, 'Attendees'));
-        
-        for (const attendeeDoc of attendeesSnapshot.docs) {
-            const attendee = attendeeDoc.data();
-            const storedId = (attendee.certificateId || '').toUpperCase();
-            
-            if (storedId === searchId) {
-                return {
-                    attendee: attendee,
-                    eventId: eventDoc.id,
-                    eventTitle: eventDoc.data().title || '',
-                    found: true
-                };
-            }
-        }
-    }
-    return { found: false };
-}
+const functions = getFunctions(app);
+const verifyCertificateFn = httpsCallable(functions, 'verifyCertificate');
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('verifyForm');
@@ -58,25 +36,29 @@ document.addEventListener('DOMContentLoaded', () => {
             setButtonLoading(verifyBtn, true, 'Verifying...');
 
             try {
-                const result = await searchAllEventsForAttendee(certificateId);
+                const result = await verifyCertificateFn({ certificateId });
+                const data = result.data || {};
                 
-                if (!result.found) {
+                if (!data.found) {
                     showAlert('Certificate Not Found', { type: 'error' });
                     return;
                 }
                 
-                document.getElementById('certName').textContent = result.attendee.fullName || '';
-                document.getElementById('certCourse').textContent = result.attendee.course || '';
-                document.getElementById('certRole').textContent = result.attendee.role || '';
-                document.getElementById('certDateAttended').textContent = result.attendee.dateAttended || '';
-                document.getElementById('certStatus').textContent = result.attendee.status ? result.attendee.status.charAt(0).toUpperCase() + result.attendee.status.slice(1) : '';
-                document.getElementById('certId').textContent = result.attendee.certificateId || '';
-                document.getElementById('certEvent').textContent = result.eventTitle;
+                const attendee = data.attendee || {};
+                
+                document.getElementById('certName').textContent = attendee.fullName || '';
+                document.getElementById('certCourse').textContent = attendee.course || '';
+                document.getElementById('certRole').textContent = attendee.role || '';
+                document.getElementById('certDateAttended').textContent = attendee.dateAttended || '';
+                document.getElementById('certStatus').textContent = attendee.status ? attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1) : '';
+                document.getElementById('certId').textContent = attendee.certificateId || '';
+                document.getElementById('certEvent').textContent = data.eventTitle || '';
                 document.getElementById('verifyForm').classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
             } catch (error) {
                 console.error('Error verifying certificate:', error);
-                showAlert(`Failed to verify certificate: ${error.message || 'Unknown error'}`, { type: 'error' });
+                const message = (error && error.message) ? error.message : 'Unknown error';
+                showAlert(`Failed to verify certificate: ${message}`, { type: 'error' });
             } finally {
                 setButtonLoading(verifyBtn, false);
             }

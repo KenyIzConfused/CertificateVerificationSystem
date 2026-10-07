@@ -2,6 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showConfirm, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
+import { requireAdmin } from '../FirebaseAdmin.js';
 
 const themes = {
   green: {
@@ -555,6 +556,12 @@ async function backfillAdminNames(adminUid, adminName) {
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
+    if (!(await requireAdmin())) {
+      showAlert('Access denied: admin privileges required.', { type: 'error' });
+      window.location.href = '../logIn/LogInAdmin.html';
+      return;
+    }
+
     currentUser = user;
     await registerSession(user);
     startSessionEnforcement(user);

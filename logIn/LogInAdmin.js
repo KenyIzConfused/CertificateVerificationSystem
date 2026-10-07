@@ -2,6 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 import { showAlert, showToast, setButtonLoading, registerSession } from '../PopupSystem.js';
+import { requireAdmin } from '../FirebaseAdmin.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -29,6 +30,13 @@ loginForm.addEventListener('submit', async (e) => {
 
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    
+    // Verify the account has admin privileges (custom claim).
+    if (!(await requireAdmin())) {
+      showAlert('This account does not have admin access. Contact an administrator.', { type: 'error' });
+      return;
+    }
+
     sessionStorage.setItem('adminLoggedIn', 'true');
     await registerSession(userCredential.user);
     showToast('Login successful!');

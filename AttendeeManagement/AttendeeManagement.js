@@ -3,6 +3,7 @@ import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 import { showAlert, showToast, showConfirm, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
+import { requireAdmin } from '../FirebaseAdmin.js';
 
 let currentEventId = null;
 let currentEvent = null;
@@ -704,6 +705,12 @@ onAuthStateChanged(auth, async (user) => {
 
   if (!user) {
     stopSessionEnforcement();
+    window.location.href = '../logIn/LogInAdmin.html';
+    return;
+  }
+
+  if (!(await requireAdmin())) {
+    showAlert('Access denied: admin privileges required.', { type: 'error' });
     window.location.href = '../logIn/LogInAdmin.html';
     return;
   }
