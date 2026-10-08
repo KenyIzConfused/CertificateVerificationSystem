@@ -1,4 +1,4 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 import '../AppCheck.js';
 import { showAlert, setButtonLoading } from '../PopupSystem.js';
@@ -13,13 +13,13 @@ const firebaseConfig = {
     measurementId: "G-R7PDE8B834"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const functions = getFunctions(app);
 const verifyEventFn = httpsCallable(functions, 'verifyEvent');
 
 function getEventCodeFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    return (params.get('code') || '').trim().toUpperCase();
+    return (params.get('eventCode') || params.get('code') || '').trim().toUpperCase();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
