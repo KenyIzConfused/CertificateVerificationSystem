@@ -1,12 +1,11 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
-import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import '../AppCheck.js';
 import { showAlert, setButtonLoading } from '../PopupSystem.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
-    authDomain: "ipprc-certificate-verification.firebaseapp.com",
+    authDomain: "ipprc-certificate-verification.firebaseauth.com",
     projectId: "ipprc-certificate-verification",
     storageBucket: "ipprc-certificate-verification.firebasestorage.app",
     messagingSenderId: "1056133117009",
@@ -16,106 +15,84 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app);
-const db = getFirestore(app);
-const verifyCertificateFn = httpsCallable(functions, 'verifyCertificate');
+const verifyEventFn = httpsCallable(functions, 'verifyEvent');
 
-// Fallback scan, used only when the verifyCertificate Cloud
-// Function is unavailable (not deployed). Reads documents
-// directly from Firestore.
-async function searchAllEventsForAttendee(certificateId) {
-    const searchId = certificateId.toUpperCase();
-    const eventsSnapshot = await getDocs(collection(db, 'Events'));
-
-    for (const eventDoc of eventsSnapshot.docs) {
-        const attendeesSnapshot = await getDocs(collection(db, 'Events', eventDoc.id, 'Attendees'));
-
-        for (const attendeeDoc of attendeesSnapshot.docs) {
-            const attendee = attendeeDoc.data();
-            const storedId = (attendee.certificateId || '').toUpperCase();
-
-            if (storedId === searchId) {
-                return {
-                    attendee: attendee,
-                    eventId: eventDoc.id,
-                    eventTitle: eventDoc.data().title || '',
-                    found: true
-                };
-            }
-        }
-    }
-    return { found: false };
-}
-
-// Primary path: the verifyCertificate Cloud Function (returns
-// only display fields - never emails). If the function is not
-// deployed, falls back to a direct Firestore scan.
-async function verifyCertificate(certificateId) {
-    try {
-        const result = await verifyCertificateFn({ certificateId });
-        const data = result.data || {};
-        return {
-            found: !!data.found,
-            eventTitle: data.eventTitle || '',
-            attendee: data.attendee || {}
-        };
-    } catch (error) {
-        console.warn('verifyCertificate function unavailable, falling back to local scan:', error);
-        return searchAllEventsForAttendee(certificateId);
-    }
+function getEventCodeFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get('code') || '').trim().toUpperCase();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('verifyForm');
     const verifyAnotherBtn = document.getElementById('verifyAnotherBtn');
     const verifyBtn = form.querySelector('button[type="submit"]');
-    
+
+    // Auto-verify if eventCode is in the URL
+    const urlEventCode = getEventCodeFromUrl();
+    if (urlEventCode) {
+        document.getElementById('eventCode').value = urlEventCode;
+        form.requestSubmit();
+    }
+
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            const certificateId = document.getElementById('certificateId').value.trim().toUpperCase();
-            
-            if (!certificateId) {
-                showAlert('Please enter a certificate ID', { type: 'warning' });
+
+            const eventCode = document.getElementById('eventCode').value.trim().toUpperCase();
+
+            if (!eventCode) {
+                showAlert('Please enter an event code', { type: 'warning' });
                 return;
             }
-            
+
+            if (eventCode.length > 20 || !/^[A-Z0-9-]+$/.test(eventCode)) {
+                showAlert('Invalid event code format', { type: 'warning' });
+                return;
+            }
+
             setButtonLoading(verifyBtn, true, 'Verifying...');
 
             try {
-                const result = await verifyCertificate(certificateId);
-                
-                if (!result.found) {
-                    showAlert('Certificate Not Found', { type: 'error' });
+                const result = await verifyEventFn({ eventCode });
+                const data = result.data || {};
+
+                if (!data.found) {
+                    showAlert('Event Not Found', { type: 'error' });
                     return;
                 }
-                
-                const attendee = result.attendee || {};
-                
-                document.getElementById('certName').textContent = attendee.fullName || '';
-                document.getElementById('certCourse').textContent = attendee.course || '';
-                document.getElementById('certRole').textContent = attendee.role || '';
-                document.getElementById('certDateAttended').textContent = attendee.dateAttended || '';
-                document.getElementById('certStatus').textContent = attendee.status ? attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1) : '';
-                document.getElementById('certId').textContent = attendee.certificateId || '';
-                document.getElementById('certEvent').textContent = result.eventTitle || '';
+
+                const event = data.event || {};
+
+                document.getElementById('eventName').textContent = event.title || '';
+                document.getElementById('eventDate').textContent = event.date || '';
+                document.getElementById('eventTime').textContent = event.time || '';
+                document.getElementById('eventLocation').textContent = event.location || '';
+                document.getElementById('eventDescription').textContent = event.description || '';
+                document.getElementById('eventOrganizer').textContent = event.organizer || '';
+                document.getElementById('eventAttendeeCount').textContent = event.attendeeCount || 0;
+                document.getElementById('eventCodeDisplay').textContent = event.eventCode || '';
+
                 document.getElementById('verifyForm').classList.add('hidden');
                 document.getElementById('result').classList.remove('hidden');
             } catch (error) {
-                console.error('Error verifying certificate:', error);
+                console.error('Error verifying event:', error);
                 const message = (error && error.message) ? error.message : 'Unknown error';
-                showAlert(`Failed to verify certificate: ${message}`, { type: 'error' });
+                if (message.includes('not-found') || message.includes('unavailable') || message.includes('unimplemented')) {
+                    showAlert('Verification service unavailable. The Cloud Function "verifyEvent" must be deployed for public verification to work.', { type: 'error' });
+                } else {
+                    showAlert(`Failed to verify event: ${message}`, { type: 'error' });
+                }
             } finally {
                 setButtonLoading(verifyBtn, false);
             }
         });
     }
-    
+
     if (verifyAnotherBtn) {
         verifyAnotherBtn.addEventListener('click', () => {
             document.getElementById('result').classList.add('hidden');
             document.getElementById('verifyForm').classList.remove('hidden');
-            document.getElementById('certificateId').value = '';
+            document.getElementById('eventCode').value = '';
         });
     }
 });

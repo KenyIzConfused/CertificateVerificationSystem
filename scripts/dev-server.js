@@ -20,7 +20,7 @@ const REWRITES = [
   { source: '/certificate-management', destination: '/CertificateManagement/CertificateManagement.html' },
   { source: '/attendee-management', destination: '/AttendeeManagement/AttendeeManagement.html' },
   { source: '/admin-login', destination: '/logIn/LogInAdmin.html' },
-  { source: '/verify-certificate', destination: '/CertificateVerification/CertificateVerification.html' },
+  { source: '/verify-event', destination: '/CertificateVerification/CertificateVerification.html' },
   { source: '/signup', destination: '/SignUp/SignUpAdmin.html' },
   { source: '/forgot-password', destination: '/logIn/ForgotPassword.html' },
   { source: '/reset-password', destination: '/logIn/ResetPassword.html' },
@@ -84,5 +84,5 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Dev server running at http://localhost:${PORT}`);
-  console.log('Pretty URLs (e.g. /event-crud, /verify-certificate) are supported.');
+  console.log('Pretty URLs (e.g. /event-crud, /verify-event) are supported.');
 });

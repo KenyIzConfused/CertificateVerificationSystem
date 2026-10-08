@@ -158,6 +158,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
       document.getElementById('cancelEditBtn').classList.add('hidden');
     } else {
       setButtonLoading(submitBtn, true, 'Creating...');
+      const eventCode = await generateUniqueEventCode(allEvents);
       await addDoc(collection(db, 'Events'), {
         adminId: currentUser.uid,
         adminName: currentAdminName,
@@ -169,6 +170,7 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
         duration: eventDuration ? parseInt(eventDuration) : null,
         department: department,
         speaker: document.getElementById('speaker').value || '',
+        eventCode: eventCode,
         status: 'active',
         createdAt: new Date()
       });
@@ -188,6 +190,30 @@ document.getElementById('showCreateFormBtn').addEventListener('click', () => {
   document.getElementById('createEventPanel').classList.remove('hidden');
   document.getElementById('createEventPanel').scrollIntoView({ behavior: 'smooth' });
 });
+
+function generateShortId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = '';
+  for (let i = 0; i < 7; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
+
+async function isEventCodeUnique(eventsList, candidateCode) {
+  return !eventsList.some(e => e.eventCode === candidateCode);
+}
+
+async function generateUniqueEventCode(eventsList) {
+  let code = generateShortId();
+  let attempts = 0;
+  const maxAttempts = 50;
+  while (!(await isEventCodeUnique(eventsList, code)) && attempts < maxAttempts) {
+    code = generateShortId();
+    attempts++;
+  }
+  return code;
+}
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -242,6 +268,11 @@ function renderEventCard(event) {
           <span class="inline-block mt-5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-400/30 text-blue-200 ml-2">
             Attendees: ${event.attendeeCount || 0}
           </span>
+          ${event.eventCode ? `
+          <span class="inline-block mt-5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-400/30 text-amber-200 ml-2" title="Event Code">
+            Code: ${escapeHtml(event.eventCode)}
+          </span>
+          ` : ''}
           ${event.adminName ? `
           <span class="inline-block mt-5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-400/30 text-purple-200 ml-2" title="Created by">
             By ${escapeHtml(event.adminName)}

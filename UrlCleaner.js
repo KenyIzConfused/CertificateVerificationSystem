@@ -13,7 +13,7 @@ const ROUTES = [
   { file: 'certificatemanagement/certificatemanagement.html', slug: '/certificate-management' },
   { file: 'attendeemanagement/attendemanagement.html', slug: '/attendee-management' },
   { file: 'login/loginadmin.html', slug: '/admin-login' },
-  { file: 'certificateverification/certificateverification.html', slug: '/verify-certificate' },
+  { file: 'certificateverification/certificateverification.html', slug: '/verify-event' },
   { file: 'signup/signupadmin.html', slug: '/signup' },
   { file: 'login/forgotpassword.html', slug: '/forgot-password' },
   { file: 'login/resetpassword.html', slug: '/reset-password' },

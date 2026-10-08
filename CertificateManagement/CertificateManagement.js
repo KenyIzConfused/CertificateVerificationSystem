@@ -20,7 +20,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 // Firebase Storage removed - using IndexedDB instead (no billing required)
 
-const VERIFICATION_URL = 'https://certificate-verification-system-6nx90yh8u.vercel.app/CertificateVerification/CertificateVerification.html?id=';
+const VERIFICATION_URL = 'https://certificate-verification-system-6nx90yh8u.vercel.app/verify-event?code=';
 
 let currentEventId = null;
 let currentEvent = null;
@@ -112,7 +112,11 @@ async function generateCertificate(attendee, templateBytes) {
         course: attendee.course || '',
         role: attendee.role || '',
         dateAttended: attendee.dateAttended || '',
-        certificateId: attendee.certificateId || ''
+        certificateId: attendee.certificateId || '',
+        eventCode: currentEvent.eventCode || '',
+        eventTitle: currentEvent.title || '',
+        eventDate: currentEvent.date || '',
+        eventLocation: currentEvent.location || ''
     };
 
     doc.render(renderData);
@@ -286,13 +290,14 @@ window.sendSingleCertificate = async (attendeeId, btn) => {
 
     try {
         const certBuffer = await generateCertificate(attendee, templateBytes);
-        const verificationUrl = `${VERIFICATION_URL}${attendee.certificateId}`;
+        const verificationUrl = `${VERIFICATION_URL}${currentEvent.eventCode || ''}`;
 
         const templateParams = {
             to_email: attendee.email,
             to_name: attendee.fullName,
             event_title: currentEvent.title,
             certificate_id: attendee.certificateId,
+            event_code: currentEvent.eventCode || '',
             course: attendee.course || '',
             role: attendee.role || '',
             date_attended: attendee.dateAttended || '',
@@ -394,13 +399,14 @@ window.sendAllEmails = async (btn) => {
             const filename = `Certificate_${attendee.certificateId}_${attendee.fullName}.docx`;
             zip.file(filename, certBuffer);
 
-            const verificationUrl = `${VERIFICATION_URL}${attendee.certificateId}`;
+            const verificationUrl = `${VERIFICATION_URL}${currentEvent.eventCode || ''}`;
 
             const templateParams = {
                 to_email: attendee.email,
                 to_name: attendee.fullName,
                 event_title: currentEvent.title,
                 certificate_id: attendee.certificateId,
+                event_code: currentEvent.eventCode || '',
                 course: attendee.course || '',
                 role: attendee.role || '',
                 date_attended: attendee.dateAttended || '',

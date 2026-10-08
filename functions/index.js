@@ -210,55 +210,63 @@ exports.generateAndEmailCertificates = onCall(
   }
 );
 
-// Public certificate verification - callable by anyone (no login required).
-// Scans events/attendees server-side (Admin SDK bypasses Firestore rules) and
-// returns only the display fields, never email or other private attendee data.
-exports.verifyCertificate = onCall(
+// Public event verification - callable by anyone (no login required).
+// Queries by eventCode (single doc read via Admin SDK, bypasses Firestore rules).
+exports.verifyEvent = onCall(
   {
-    timeoutSeconds: 60,
-    memory: '512MiB'
+    timeoutSeconds: 30,
+    memory: '256MiB'
   },
   async (request) => {
-    const { certificateId } = request.data || {};
-    if (typeof certificateId !== 'string' || !certificateId.trim()) {
-      throw new HttpsError('invalid-argument', 'certificateId is required.');
+    const { eventCode } = request.data || {};
+    if (typeof eventCode !== 'string' || !eventCode.trim()) {
+      throw new HttpsError('invalid-argument', 'eventCode is required.');
     }
 
-    const searchId = certificateId.trim().toUpperCase();
-    if (searchId.length > 64 || !/^[A-Z0-9-]+$/.test(searchId)) {
-      throw new HttpsError('invalid-argument', 'certificateId is invalid.');
+    const searchCode = eventCode.trim().toUpperCase();
+    if (searchCode.length > 20 || !/^[A-Z0-9-]+$/.test(searchCode)) {
+      throw new HttpsError('invalid-argument', 'eventCode is invalid.');
     }
 
-    const eventsSnap = await db.collection('Events').get();
+    const eventsSnap = await db.collection('Events')
+      .where('eventCode', '==', searchCode)
+      .limit(1)
+      .get();
 
-    for (const eventDoc of eventsSnap.docs) {
-      const event = eventDoc.data() || {};
+    if (eventsSnap.empty) {
+      return { found: false };
+    }
+
+    const eventDoc = eventsSnap.docs[0];
+    const event = eventDoc.data() || {};
+
+    // Fetch attendee count
+    let attendeeCount = 0;
+    try {
       const attSnap = await db
         .collection('Events').doc(eventDoc.id)
         .collection('Attendees').get();
-
-      for (const attDoc of attSnap.docs) {
-        const attendee = attDoc.data() || {};
-        const storedId = (attendee.certificateId || '').toUpperCase();
-
-        if (storedId === searchId) {
-          return {
-            found: true,
-            eventTitle: event.title || '',
-            attendee: {
-              fullName: attendee.fullName || '',
-              course: attendee.course || '',
-              role: attendee.role || '',
-              dateAttended: attendee.dateAttended || '',
-              status: attendee.status || '',
-              certificateId: attendee.certificateId || ''
-            }
-          };
-        }
-      }
+      attendeeCount = attSnap.size;
+    } catch (e) {
+      console.warn('Could not fetch attendee count', e);
     }
 
-    return { found: false };
+    return {
+      found: true,
+      event: {
+        title: event.title || '',
+        description: event.description || '',
+        date: event.date || '',
+        time: event.time || '',
+        location: event.location || '',
+        duration: event.duration || null,
+        department: event.department || '',
+        speaker: event.speaker || '',
+        organizer: event.adminName || '',
+        attendeeCount: attendeeCount,
+        eventCode: event.eventCode || ''
+      }
+    };
   }
 );
 
@@ -294,14 +302,17 @@ exports.generateQRCodes = onCall(
       .collection('Attendees').get();
     const attendees = attSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    const verificationBaseUrl = 'https://certificate-verification-system-6nx90yh8u.vercel.app/CertificateVerification/CertificateVerification.html?id=';
+    const eventCode = event.eventCode || '';
+    if (!eventCode) {
+      throw new HttpsError('failed-precondition', 'Event has no eventCode. Re-save the event to generate one.');
+    }
+
+    // Use eventCode for verification URL (new event-based flow)
+    const verificationBaseUrl = 'https://certificate-verification-system-6nx90yh8u.vercel.app/verify-event?code=';
     let updated = 0;
 
     for (const attendee of attendees) {
-      const certId = attendee.certificateId || '';
-      if (!certId) continue;
-
-      const verificationUrl = verificationBaseUrl + certId;
+      const verificationUrl = verificationBaseUrl + eventCode;
       const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, { width: 200, margin: 2 });
 
       // Store QR code data URL in attendee document
