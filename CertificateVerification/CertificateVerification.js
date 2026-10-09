@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
+import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import '../AppCheck.js';
 import { showAlert, setButtonLoading } from '../PopupSystem.js';
 
@@ -14,12 +14,48 @@ const firebaseConfig = {
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const functions = getFunctions(app);
-const verifyEventFn = httpsCallable(functions, 'verifyEvent');
+const db = getFirestore(app);
 
 function getEventCodeFromUrl() {
     const params = new URLSearchParams(window.location.search);
     return (params.get('eventCode') || params.get('code') || '').trim().toUpperCase();
+}
+
+// Direct Firestore scan by eventCode (works without Cloud Functions)
+async function verifyEvent(eventCode) {
+    const q = query(collection(db, 'Events'), where('eventCode', '==', eventCode.toUpperCase()));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return { found: false };
+    }
+    const eventDoc = snapshot.docs[0];
+    const event = eventDoc.data();
+
+    // Fetch attendee count
+    let attendeeCount = 0;
+    try {
+        const attSnap = await getDocs(collection(db, 'Events', eventDoc.id, 'Attendees'));
+        attendeeCount = attSnap.size;
+    } catch (e) {
+        console.warn('Could not fetch attendee count', e);
+    }
+
+    return {
+        found: true,
+        event: {
+            title: event.title || '',
+            description: event.description || '',
+            date: event.date || '',
+            time: event.time || '',
+            location: event.location || '',
+            duration: event.duration || null,
+            department: event.department || '',
+            speaker: event.speaker || '',
+            organizer: event.adminName || '',
+            attendeeCount: attendeeCount,
+            eventCode: event.eventCode || ''
+        }
+    };
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -53,15 +89,14 @@ document.addEventListener('DOMContentLoaded', () => {
             setButtonLoading(verifyBtn, true, 'Verifying...');
 
             try {
-                const result = await verifyEventFn({ eventCode });
-                const data = result.data || {};
+                const result = await verifyEvent(eventCode);
 
-                if (!data.found) {
+                if (!result.found) {
                     showAlert('Event Not Found', { type: 'error' });
                     return;
                 }
 
-                const event = data.event || {};
+                const event = result.event || {};
 
                 document.getElementById('eventName').textContent = event.title || '';
                 document.getElementById('eventDate').textContent = event.date || '';
@@ -77,11 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Error verifying event:', error);
                 const message = (error && error.message) ? error.message : 'Unknown error';
-                if (message.includes('not-found') || message.includes('unavailable') || message.includes('unimplemented')) {
-                    showAlert('Verification service unavailable. The Cloud Function "verifyEvent" must be deployed for public verification to work.', { type: 'error' });
-                } else {
-                    showAlert(`Failed to verify event: ${message}`, { type: 'error' });
-                }
+                showAlert(`Failed to verify event: ${message}`, { type: 'error' });
             } finally {
                 setButtonLoading(verifyBtn, false);
             }

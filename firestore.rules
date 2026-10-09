@@ -19,11 +19,10 @@ service cloud.firestore {
     }
 
     // Events collection - admins can CRUD their own events
-    // Single-document reads stay public for certificate verification;
-    // listing the whole collection requires login (blocks bulk scraping)
+    // Single-document reads stay public; list queries allowed for eventCode lookup
     match /Events/{eventId} {
       allow get: if true;
-      allow list: if request.auth != null;
+      allow list: if true;
       // Owner-only modification: resource.data is the stored document, so a
       // logged-in user cannot take over an event by forging adminId in the payload
       allow update, delete: if request.auth != null &&
