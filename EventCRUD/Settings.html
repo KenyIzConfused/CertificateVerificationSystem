@@ -185,7 +185,16 @@
                 </button>
                 <div id="inviteCodeResult" class="hidden mt-2 p-4 rounded-xl border border-green-400/30" style="background: color-mix(in srgb, var(--theme-primary) 12%, transparent);">
                     <p class="text-xs text-green-200/60 uppercase tracking-wide mb-1">New invite code (one-time use)</p>
-                    <p id="inviteCodeValue" class="text-2xl font-mono font-bold text-green-100 tracking-widest"></p>
+                    <div class="flex flex-col sm:flex-row gap-2 items-start">
+                        <p id="inviteCodeValue" class="flex-1 text-2xl font-mono font-bold text-green-100 tracking-widest break-all"></p>
+                        <button type="button" id="copyInviteLinkBtn"
+                            class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copy Link
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -194,7 +203,7 @@
                     class="flex-1 btn-3d text-white font-semibold py-3.5 rounded-xl">
                     Save Settings
                 </button>
-                <a href="EventCRUD.html"
+                <a href="/event-crud"
                     class="flex-1 text-center btn-glass py-3.5 font-semibold rounded-xl">
                     Cancel
                 </a>
