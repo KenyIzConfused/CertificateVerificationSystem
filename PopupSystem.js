@@ -256,18 +256,51 @@ export function startSessionEnforcement(user) {
   const sessionId = sessionStorage.getItem('sessionId');
   if (!sessionId) return;
   
-  currentSessionUnsubscribe = onSnapshot(doc(db, 'adminSessions', user.uid), (snapshot) => {
-    if (!snapshot.exists()) return;
+  // Mark this page as active
+  const pageId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36);
+  window.__sessionPageId = pageId;
+  
+  // First, verify the current session document matches our sessionId
+  // before starting real-time enforcement
+  getDoc(doc(db, 'adminSessions', user.uid)).then(snapshot => {
+    // Page might have been unloaded during the async check
+    if (window.__sessionPageId !== pageId) return;
+    
+    if (!snapshot.exists()) {
+      console.warn('No session document found');
+      return;
+    }
     
     const data = snapshot.data();
     if (data.sessionId !== sessionId) {
-      console.warn('Session conflict detected - signing out');
+      console.warn('Session conflict on page load - signing out');
       signOut(auth).then(() => {
         window.location.href = '../logIn/LogInAdmin.html';
       }).catch(() => {
         window.location.href = '../logIn/LogInAdmin.html';
       });
+      return;
     }
+    
+    // Now start real-time listener for subsequent changes
+    currentSessionUnsubscribe = onSnapshot(doc(db, 'adminSessions', user.uid), (snapshot) => {
+      // Ignore if page is no longer active
+      if (window.__sessionPageId !== pageId) return;
+      
+      if (!snapshot.exists()) return;
+      
+      const data = snapshot.data();
+      if (data.sessionId !== sessionId) {
+        console.warn('Session conflict detected - signing out');
+        signOut(auth).then(() => {
+          window.location.href = '../logIn/LogInAdmin.html';
+        }).catch(() => {
+          window.location.href = '../logIn/LogInAdmin.html';
+        });
+      }
+    });
+  }).catch(err => {
+    console.error('Session check failed:', err);
   });
 }
 
