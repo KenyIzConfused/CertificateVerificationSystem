@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
 import { requireAdmin } from '../FirebaseAdmin.js';
 
@@ -141,77 +141,6 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
 
 document.getElementById('themeSelect').addEventListener('change', (e) => {
   applyTheme(e.target.value);
-});
-
-function generateShortId() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let id = '';
-  for (let i = 0; i < 10; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return id;
-}
-
-async function isCodeUnique(existingCodes, candidate) {
-  return !existingCodes.has(candidate);
-}
-
-document.getElementById('generateInviteBtn').addEventListener('click', async () => {
-  if (!currentUser) {
-    showAlert('Please log in first', { type: 'warning' });
-    return;
-  }
-
-  const inviteBtn = document.getElementById('generateInviteBtn');
-  setButtonLoading(inviteBtn, true, 'Generating...');
-
-  try {
-    // Fetch existing codes to ensure uniqueness
-    const codesSnap = await getDocs(collection(db, 'inviteCodes'));
-    const existingCodes = new Set();
-    codesSnap.docs.forEach(d => existingCodes.add(d.id));
-
-    let code = generateShortId();
-    let attempts = 0;
-    while (existingCodes.has(code) && attempts < 50) {
-      code = generateShortId();
-      attempts++;
-    }
-    if (attempts >= 50) {
-      showAlert('Could not generate unique code', { type: 'error' });
-      return;
-    }
-
-    // Save the invite code
-    await setDoc(doc(db, 'inviteCodes', code), {
-      used: false,
-      usedBy: null,
-      createdBy: currentUser.uid,
-      createdAt: new Date()
-    });
-
-    document.getElementById('inviteCodeValue').textContent = code;
-    document.getElementById('inviteCodeResult').classList.remove('hidden');
-    showToast('Invite code generated');
-  } catch (error) {
-    console.error('Error generating invite code:', error);
-    const message = (error && error.message) ? error.message : 'Unknown error';
-    showAlert('Failed to generate invite code: ' + message, { type: 'error' });
-  } finally {
-    setButtonLoading(inviteBtn, false);
-  }
-});
-
-// Copy invite link to clipboard
-document.getElementById('copyInviteLinkBtn')?.addEventListener('click', () => {
-  const code = document.getElementById('inviteCodeValue').textContent;
-  if (!code) return;
-  const url = `${window.location.origin}/signup?inviteCode=${code}`;
-  navigator.clipboard.writeText(url).then(() => {
-    showToast('Invite link copied!');
-  }).catch(() => {
-    showAlert('Failed to copy link', { type: 'error' });
-  });
 });
 
 onAuthStateChanged(auth, async (user) => {
