@@ -1,5 +1,13 @@
 # Service account credentials - NEVER commit these
 service-account.json
+serviceAccount.json
+
+# OAuth / auth state files - NEVER commit these
+scripts/.cors-auth-state.json
+
+# Environment variables
+.env
+.env.local
 
 # Firebase
 .firebase/

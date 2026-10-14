@@ -4,8 +4,8 @@ const crypto = require('crypto');
 const { exec } = require('child_process');
 const { URLSearchParams } = require('url');
 
-const CLIENT_ID = '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com';
-const CLIENT_SECRET = 'j9iVZfS8kkCEFUPaAeJV0sAi';
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const AUTH_ORIGIN = 'https://accounts.google.com';
 const BUCKET_NAME = 'ipprc-certificate-verification.firebasestorage.app';
 const CORS_CONFIG = require('./cors.json');
@@ -14,6 +14,13 @@ const SCOPES = [
   'https://www.googleapis.com/auth/devstorage.full_control',
   'https://www.googleapis.com/auth/cloud-platform',
 ];
+
+if (!CLIENT_ID || !CLIENT_SECRET) {
+  console.error('CLIENT_ID and CLIENT_SECRET environment variables must be set.');
+  console.error('You can obtain them from: https://console.cloud.google.com/apis/credentials');
+  console.error('Then run: $env:CLIENT_ID="..."; $env:CLIENT_SECRET="..."; node scripts/auth-flow.js');
+  process.exit(1);
+}
 
 function b64url(buf) {
   return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
