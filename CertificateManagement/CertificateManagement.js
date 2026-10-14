@@ -172,7 +172,7 @@ async function generateCertificate(attendee, templateBytes) {
         course: attendee.course || '',
         role: attendee.role || '',
         dateAttended: attendee.dateAttended || '',
-        certificateId: attendee.certificateId || '',
+        eventId: currentEvent.eventCode || '',
         eventCode: currentEvent.eventCode || '',
         eventTitle: currentEvent.title || '',
         eventDate: currentEvent.date || '',
@@ -195,6 +195,22 @@ function downloadFile(buffer, filename) {
     URL.revokeObjectURL(url);
 }
 
+function getStatusBadge(attendee) {
+    let statusClass = 'bg-gray-400/30 text-gray-200';
+    let statusLabel = 'PENDING';
+    if (attendee.status === 'present') {
+        statusClass = 'bg-green-400/30 text-green-200';
+        statusLabel = 'PRESENT';
+    } else if (attendee.status === 'late') {
+        statusClass = 'bg-orange-400/30 text-orange-200';
+        statusLabel = 'LATE';
+    } else if (attendee.status === 'absent') {
+        statusClass = 'bg-red-400/30 text-red-200';
+        statusLabel = 'ABSENT';
+    }
+    return `<span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${statusClass}">${statusLabel}</span>`;
+}
+
 function renderCertAttendeeRow(attendee) {
     return `
         <tr class="border-b border-green-400/20 hover:bg-white/10 transition-colors">
@@ -204,10 +220,9 @@ function renderCertAttendeeRow(attendee) {
             <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
             <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
             <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.email || '')}</td>
+            <td class="py-4 px-2 font-mono text-green-200/80">${escapeHtml(currentEvent?.eventCode || '')}</td>
             <td class="py-4 px-2">
-                <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-400/30 text-blue-200">
-                    ${escapeHtml(attendee.certificateId || '')}
-                </span>
+                ${getStatusBadge(attendee)}
             </td>
             <td class="py-4 px-2">
                 <div class="flex gap-1 flex-wrap">
@@ -232,7 +247,7 @@ function filterCertAttendees(searchTerm) {
         (a.course || '').toLowerCase().includes(term) ||
         (a.role || '').toLowerCase().includes(term) ||
         (a.email || '').toLowerCase().includes(term) ||
-        (a.certificateId || '').toLowerCase().includes(term)
+        (a.status || '').toLowerCase().includes(term)
     );
 }
 
@@ -411,7 +426,7 @@ window.openSendEmailModal = () => {
                 <div class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</div>
                 <div class="text-xs text-green-200/60">${escapeHtml(attendee.email)} • ${escapeHtml(attendee.course || '')} • ${escapeHtml(attendee.role || '')}</div>
             </div>
-            <span class="text-xs px-2 py-1 rounded-full bg-blue-400/30 text-blue-200">${escapeHtml(attendee.certificateId || '')}</span>
+            ${getStatusBadge(attendee)}
         </button>
     `).join('');
 
@@ -572,7 +587,7 @@ window.openSelectAttendeeModal = () => {
                 <div class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</div>
                 <div class="text-xs text-green-200/60">${escapeHtml(attendee.course || '')} • ${escapeHtml(attendee.role || '')}</div>
             </div>
-            <span class="text-xs px-2 py-1 rounded-full bg-blue-400/30 text-blue-200">${escapeHtml(attendee.certificateId || '')}</span>
+            ${getStatusBadge(attendee)}
         </button>
     `).join('');
 
