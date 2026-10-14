@@ -1,173 +1,252 @@
-# IPPRC Certificate Verification System
+<div align="center">
 
-A web-based system for managing events, attendees, and generating verifiable certificates for the Information Unit (IPPRC).
+# 🎓 IPPRC Certificate Verification System
 
-## Features
+**Event management, attendee tracking, and verifiable certificates — running entirely on free-tier services.**
 
-### Event Management
+[![MIT License](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com)
+[![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind-38BDF8?logo=tailwindcss&logoColor=black)](https://tailwindcss.com/)
+
+</div>
+
+---
+
+## 📑 Table of Contents
+
+- [✨ Features](#-features)
+- [🔐 Security](#-security)
+- [🧱 Technical Stack](#-technical-stack)
+- [🗂️ Project Structure](#️-project-structure)
+- [🚀 Quick Start](#-quick-start)
+- [💻 Local Development](#-local-development)
+- [☁️ Deployment](#️-deployment)
+- [🔗 Pretty URLs & Routes](#-pretty-urls--routes)
+- [📝 Certificate Placeholders](#-certificate-placeholders)
+- [🆕 Recent Changes](#-recent-changes)
+- [⚠️ Notes & Gotchas](#️-notes--gotchas)
+
+---
+
+## ✨ Features
+
+### 🗓️ Event Management
 - Create, edit, and close events
-- View all events with status (active/completed)
-- Each event has a unique ID and tracks the number of attendees
-- Each event records which admin created it ("Created By" badge)
-- Search events by title, description, venue, department, speaker, or creator
-- Pagination: 2 events per page with Previous/Next controls (newest first)
-- Arrow-key navigation (← / →) between pages
+- View all events with status (active / completed)
+- Each event has a unique ID, a 7-character **Event Code**, and an attendee count
+- "Created By" badge showing the admin who created the event
+- Search by title, description, venue, department, speaker, or creator
+- Pagination (2 per page, newest first) with Previous/Next controls and arrow-key navigation
 
-### Attendee Management
+### 👥 Attendee Management
 - Add attendees manually (name, course, role, email)
-- Import attendees from Excel/CSV files (with smart header detection)
-- Edit attendee details (name, course, role, status)
-- Mark attendance status (present, absent, late)
+- Import from Excel/CSV with smart header detection
+- Edit attendee details and mark attendance status (present, absent, late)
 - Delete attendees
-- Search/filter attendees by name, course, role, date, status, or certificate ID
-- Export attendee list to Excel (.xlsx) with formatted headers
-- Each attendee gets an auto-generated 7-character unique Certificate ID
-- Pagination: 5 attendees per page with Previous/Next controls
-- Arrow-key navigation (← / →) between pages
+- Search/filter by name, course, role, date, status, or certificate ID
+- Export to Excel (`.xlsx`) with formatted headers
+- Auto-generated 7-character unique Certificate ID per attendee
+- Pagination (5 per page) with Previous/Next controls and arrow-key navigation
 
-### Certificate Management
-- Upload certificate templates (.docx files with placeholders)
-- Templates are stored locally in the browser via IndexedDB (no cloud storage required)
-- Generate certificates for individual attendees (opens in new tab)
-- Generate all certificates at once and download as a single ZIP file
-- Send certificates individually via email using EmailJS
-- Send all certificates at once via email (EmailJS)
-- Each certificate includes attendee-specific data and a verification URL
-- Search attendees by name, course, role, email, or certificate ID
-- Pagination: 5 attendees per page with Previous/Next controls
-- Arrow-key navigation (← / →) between pages
+### 🎖️ Certificate Management
+- Upload certificate templates (`.docx` with placeholders)
+- Templates are stored per-browser in IndexedDB — no cloud storage required
+- Generate certificates individually or all at once as a single ZIP
+- Send certificates via EmailJS, with a `mailto:` fallback when EmailJS isn't configured
+- QR codes on certificates link to `/verify-event?eventCode=XXXX`
+- Search + pagination (5 per page) with arrow-key navigation
 
-### Certificate Verification (Public)
-- Anyone with an **Event Code** can verify an event's authenticity
-- QR code on certificates links to `/verify-event?eventCode=XXXX`
-- Shows **event details**: title, date, time, location, description, department, speaker, organizer, attendee count
-- Public access (no login required)
-- Verification runs via direct Firestore query (no Cloud Function required) — works on free tier without billing
+### 🌐 Public Verification — `verify-event`
+- Anyone with an **Event Code** can verify an event's authenticity — no login required
+- Shows event details: title, date, time, location, description, organizer, attendee count
+- **See All Participants** — an alphabetical (A–Z) list of the event's attendees with:
+  - a searchable dropdown to look up any participant
+  - live search filtering with highlight-on-select
+  - name, course • role, and certificate ID per row
+  - attendee **emails are never exposed** publicly
+- Runs via a direct Firestore query — no Cloud Function, no billing required
 
-### Authentication
-- Admin signup with email/password (creates the admin's `Admin` document)
-- Admin login verifies the `Admin` document directly in Firestore — no Cloud Function required
+### 🔑 Authentication
+- Admin signup and login with email/password (the first signup creates the first admin)
 - Password reset via email
-- Each admin manages their own events (data isolation) — events, attendees, and certificates are scoped to the admin who created them
+- Each admin manages only their own events (data isolation)
 - Session enforcement (auto-logout after inactivity)
-- **Optional hardening (requires deploying the Cloud Functions):** invite-code signup and the `admin` custom claim are implemented in `functions/index.js` (`createAdmin`, `generateInviteCode`, `ensureAdminClaim`). Deploy the functions and switch `SignUpAdmin.js` back to the `createAdmin` flow to enable invite-only signup.
+- **Optional hardening:** invite-code signup and the `admin` custom claim live in `functions/index.js` (`createAdmin`, `generateInviteCode`, `ensureAdminClaim`) — deploy the functions and switch `SignUpAdmin.js` back to the `createAdmin` flow to enable them
 
-## Recent Changes
-- **Event-based verification rehaul:** Verification now uses **Event Codes** instead of attendee Certificate IDs. Enter an event code → see event details (title, date, location, description, organizer, attendee count). QR codes on certificates link to `/verify-event?eventCode=...`. Works without Cloud Functions (direct Firestore query) — no billing required.
-- **Event code generation:** Each new event gets a unique 7-char `eventCode` (e.g., `Q2U0W0T`). Displayed on event cards in Event CRUD.
-- **Certificate template updates:** Added `{eventCode}`, `{eventTitle}`, `{eventDate}`, `{eventLocation}` placeholders. QR code URLs use event code.
-- **Firestore rules updated:** `Events` collection now allows anonymous `list` queries (for `where('eventCode', '==', ...)` lookup). Attendee data remains private (no list access).
-- **URL cleaner + routes:** New `/verify-event` pretty URL route in `firebase.json`, `vercel.json`, `UrlCleaner.js`, and `scripts/dev-server.js`.
-- **Migration script:** `scripts/migrate-event-codes.js` adds `eventCode` to existing events.
-- **Pretty-URL navigation:** All links now use relative paths (`logIn/LogInAdmin.html`, `EventCRUD/EventCRUD.html`, etc.) so the app works identically on a local static server (Live Server / `python -m http.server`) and when deployed to Firebase Hosting / Vercel. The rewrite rules in `firebase.json` and `vercel.json` are kept so pretty URLs (`/admin-login`, `/verify-event`) still resolve on production.
-- **Event isolation:** Each event stores the creating admin's UID (`adminId`) and display name (`adminName`). The Event CRUD list now filters to the logged-in admin only, and Attendee Management / Certificate Management reject events belonging to another admin.
-- **Created By tracking:** New events record the creator's name; existing events are backfilled on login. Each event card shows a purple "By <name>" badge.
-- **Event pagination & search:** Events are paginated (2 per page, newest first) with a live search bar, Previous/Next controls, and arrow-key navigation.
-- **Attendee pagination & search:** Attendees are paginated (5 per page) with a live search bar, Previous/Next controls, and arrow-key navigation.
-- **Certificate pagination & search:** Certificates are paginated (5 per page) with a live search bar, Previous/Next controls, and arrow-key navigation.
-- **Firestore security rules:** Added an `adminSessions` rule so each admin can read/write their own session doc (fixes the "Missing or insufficient permissions" error on session registration). Events/attendees/certificate formats remain scoped to the event owner.
-- **Event takeover fix (rules):** `Events` writes are now split — `update`/`delete` require the *stored* `resource.data.adminId` to match the caller, and `create` requires `request.resource.data.adminId == caller`. Previously any logged-in user could overwrite or delete another admin's event by forging `adminId` in the request payload.
-- **Bulk-read restriction (rules):** `Events` and `Attendees` use `allow get: if true; allow list: if request.auth != null` — single documents stay readable for public verification, but anonymous users can no longer list/scan whole collections. **Exception:** `Events` now allows anonymous `list` for eventCode lookup.
-- **Admin access without Cloud Functions:** login and all admin pages verify the `Admin` document directly in Firestore, so the app works with Authentication + Firestore alone. Invite-code signup and custom-claim checks remain available in `functions/index.js` for when the functions are deployed.
-- **App Check (optional):** `AppCheck.js` wires reCAPTCHA v3; paste the site key to enable, then turn on enforcement in Firebase Console → App Check. Off by default (no-op).
-- **Clean URLs:** `UrlCleaner.js` swaps `.html` addresses for pretty slugs (`/event-crud`, `/verify-event`, …) in the address bar via `history.replaceState`. Pretty URLs are served by the rewrite rules in `firebase.json` (Firebase Hosting) and `vercel.json` (Vercel); locally, use `node scripts/dev-server.js`, which applies the same rewrites (`python -m http.server` does not).
+---
 
-### Certificate Placeholders
-Use these placeholders in your .docx template:
-- `{name}` – Attendee's full name
-- `{course}` – Course
-- `{role}` – Role (e.g., Student, Speaker, Organizer)
-- `{dateAttended}` – Date of attendance
-- `{certificateId}` – Unique certificate ID
-- `{eventCode}` – Event verification code
-- `{eventTitle}` – Event title
-- `{eventDate}` – Event date
-- `{eventLocation}` – Event location
+## 🔐 Security
 
-## Security
-What was hardened in this project (and how it works now):
-- **Event ownership:** only the admin who created an event can edit, delete, or close it. The Firestore rules check the *stored* `adminId` (not the value sent in the request), so a logged-in user cannot take over another admin's event by forging `adminId` in the payload.
-- **Data isolation:** each admin sees only their own events; Attendee Management and Certificate Management reject events belonging to other admins.
-- **Bulk-read restriction:** anonymous visitors can read single documents and query Events by `eventCode` (for public verification) but cannot list/scan whole collections — this blocks bulk scraping of attendee data.
-- **Public verification privacy:** the verification page shows only **event-level details** (no attendee PII). Attendee emails, names, and individual certificate IDs are never exposed on the public page.
-- **Admin access:** login and all admin pages verify the `Admin` document directly in Firestore, so the app runs on Authentication + Firestore alone — no Cloud Function deploy required.
-- **Optional hardening (off by default):** invite-code signup with an `admin` custom claim, and Firebase App Check (reCAPTCHA v3). Both are implemented in `functions/index.js` / `AppCheck.js` and activate when the functions are deployed / a site key is added.
+| Area | Rule |
+| --- | --- |
+| **Event ownership** | Only the creating admin can edit, delete, or close an event. Rules check the *stored* `adminId`, so a logged-in user can't take over an event by forging `adminId` in the request |
+| **Data isolation** | The event list filters to the logged-in admin; Attendee and Certificate Management reject events owned by other admins |
+| **Public reads — Events** | `get` and `list` are public so the event-code verification lookup works for anonymous visitors |
+| **Public reads — Attendees** | `get` and `list` are public to power the **See All Participants** list on the verification page — a deliberate trade-off: attendee names, course, role, and certificate IDs for an event are visible to anyone with the event code, while **emails never are** |
+| **Certificate formats** | Owner-only read/write (templates may contain sensitive data) |
+| **Admin & sessions** | Each admin reads/writes only their own `Admin` and `adminSessions` documents |
+| **Invite codes** | Client access disabled — created and validated only by Cloud Functions (Admin SDK) |
+| **Optional hardening** | Invite-code signup with an `admin` custom claim, and Firebase App Check (reCAPTCHA v3) via `AppCheck.js` — both off by default |
 
-## Technical Stack
-- **Frontend:** HTML, Tailwind CSS, vanilla JavaScript (ES modules)
-- **Backend Services (Free Tier):**
-  - Firebase Authentication – admin login/signup
-  - Cloud Firestore – events, attendees, admins data (public eventCode queries enabled)
-  - Cloud Functions (Node.js, optional) – invite-code signup, QR code + email generation
-  - EmailJS – client-side email sending (200 emails/month free)
-- **Client-side Libraries:**
-  - PizZip – .docx file parsing
-  - Docxtemplater – template rendering
-  - ExcelJS – Excel import/export
-  - QRCode.js – QR code generation
-  - JSZip – batch certificate ZIP packaging
-- **No billing required:** Core features (including public event verification) use free-tier Firebase + EmailJS services
+---
 
-## Project Structure
+## 🧱 Technical Stack
+
+| Layer | Technology |
+| --- | --- |
+| **Frontend** | HTML, Tailwind CSS, vanilla JavaScript (ES modules, no build step) |
+| **Auth & Database** | Firebase Authentication + Cloud Firestore |
+| **Functions (optional)** | Cloud Functions (Node.js) — invite-code signup, email/QR generation |
+| **Email** | EmailJS (free tier: 200 emails/month) with `mailto:` fallback |
+| **Client libraries** | PizZip, Docxtemplater, ExcelJS, QRCode.js, JSZip — all loaded from CDN |
+| **Hosting** | Vercel or Firebase Hosting (rewrite rules kept in sync for both) |
+
+> 💡 **No billing required** — core features, including public verification, run on free-tier Firebase + EmailJS.
+
+---
+
+## 🗂️ Project Structure
+
 ```
-├── index.html                  – Landing page
-├── AttendeeManagement/         – Attendee CRUD
-├── CertificateManagement/      – Certificate generation
-│   ├── emailjs-template.html   – EmailJS HTML template for certificate emails
-│   ├── CertificateManagement.html
-│   └── CertificateManagement.js
-├── CertificateVerification/    – Public verification page
-├── EventCRUD/                  – Event management (incl. Settings)
-├── functions/                  – Cloud Functions, optional (verification, invite signup)
-├── logIn/                      – Login, signup, password reset
-├── scripts/                    – Utility scripts (CORS, setup, dev-server)
-├── AppCheck.js                 – Optional Firebase App Check (reCAPTCHA v3) wiring
-├── FirebaseAdmin.js            – Shared admin access guard (reads the Admin document)
-├── UrlCleaner.js               – Hides .html in the address bar (pretty URLs)
-├── PopupSystem.js              – Shared modal/toast utilities
-├── firestore.rules             – Firestore security rules
-└── storage.rules               – Storage security rules
+├── index.html                     Landing page
+├── AttendeeManagement/            Attendee CRUD, import/export
+├── CertificateManagement/         Certificate generation & email
+│   └── emailjs-template.html      EmailJS HTML template for certificate emails
+├── CertificateVerification/       Public verification page
+│                                  (event lookup + See All Participants)
+├── EventCRUD/                     Event management + Settings
+├── logIn/                         Login, password reset
+├── SignUp/                        Admin signup
+├── scripts/
+│   ├── dev-server.js              Zero-dependency dev server with production rewrites
+│   ├── migrate-event-codes.js     Backfills eventCode on existing events
+│   └── …                          CORS / setup utilities
+├── functions/                     Cloud Functions (optional)
+├── UrlCleaner.js                  Pretty URLs (hides .html in the address bar)
+├── PopupSystem.js                 Shared modal/toast utilities
+├── FirebaseAdmin.js               Shared admin access guard
+├── AppCheck.js                    Optional App Check (reCAPTCHA v3) wiring
+├── firestore.rules                Firestore security rules
+├── storage.rules                  Storage security rules
+├── firebase.json                  Firebase Hosting config + rewrites
+├── vercel.json                    Vercel config + rewrites
+└── .firebaserc                    Firebase project link
 ```
 
-## Setup
-1. Open `index.html` in a browser (or deploy to Firebase Hosting)
-2. Sign up as an admin (the first signup creates the first admin account)
-3. Create an event (auto-generates an Event Code, e.g., `Q2U0W0T`)
-4. Add attendees (manually or via Excel import)
-5. Upload a certificate template (use new placeholders: `{eventCode}`, `{eventTitle}`, `{eventDate}`, `{eventLocation}`)
-6. Generate and download certificates individually or as a ZIP (QR codes link to `/verify-event?eventCode=...`)
-7. (Optional) Configure EmailJS in `CertificateManagement.js` to send certificates via email:
-   - Create an account at [emailjs.com](https://www.emailjs.com/)
-   - Add an email service and create an email template
-   - Replace the placeholder values in `EMAILJS_CONFIG` with your Service ID, Template ID, and Public Key
-8. Share the verification URL (`/verify-event?eventCode=Q2U0W0T`) with recipients
+---
 
-### Testing verification
-- Visit `/verify-event?eventCode=Q2U0W0T` (replace with your event's code)
-- Or go to `/verify-event` and enter the code manually
-- Shows: event title, date, time, location, description, organizer, attendee count
+## 🚀 Quick Start
 
-### First admin
-On a fresh deployment, the first admin simply signs up at `/signup` (the signup creates the `Admin` document). To restrict signup to invite codes later, deploy the Cloud Functions and use the `createAdmin` flow — see "Authentication" above.
+1. Serve the project locally (see [Local Development](#-local-development))
+2. Sign up as an admin at `/signup` — the first signup creates the first admin account
+3. Create an event (an Event Code like `Q2U0W0T` is generated automatically)
+4. Add attendees — manually, or import an Excel/CSV file
+5. Upload a certificate template (`.docx`) using the [placeholders](#-certificate-placeholders)
+6. Generate certificates individually or as a ZIP — QR codes link to `/verify-event?eventCode=...`
+7. *(Optional)* Configure EmailJS in `CertificateManagement.js`: create a service and template at [emailjs.com](https://www.emailjs.com/), then fill in `EMAILJS_CONFIG`
+8. Share the verification URL — `/verify-event?eventCode=Q2U0W0T` — with recipients
 
-## Local development
-Two options:
-- **Recommended (pretty URLs work):** `node scripts/dev-server.js` — a zero-dependency Node server with the same rewrites as production. Open http://localhost:8080.
-- **`python -m http.server` / VS Code Live Server:** works, but only the `.html` links resolve (no rewrites), so the address bar shows `.html` paths.
+---
 
-## Deployment
-The app runs on Authentication + Firestore alone; Cloud Functions are optional (needed only for invite-code signup, the email/QR generation features, and the privacy-hardened verification path). When deploying them:
+## 💻 Local Development
+
+```bash
+# Recommended — pretty URLs work exactly like production
+node scripts/dev-server.js          # http://localhost:8080
+node scripts/dev-server.js 5500     # or pick your own port
 ```
-firebase deploy --only functions          # new/changed Cloud Functions first
+
+The dev server is **zero-dependency** (Node built-ins only) and mirrors the rewrites in `firebase.json` / `vercel.json`.
+
+> ⚠️ VS Code **Live Server** and `python -m http.server` also work, but they don't apply rewrites — only the `.html` paths resolve, so the address bar shows `.html` URLs. All navigation uses absolute file paths (e.g. `/EventCRUD/EventCRUD.html`), so links work on any static server; `UrlCleaner.js` then swaps in the pretty slug for the address bar.
+
+---
+
+## ☁️ Deployment
+
+**Vercel** — the static site deploys as-is; `vercel.json` carries the rewrite rules.
+
+**Firebase Hosting** — deploy in this order:
+
+```bash
+firebase deploy --only functions          # optional Cloud Functions first
 firebase deploy --only hosting            # then the static pages
-firebase deploy --only firestore:rules    # rules last (they can break old pages)
+firebase deploy --only firestore:rules    # rules LAST — old pages can 403 without them
 ```
-Redeploy on Vercel as well if that domain serves the app.
 
-## Notes
-- Templates are stored per-browser in IndexedDB (not synced across devices)
-- Certificate generation and ZIP packaging run entirely in the browser
-- **Cloud Functions are optional:** used for invite-code signup, QR/email generation, and (previously) certificate verification — now verification works client-side via Firestore
-- Email sending uses EmailJS client-side SDK (free tier: 200 emails/month). If EmailJS is not configured, the app falls back to opening the user's default mail client via `mailto:` links
-- EmailJS attachments require a paid plan; current free-tier implementation sends certificate details and verification links in the email body
-- Local development with App Check enforcement enabled: print `self.FIREBASE_APPCHECK_DEBUG_TOKEN` in the browser console and register it under Firebase Console → App Check → Manage debug tokens
+> 🚨 **Firestore rules changes do NOT ship with a site redeploy.**
+> After editing `firestore.rules`, you must run `firebase deploy --only firestore:rules`.
+> If the verification page shows `Missing or insufficient permissions` in production, the rules file was edited locally but never deployed — the deployed rules are separate from what Vercel serves. *(We hit exactly this: the rules fix for "See All Participants" sat in the working tree while production still enforced `allow list: if request.auth != null`, so the deployed page 403'd. Verifying with an anonymous Firestore REST call confirmed the fix.)*
+
+---
+
+## 🔗 Pretty URLs & Routes
+
+`UrlCleaner.js` rewrites the address bar to pretty slugs via `history.replaceState`. The same routes exist in `firebase.json`, `vercel.json`, and `scripts/dev-server.js`:
+
+| Route | File |
+| --- | --- |
+| `/` | `index.html` |
+| `/event-crud` | `EventCRUD/EventCRUD.html` |
+| `/certificate-management` | `CertificateManagement/CertificateManagement.html` |
+| `/attendee-management` | `AttendeeManagement/AttendeeManagement.html` |
+| `/verify-event` | `CertificateVerification/CertificateVerification.html` |
+| `/admin-login` | `logIn/LogInAdmin.html` |
+| `/signup` | `SignUp/SignUpAdmin.html` |
+| `/forgot-password` | `logIn/ForgotPassword.html` |
+| `/reset-password` | `logIn/ResetPassword.html` |
+| `/settings` | `EventCRUD/Settings.html` |
+
+---
+
+## 📝 Certificate Placeholders
+
+Use these placeholders in your `.docx` template:
+
+| Placeholder | Value |
+| --- | --- |
+| `{name}` | Attendee's full name |
+| `{course}` | Course |
+| `{role}` | Role (e.g., Student, Speaker, Organizer) |
+| `{dateAttended}` | Date of attendance |
+| `{certificateId}` | Unique certificate ID |
+| `{eventCode}` | Event verification code |
+| `{eventTitle}` | Event title |
+| `{eventDate}` | Event date |
+| `{eventLocation}` | Event location |
+
+---
+
+## 🆕 Recent Changes
+
+**Latest**
+- **See All Participants** on `/verify-event` — a button above "Verify Another" opens an alphabetical (A–Z, case-insensitive) list of the event's attendees with a searchable dropdown, live search filtering, highlight-on-select, and per-row certificate IDs (emails never exposed). Requires the updated `firestore.rules` to be deployed.
+- **Firestore rules: public attendee list** — the `Attendees` subcollection now allows anonymous `list` (was `request.auth != null`) so the public participants list works. Writes remain owner-only.
+- **Navigation fix (pretty-URL base bug)** — `UrlCleaner.js` rewrites the address bar to slugs like `/event-crud`, which changes the document base URL, so same-directory links (`Settings.html`, `EventCRUD.html`, `ForgotPassword.html`) resolved to non-existent root paths and 404'd. All internal navigation now uses absolute file paths (`/EventCRUD/EventCRUD.html`, …), which work on every static server while still landing on the pretty URL.
+
+**Previous**
+- **Event-based verification rehaul** — verification uses Event Codes instead of attendee Certificate IDs; enter a code to see event details. Works without Cloud Functions (direct Firestore query).
+- **Unique event codes** — each new event gets a 7-char `eventCode` (e.g. `Q2U0W0T`) shown on event cards.
+- **New certificate placeholders** — `{eventCode}`, `{eventTitle}`, `{eventDate}`, `{eventLocation}`; QR URLs use the event code.
+- **Pretty URLs** — `UrlCleaner.js` + rewrite rules for `/event-crud`, `/verify-event`, `/admin-login`, and friends.
+- **Event isolation & Created By tracking** — events store `adminId`/`adminName`; lists filter to the owner.
+- **Pagination & search everywhere** — events (2/page), attendees (5/page), certificates (5/page), with arrow-key navigation.
+- **Admin access without Cloud Functions** — login verifies the `Admin` document in Firestore directly.
+
+---
+
+## ⚠️ Notes & Gotchas
+
+- **Rules vs. site deploys are separate** — deploying to Vercel/Firebase Hosting does *not* deploy `firestore.rules`. See the [Deployment](#️-deployment) warning.
+- **Attendee names are public by design** — the See All Participants feature makes an event's attendee list (names, course, role, certificate IDs — never emails) visible to anyone with the event code.
+- **Templates are per-browser** — certificate templates live in IndexedDB and don't sync across devices.
+- **Cloud Functions are optional** — only needed for invite-code signup and the email/QR generation helpers; verification itself is client-side.
+- **EmailJS free tier** — attachments need a paid plan; the current implementation sends certificate details and the verification link in the email body, with a `mailto:` fallback.
+- **App Check debug tokens** — when enforcement is on during development, read `self.FIREBASE_APPCHECK_DEBUG_TOKEN` from the console and register it under Firebase Console → App Check → Manage debug tokens.
+
+---
+
+<div align="center">
+<sub>Built for the Information Unit (IPPRC) · MIT License · <a href="https://github.com/KenyIzConfused/CertificateVerificationSystem">GitHub</a></sub>
+</div>
