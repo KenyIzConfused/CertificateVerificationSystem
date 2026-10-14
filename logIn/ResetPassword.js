@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
+import { showAlert, showToast, setButtonLoading } from '../assets/js/PopupSystem.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",

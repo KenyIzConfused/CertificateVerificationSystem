@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import '../AppCheck.js';
-import { showAlert, setButtonLoading } from '../PopupSystem.js';
+import '../assets/js/AppCheck.js';
+import { showAlert, setButtonLoading } from '../assets/js/PopupSystem.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",

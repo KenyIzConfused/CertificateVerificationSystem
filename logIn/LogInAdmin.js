@@ -1,8 +1,8 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-import { showAlert, showToast, setButtonLoading, registerSession } from '../PopupSystem.js';
-import { requireAdmin } from '../FirebaseAdmin.js';
+import { showAlert, showToast, setButtonLoading, registerSession } from '../assets/js/PopupSystem.js';
+import { requireAdmin } from '../assets/js/FirebaseAdmin.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",

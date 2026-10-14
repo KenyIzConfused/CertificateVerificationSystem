@@ -3,7 +3,7 @@ service-account.json
 serviceAccount.json
 
 # OAuth / auth state files - NEVER commit these
-scripts/.cors-auth-state.json
+tools/scripts/.cors-auth-state.json
 
 # Environment variables
 .env
@@ -16,7 +16,7 @@ firebase-debug.log.*
 
 # Node modules
 node_modules/
-functions/node_modules/
+tools/functions/node_modules/
 
 # Kilo agent manager
 .kilo/

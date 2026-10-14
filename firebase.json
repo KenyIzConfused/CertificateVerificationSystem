@@ -1,13 +1,13 @@
 {
   "functions": {
-    "source": "functions",
+    "source": "tools/functions",
     "runtime": "nodejs24"
   },
   "storage": {
-    "rules": "storage.rules"
+    "rules": "tools/storage.rules"
   },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "tools/firestore.rules"
   },
   "hosting": {
     "public": ".",

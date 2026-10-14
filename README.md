@@ -72,7 +72,7 @@
 - Password reset via email
 - Each admin manages only their own events (data isolation)
 - Session enforcement (auto-logout after inactivity)
-- **Optional hardening:** invite-code signup and the `admin` custom claim live in `functions/index.js` (`createAdmin`, `generateInviteCode`, `ensureAdminClaim`) — deploy the functions and switch `SignUpAdmin.js` back to the `createAdmin` flow to enable them
+- **Optional hardening:** invite-code signup and the `admin` custom claim live in `tools/functions/index.js` (`createAdmin`, `generateInviteCode`, `ensureAdminClaim`) — deploy the functions and switch `SignUpAdmin.js` back to the `createAdmin` flow to enable them
 
 ---
 
@@ -118,21 +118,25 @@
 ├── EventCRUD/                     Event management + Settings
 ├── logIn/                         Login, password reset
 ├── SignUp/                        Admin signup
-├── scripts/
-│   ├── dev-server.js              Zero-dependency dev server with production rewrites
-│   ├── migrate-event-codes.js     Backfills eventCode on existing events
-│   └── …                          CORS / setup utilities
-├── functions/                     Cloud Functions (optional)
-├── UrlCleaner.js                  Pretty URLs (hides .html in the address bar)
-├── PopupSystem.js                 Shared modal/toast utilities
-├── FirebaseAdmin.js               Shared admin access guard
-├── AppCheck.js                    Optional App Check (reCAPTCHA v3) wiring
-├── firestore.rules                Firestore security rules
-├── storage.rules                  Storage security rules
-├── firebase.json                  Firebase Hosting config + rewrites
-├── vercel.json                    Vercel config + rewrites
-└── .firebaserc                    Firebase project link
+├── assets/                        Files the website loads at runtime
+│   ├── favicon.png
+│   └── js/
+│       ├── UrlCleaner.js          Pretty URLs (hides .html in the address bar)
+│       ├── PopupSystem.js         Shared modal/toast utilities
+│       ├── FirebaseAdmin.js       Shared admin access guard
+│       └── AppCheck.js            Optional App Check (reCAPTCHA v3) wiring
+└── tools/                         Rarely-used files the site never loads
+    ├── firestore.rules            Firestore security rules
+    ├── storage.rules              Storage security rules
+    ├── .env.example               Env vars for scripts/auth-flow.js
+    ├── functions/                 Cloud Functions (optional)
+    └── scripts/
+        ├── dev-server.js          Zero-dependency dev server with production rewrites
+        ├── migrate-event-codes.js Backfills eventCode on existing events
+        └── …                      CORS / setup utilities
 ```
+
+> The page folders are the app; `assets/` holds what the browser loads; `tools/` holds deploy configs, optional Cloud Functions, and dev utilities. Files like `firebase.json`, `vercel.json`, `.firebaserc`, `package.json`, and `LICENSE` stay at the root because those tools require it.
 
 ---
 
@@ -153,8 +157,8 @@
 
 ```bash
 # Recommended — pretty URLs work exactly like production
-node scripts/dev-server.js          # http://localhost:8080
-node scripts/dev-server.js 5500     # or pick your own port
+node tools/scripts/dev-server.js          # http://localhost:8080
+node tools/scripts/dev-server.js 5500     # or pick your own port
 ```
 
 The dev server is **zero-dependency** (Node built-ins only) and mirrors the rewrites in `firebase.json` / `vercel.json`.
@@ -183,7 +187,7 @@ firebase deploy --only firestore:rules    # rules LAST — old pages can 403 wit
 
 ## 🔗 Pretty URLs & Routes
 
-`UrlCleaner.js` rewrites the address bar to pretty slugs via `history.replaceState`. The same routes exist in `firebase.json`, `vercel.json`, and `scripts/dev-server.js`:
+`UrlCleaner.js` rewrites the address bar to pretty slugs via `history.replaceState`. The same routes exist in `firebase.json`, `vercel.json`, and `tools/scripts/dev-server.js`:
 
 | Route | File |
 | --- | --- |
@@ -238,7 +242,7 @@ Use these placeholders in your `.docx` template:
 
 ## ⚠️ Notes & Gotchas
 
-- **Rules vs. site deploys are separate** — deploying to Vercel/Firebase Hosting does *not* deploy `firestore.rules`. See the [Deployment](#️-deployment) warning.
+- **Rules vs. site deploys are separate** — deploying to Vercel/Firebase Hosting does *not* deploy `firestore.rules` (now in `tools/`). See the [Deployment](#️-deployment) warning.
 - **Attendee names are public by design** — the See All Participants feature makes an event's attendee list (names, course, role, certificate IDs — never emails) visible to anyone with the event code.
 - **Templates are per-browser** — certificate templates live in IndexedDB and don't sync across devices.
 - **Cloud Functions are optional** — only needed for invite-code signup and the email/QR generation helpers; verification itself is client-side.

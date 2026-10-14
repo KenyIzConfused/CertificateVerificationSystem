@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
-import { createAdminFn } from '../FirebaseAdmin.js';
+import { showAlert, showToast, setButtonLoading } from '../assets/js/PopupSystem.js';
+import { createAdminFn } from '../assets/js/FirebaseAdmin.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
