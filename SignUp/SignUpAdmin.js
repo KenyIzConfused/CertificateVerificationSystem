@@ -1,4 +1,4 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showToast, setButtonLoading } from '../PopupSystem.js';
@@ -13,7 +13,7 @@ const firebaseConfig = {
   measurementId: "G-R7PDE8B834"
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -44,7 +44,7 @@ form.addEventListener('submit', async (e) => {
     });
     await sendEmailVerification(userCredential.user);
     showToast('Account created! Please verify your email.');
-    window.location.href = '/admin-login';
+    window.location.href = '../logIn/LogInAdmin.html';
   } catch (error) {
     console.error('Error:', error);
     showAlert('Sign up failed: ' + error.message, { type: 'error' });

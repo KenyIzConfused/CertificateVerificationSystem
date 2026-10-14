@@ -2,6 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 import { showAlert, showToast, setButtonLoading, registerSession } from '../PopupSystem.js';
+import { requireAdmin } from '../FirebaseAdmin.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -29,10 +30,16 @@ loginForm.addEventListener('submit', async (e) => {
 
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    
+    // Verify the account has an admin record.
+    if (!(await requireAdmin())) {
+      return;
+    }
+
     sessionStorage.setItem('adminLoggedIn', 'true');
     await registerSession(userCredential.user);
     showToast('Login successful!');
-    window.location.href = '/event-crud';
+    window.location.href = '../EventCRUD/EventCRUD.html';
   } catch (error) {
     console.error('Login error:', error);
     if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-email') {

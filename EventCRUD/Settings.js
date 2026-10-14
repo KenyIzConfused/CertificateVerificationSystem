@@ -1,7 +1,8 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../PopupSystem.js';
+import { requireAdmin } from '../FirebaseAdmin.js';
 
 const themes = {
   green: {
@@ -129,7 +130,7 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
 
     applyTheme(selectedTheme);
     showToast('Settings saved successfully');
-    window.location.href = '/event-crud';
+    window.location.href = 'EventCRUD.html';
   } catch (error) {
     console.error('Error saving settings:', error);
     showAlert('Failed to save settings', { type: 'error' });
@@ -145,7 +146,12 @@ document.getElementById('themeSelect').addEventListener('change', (e) => {
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     stopSessionEnforcement();
-    window.location.href = '/admin-login';
+    window.location.href = '../logIn/LogInAdmin.html';
+    return;
+  }
+
+  if (!(await requireAdmin())) {
+    window.location.href = '../logIn/LogInAdmin.html';
     return;
   }
 
