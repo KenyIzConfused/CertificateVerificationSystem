@@ -169,7 +169,7 @@
                 
                 <!-- Dropdown Menu -->
                 <div id="menuDropdown" class="hidden absolute left-0 mt-2 w-48 liquid-panel rounded-xl p-1 shadow-lg">
-                     <a href="Settings.html" class="block px-3 py-2 text-green-100 hover:bg-green-400/20 rounded-md transition-colors text-sm">
+                     <a href="/EventCRUD/Settings.html" class="block px-3 py-2 text-green-100 hover:bg-green-400/20 rounded-md transition-colors text-sm">
                         Settings
                     </a>
                      <a href="../SignUp/SignUpAdmin.html" class="block px-3 py-2 text-green-100 hover:bg-green-400/20 rounded-md transition-colors text-sm">
@@ -327,6 +327,10 @@
       </div>
     </div>
     <p class="text-center text-green-200/50 text-sm mt-4 pb-4">Information Unit @ 2025</p>
-    <script type="module" src="/EventCRUD/EventCRUD.js"></script>
+    <script type="module">
+        import '../UrlCleaner.js';
+        import '../PopupSystem.js';
+        import '../EventCRUD/EventCRUD.js';
+    </script>
 </body>
 </html>
