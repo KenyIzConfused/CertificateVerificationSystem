@@ -220,6 +220,7 @@ function renderCertAttendeeRow(attendee) {
             <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
             <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
             <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.email || '')}</td>
+            <td class="py-4 px-2 font-mono text-green-200/80">${escapeHtml(currentEvent?.eventCode || '')}</td>
             <td class="py-4 px-2">
                 ${getStatusBadge(attendee)}
             </td>

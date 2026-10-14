@@ -51,7 +51,7 @@
 
 ### 🎖️ Certificate Management
 - Upload certificate templates (`.docx` with placeholders)
-- Attendee table shows each person's attendance **status** (present / late / absent / pending) with color-coded badges
+- Attendee table shows each person's **Event ID** (the event's code) and attendance **status** (present / late / absent / pending) with color-coded badges
 - The template's ID placeholder is `{eventId}` (the Event Code) — certificates are per-event, not per-person
 - Templates are stored per-browser in IndexedDB — no cloud storage required
 - Generate certificates individually or all at once as a single ZIP
@@ -231,7 +231,7 @@ Use these placeholders in your `.docx` template:
 ## 🆕 Recent Changes
 
 **Latest**
-- **Certificate Management rehaul** — the attendee table now shows a color-coded **Status** column (present / late / absent / pending, matching Attendee Management) instead of the per-person Certificate ID, and the same badge appears in the generate/email modals. The template placeholder `{certificateId}` is replaced by `{eventId}`, which carries the Event Code since certificates are per-event; search now matches status instead of certificate ID.
+- **Certificate Management rehaul** — the attendee table now shows a color-coded **Status** column (present / late / absent / pending, matching Attendee Management) and an **Event ID** column (the event's code, from the same source as the `{eventId}` template placeholder) instead of the per-person Certificate ID, and the same status badge appears in the generate/email modals. The template placeholder `{certificateId}` is replaced by `{eventId}`, which carries the Event Code since certificates are per-event; search now matches status instead of certificate ID.
 - **Repository reorganization** — runtime files moved to `assets/` (favicon + the shared JS modules `UrlCleaner.js`, `PopupSystem.js`, `FirebaseAdmin.js`, `AppCheck.js`); rarely-used files moved to `tools/` (security rules, optional `functions/`, dev/CORS scripts, `.env.example`). All page references updated to the new paths; the dev server command is now `node tools/scripts/dev-server.js`. Files their tooling requires (`firebase.json`, `vercel.json`, `.firebaserc`, `package.json`, `LICENSE`) intentionally stay at the root.
 - **See All Participants** on `/verify-event` — a button above "Verify Another" opens an alphabetical (A–Z, case-insensitive) list of the event's attendees with a searchable dropdown, live search filtering, highlight-on-select, and per-row certificate IDs (emails never exposed). Requires the updated `firestore.rules` to be deployed.
 - **Firestore rules: public attendee list** — the `Attendees` subcollection now allows anonymous `list` (was `request.auth != null`) so the public participants list works. Writes remain owner-only.
