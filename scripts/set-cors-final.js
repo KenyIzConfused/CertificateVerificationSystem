@@ -2,10 +2,17 @@ const https = require('https');
 const { URLSearchParams } = require('url');
 const fs = require('fs');
 
-const CLIENT_ID = '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com';
-const CLIENT_SECRET = 'j9iVZfS8kkCEFUPaAeJV0sAi';
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const AUTH_ORIGIN = 'https://accounts.google.com';
 const CORS_CONFIG = require('./cors.json');
+
+if (!CLIENT_ID || !CLIENT_SECRET) {
+  console.error('CLIENT_ID and CLIENT_SECRET environment variables must be set.');
+  console.error('You can obtain them from: https://console.cloud.google.com/apis/credentials');
+  console.error('Then run: $env:CLIENT_ID="..."; $env:CLIENT_SECRET="..."; node scripts/set-cors-final.js');
+  process.exit(1);
+}
 
 function postForm(url, params) {
   const data = new URLSearchParams(params).toString();

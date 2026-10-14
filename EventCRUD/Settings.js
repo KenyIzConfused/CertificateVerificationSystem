@@ -130,7 +130,7 @@ document.getElementById('settingsForm').addEventListener('submit', async (e) => 
 
     applyTheme(selectedTheme);
     showToast('Settings saved successfully');
-    window.location.href = 'EventCRUD.html';
+    window.location.href = '/EventCRUD/EventCRUD.html';
   } catch (error) {
     console.error('Error saving settings:', error);
     showAlert('Failed to save settings', { type: 'error' });

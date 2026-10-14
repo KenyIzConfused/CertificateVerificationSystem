@@ -210,6 +210,29 @@
                 </div>
             </div>
             <p class="text-center text-green-200/50 text-sm pt-2">Information Unit @ 2026</p>
+            <button type="button" id="seeParticipantsBtn" class="w-full btn-glass py-2.5 font-medium mt-4">
+                See All Participants
+            </button>
+            <div id="participantsPanel" class="hidden space-y-3">
+                <div class="relative">
+                    <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-green-200/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"></path>
+                    </svg>
+                    <input type="text" id="participantSearch" autocomplete="off" placeholder="Search or select a participant..."
+                        class="w-full pl-10 pr-10 py-3 liquid-input outline-none transition-all">
+                    <button type="button" id="participantSearchClear"
+                        class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-green-200/60 hover:text-green-100"
+                        aria-label="Clear search">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <div id="participantDropdown"
+                        class="hidden absolute left-0 right-0 mt-2 liquid-panel rounded-xl p-1 shadow-lg z-10 max-h-60 overflow-y-auto"></div>
+                </div>
+                <p id="participantsCount" class="text-green-200/60 text-sm"></p>
+                <div id="participantsList" class="space-y-2 max-h-80 overflow-y-auto pr-1"></div>
+            </div>
             <button type="button" id="verifyAnotherBtn" class="w-full btn-glass py-2.5 font-medium mt-4">
                 Verify Another
             </button>
