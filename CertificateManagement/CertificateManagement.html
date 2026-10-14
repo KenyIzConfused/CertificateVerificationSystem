@@ -160,7 +160,7 @@
                 </svg>
                 Certificate Template
             </h2>
-            <p class="text-green-200/60 text-xs mb-4">Upload a .docx file with placeholders: {name}, {course}, {role}, {dateAttended}, {certificateId}</p>
+            <p class="text-green-200/60 text-xs mb-4">Upload a .docx file with placeholders: {name}, {course}, {role}, {dateAttended}, {eventId}</p>
             <div class="flex flex-col md:flex-row gap-4">
                 <input type="file" id="templateFile" accept=".docx" class="flex-1 text-sm text-green-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-green-700/30 file:text-green-100 hover:file:bg-green-600/40">
                 <button id="uploadTemplateBtn" class="btn-3d px-6 py-2.5 font-semibold">
@@ -196,8 +196,20 @@
                         <span class="text-green-200/60 block mt-0.5">Date the event was attended</span>
                     </div>
                     <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
-                        <span class="font-mono text-green-300">{certificateId}</span>
-                        <span class="text-green-200/60 block mt-0.5">Unique certificate ID</span>
+                        <span class="font-mono text-green-300">{eventId}</span>
+                        <span class="text-green-200/60 block mt-0.5">Event Code — identifies the event (certificates are per-event)</span>
+                    </div>
+                    <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
+                        <span class="font-mono text-green-300">{eventTitle}</span>
+                        <span class="text-green-200/60 block mt-0.5">Event title</span>
+                    </div>
+                    <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
+                        <span class="font-mono text-green-300">{eventDate}</span>
+                        <span class="text-green-200/60 block mt-0.5">Event date</span>
+                    </div>
+                    <div class="bg-green-900/30 rounded-lg p-2 border border-green-400/10">
+                        <span class="font-mono text-green-300">{eventLocation}</span>
+                        <span class="text-green-200/60 block mt-0.5">Event location</span>
                     </div>
                 </div>
             </div>
@@ -272,7 +284,7 @@
 
             <div class="liquid-panel p-4 mb-4">
                 <div class="relative">
-                    <input type="text" id="certSearch" placeholder="Search attendees by name, course, role, email, or certificate ID..."
+                    <input type="text" id="certSearch" placeholder="Search attendees by name, course, role, email, or status..."
                         class="w-full pl-10 pr-4 py-3 liquid-input rounded-lg text-sm outline-none">
                     <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-green-200/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -287,7 +299,7 @@
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Course</th>
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Role</th>
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Email</th>
-                        <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Certificate ID</th>
+                        <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Status</th>
                         <th class="text-left py-3 px-2 text-sm font-semibold text-green-100">Actions</th>
                     </tr>
                 </thead>
