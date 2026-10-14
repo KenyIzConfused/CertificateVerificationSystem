@@ -125,15 +125,16 @@
 │       ├── PopupSystem.js         Shared modal/toast utilities
 │       ├── FirebaseAdmin.js       Shared admin access guard
 │       └── AppCheck.js            Optional App Check (reCAPTCHA v3) wiring
-└── tools/                         Rarely-used files the site never loads
-    ├── firestore.rules            Firestore security rules
-    ├── storage.rules              Storage security rules
-    ├── .env.example               Env vars for scripts/auth-flow.js
-    ├── functions/                 Cloud Functions (optional)
-    └── scripts/
-        ├── dev-server.js          Zero-dependency dev server with production rewrites
-        ├── migrate-event-codes.js Backfills eventCode on existing events
-        └── …                      CORS / setup utilities
+├── tools/                         Rarely-used files the site never loads
+│   ├── firestore.rules            Firestore security rules
+│   ├── storage.rules              Storage security rules
+│   ├── .env.example               Env vars for tools/scripts/auth-flow.js
+│   ├── functions/                 Cloud Functions (optional)
+│   └── scripts/
+│       ├── dev-server.js          Zero-dependency dev server with production rewrites
+│       ├── migrate-event-codes.js Backfills eventCode on existing events
+│       └── …                      CORS / setup utilities
+└── .github/workflows/             Auto-deploys Firebase Hosting on push to main
 ```
 
 > The page folders are the app; `assets/` holds what the browser loads; `tools/` holds deploy configs, optional Cloud Functions, and dev utilities. Files like `firebase.json`, `vercel.json`, `.firebaserc`, `package.json`, and `LICENSE` stay at the root because those tools require it.
@@ -169,19 +170,22 @@ The dev server is **zero-dependency** (Node built-ins only) and mirrors the rewr
 
 ## ☁️ Deployment
 
-**Vercel** — the static site deploys as-is; `vercel.json` carries the rewrite rules.
+Two deployments run in parallel — pick whichever you use (or both):
 
-**Firebase Hosting** — deploy in this order:
+| Target | How it deploys |
+| --- | --- |
+| **Firebase Hosting** | **Automatic** — `.github/workflows/` deploys to the `live` channel on every push to `main` |
+| **Vercel** | Automatic on push — `vercel.json` carries the rewrite rules |
+| **Cloud Functions** | Manual: `firebase deploy --only functions` (path is `tools/functions`, already wired in `firebase.json`) |
+| **Firestore / Storage rules** | Manual: `firebase deploy --only firestore:rules` / `firebase deploy --only storage:rules` |
 
 ```bash
-firebase deploy --only functions          # optional Cloud Functions first
-firebase deploy --only hosting            # then the static pages
-firebase deploy --only firestore:rules    # rules LAST — old pages can 403 without them
+# Rules and functions are NOT part of any automatic deploy — run these yourself:
+firebase deploy --only functions          # optional Cloud Functions
+firebase deploy --only firestore:rules    # after any firestore.rules change
 ```
 
-> 🚨 **Firestore rules changes do NOT ship with a site redeploy.**
-> After editing `firestore.rules`, you must run `firebase deploy --only firestore:rules`.
-> If the verification page shows `Missing or insufficient permissions` in production, the rules file was edited locally but never deployed — the deployed rules are separate from what Vercel serves. *(We hit exactly this: the rules fix for "See All Participants" sat in the working tree while production still enforced `allow list: if request.auth != null`, so the deployed page 403'd. Verifying with an anonymous Firestore REST call confirmed the fix.)*
+> 🚨 **The auto-deploy covers hosting only.** The GitHub Action and Vercel deploy *static pages* — neither ships `firestore.rules`, `storage.rules`, or Cloud Functions. That gap is exactly how the rules bug happened: the "See All Participants" rules fix sat locally while the auto-deployment kept serving with the old rules, so production 403'd until the rules were deployed by hand. **After every `firestore.rules` edit, run `firebase deploy --only firestore:rules`** — and if the verification page shows `Missing or insufficient permissions`, this is the first thing to check.
 
 ---
 
@@ -225,6 +229,7 @@ Use these placeholders in your `.docx` template:
 ## 🆕 Recent Changes
 
 **Latest**
+- **Repository reorganization** — runtime files moved to `assets/` (favicon + the shared JS modules `UrlCleaner.js`, `PopupSystem.js`, `FirebaseAdmin.js`, `AppCheck.js`); rarely-used files moved to `tools/` (security rules, optional `functions/`, dev/CORS scripts, `.env.example`). All page references updated to the new paths; the dev server command is now `node tools/scripts/dev-server.js`. Files their tooling requires (`firebase.json`, `vercel.json`, `.firebaserc`, `package.json`, `LICENSE`) intentionally stay at the root.
 - **See All Participants** on `/verify-event` — a button above "Verify Another" opens an alphabetical (A–Z, case-insensitive) list of the event's attendees with a searchable dropdown, live search filtering, highlight-on-select, and per-row certificate IDs (emails never exposed). Requires the updated `firestore.rules` to be deployed.
 - **Firestore rules: public attendee list** — the `Attendees` subcollection now allows anonymous `list` (was `request.auth != null`) so the public participants list works. Writes remain owner-only.
 - **Navigation fix (pretty-URL base bug)** — `UrlCleaner.js` rewrites the address bar to slugs like `/event-crud`, which changes the document base URL, so same-directory links (`Settings.html`, `EventCRUD.html`, `ForgotPassword.html`) resolved to non-existent root paths and 404'd. All internal navigation now uses absolute file paths (`/EventCRUD/EventCRUD.html`, …), which work on every static server while still landing on the pretty URL.
@@ -243,6 +248,8 @@ Use these placeholders in your `.docx` template:
 ## ⚠️ Notes & Gotchas
 
 - **Rules vs. site deploys are separate** — deploying to Vercel/Firebase Hosting does *not* deploy `firestore.rules` (now in `tools/`). See the [Deployment](#️-deployment) warning.
+- **Where things live** — `assets/` is loaded by the browser (favicon, shared modules); `tools/` holds deploy configs, optional Cloud Functions, and dev scripts. If you move a file again, update its references: page HTML files import the shared modules as `../assets/js/*.js` and `firebase.json` points at `tools/functions`, `tools/firestore.rules`, and `tools/storage.rules`.
+- **Commit moves as renames** — the reorganization shows up as deletes plus new `assets/`/`tools/` folders until you stage everything, so commit it in one go to keep git's rename history.
 - **Attendee names are public by design** — the See All Participants feature makes an event's attendee list (names, course, role, certificate IDs — never emails) visible to anyone with the event code.
 - **Templates are per-browser** — certificate templates live in IndexedDB and don't sync across devices.
 - **Cloud Functions are optional** — only needed for invite-code signup and the email/QR generation helpers; verification itself is client-side.
