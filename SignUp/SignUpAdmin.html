@@ -173,11 +173,80 @@
             </form>
     </div>
     </div>
-    <p class="text-center text-green-200/50 text-sm mt-4 pb-4">Information Unit @ 2025</p>
+    <p class="text-center text-green-200/50 text-sm mt-4 pb-4">
+        <button id="creditsBtn" class="text-green-300 hover:text-green-200 underline decoration-green-400/30 hover:decoration-green-400 cursor-pointer">Information Unit @ 2025</button>
+    </p>
+
+    <!-- Credits Modal -->
+    <div id="creditsModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 backdrop-blur-xl">
+        <div class="liquid-panel p-8 w-full max-w-md mx-4 liquid-glow scale-95 opacity-0 transition-all duration-300 ease-out" id="creditsModalPanel">
+            <div class="flex flex-col items-center gap-6 mb-4">
+                <div class="w-16 h-16 rounded-2xl bg-green-500/20 border border-green-400/30 flex items-center justify-center mb-2 shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+                    <svg class="w-8 h-8 text-green-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 8.088 9.246 9.5 7 11.18c-1.657 1.201-1.933 3.165-.562 4.657 1.374 1.515 3.59 1.515 4.963 0 1.372-1.492 1.096-3.456-.562-4.657zM16 10.946c.772-.561 1.03-1.55.62-2.301s-1.058-1.656-1.83-1.83c-.75-.17-1.74-.04-2.301.62s-.954 1.55-.62 2.301c.33.75.926 1.55 1.83 1.83.75.17 1.74.04 2.301-.62zM9.878 13.68c-.279.38-.476.814-.572 1.3-.096.486-.06 1.02.158 1.44.218.42.614.756 1.198.852.584.096 1.186-.136 1.568-.524.382-.388.47-.996.236-1.47-.234-.474-.652-.872-1.132-1.128-.48-.256-.914-.46-1.226-.494zm6.244 0c.279.38.476.814.572 1.3.096.486.06 1.02-.158 1.44-.218.42-.614.756-1.198.852-.584.096-1.186-.136-1.568-.524-.382-.388-.47-.996-.236-1.47.234-.474.652-.872 1.132-1.128.48-.256.914-.46 1.226-.494z" />
+                    </svg>
+                </div>
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-green-100 tracking-tight">Credits</h2>
+                    <p class="text-green-200/60 text-sm">Certificate Verification System</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="px-3 py-2 rounded-xl border border-green-400/10 bg-green-500/5">
+                    <span class="block text-xs font-semibold text-green-400/80 uppercase tracking-wider">Spearhead</span>
+                    <span class="block text-green-100 text-sm font-medium">John Led G. Joaquin</span>
+                </div>
+                <div class="px-3 py-2 rounded-xl border border-green-400/10 bg-green-500/5">
+                    <span class="block text-xs font-semibold text-green-400/80 uppercase tracking-wider">Lead Developer</span>
+                    <span class="block text-green-100 text-sm font-medium">Keneth Kyle E. Quiachon</span>
+                </div>
+                <div class="px-3 py-2 rounded-xl border border-green-400/10 bg-green-500/5">
+                    <span class="block text-xs font-semibold text-green-400/80 uppercase tracking-wider">UI Developer</span>
+                    <span class="block text-green-100 text-sm font-medium">Mark Einstein P. Cielo</span>
+                </div>
+                <div class="px-3 py-2 rounded-xl border border-green-400/10 bg-green-500/5">
+                    <span class="block text-xs font-semibold text-green-400/80 uppercase tracking-wider">Project Manager</span>
+                    <span class="block text-green-100 text-sm font-medium">Jan Mikhail M. Pating</span>
+                </div>
+                <div class="px-3 py-2 rounded-xl border border-green-400/10 bg-green-500/5">
+                    <span class="block text-xs font-semibold text-green-400/80 uppercase tracking-wider">Admin</span>
+                    <span class="block text-green-100 text-sm font-medium">Jonathan G. Galiste</span>
+                </div>
+                <div class="px-3 py-2 rounded-xl border border-green-400/10 bg-green-500/5 mt-2 pt-2 border-t border-green-400/20">
+                    <span class="block text-xs font-semibold text-green-400/80 uppercase tracking-wider">Unit</span>
+                    <span class="block text-green-100 text-sm font-medium">Information Unit</span>
+                </div>
+            </div>
+            <div class="pt-6">
+                <button onclick="window.closeCreditsModal()" class="w-full btn-3d py-3 font-semibold">Close</button>
+            </div>
+        </div>
+    </div>
     <script type="module">
         import '../assets/js/UrlCleaner.js';
         import '../assets/js/PopupSystem.js';
         import '../SignUp/SignUpAdmin.js';
+    </script>
+    <script>
+        document.getElementById('creditsBtn').addEventListener('click', () => {
+            const modal = document.getElementById('creditsModal');
+            const panel = document.getElementById('creditsModalPanel');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            requestAnimationFrame(() => {
+                panel.classList.remove('scale-95', 'opacity-0');
+                panel.classList.add('scale-100', 'opacity-100');
+            });
+        });
+        window.closeCreditsModal = () => {
+            const panel = document.getElementById('creditsModalPanel');
+            panel.classList.remove('scale-100', 'opacity-100');
+            panel.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                document.getElementById('creditsModal').classList.add('hidden');
+                document.getElementById('creditsModal').classList.remove('flex');
+            }, 300);
+        };
     </script>
 </body>
 </html>

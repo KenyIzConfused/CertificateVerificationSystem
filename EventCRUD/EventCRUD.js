@@ -130,8 +130,8 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
   
   const eventTitle = document.getElementById('eventTitle').value;
   const eventDescription = document.getElementById('eventDescription').value;
-  const eventDate = document.getElementById('eventDate').value;
-  const eventTime = document.getElementById('eventTime').value;
+  const eventStartDate = document.getElementById('eventStartDate').value;
+  const eventEndDate = document.getElementById('eventEndDate').value;
   const eventLocation = document.getElementById('eventLocation').value;
   const eventDuration = document.getElementById('eventDuration').value;
   const department = document.getElementById('department').value;
@@ -144,8 +144,8 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
       await updateDoc(doc(db, 'Events', editId), {
         title: eventTitle,
         description: eventDescription,
-        date: eventDate,
-        time: eventTime,
+        startDate: eventStartDate,
+        endDate: eventEndDate,
         location: eventLocation,
         duration: eventDuration ? parseInt(eventDuration) : null,
         department: department,
@@ -164,8 +164,8 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
         adminName: currentAdminName,
         title: eventTitle,
         description: eventDescription,
-        date: eventDate,
-        time: eventTime,
+        startDate: eventStartDate,
+        endDate: eventEndDate,
         location: eventLocation,
         duration: eventDuration ? parseInt(eventDuration) : null,
         department: department,
@@ -233,12 +233,12 @@ function renderEventCard(event) {
 
           <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-5 text-sm">
             <div>
-              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Date</dt>
-              <dd class="mt-1 text-green-200">${escapeHtml(event.date || '')}</dd>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Start Date</dt>
+              <dd class="mt-1 text-green-200">${escapeHtml(event.startDate || '')}</dd>
             </div>
             <div>
-              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Time</dt>
-              <dd class="mt-1 text-green-200">${escapeHtml(event.time || '')}</dd>
+              <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">End Date</dt>
+              <dd class="mt-1 text-green-200">${escapeHtml(event.endDate || '')}</dd>
             </div>
             <div>
               <dt class="text-xs font-semibold uppercase tracking-wide text-green-200/60">Venue</dt>
@@ -412,10 +412,10 @@ window.exportSingleEvent = async (eventId, eventTitle) => {
     const attendeesSnapshot = await getDocs(collection(db, 'Events', eventId, 'Attendees'));
     const attendees = attendeesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     
-    const headers = ['Attendee Name', 'Course', 'Role', 'Date Attended', 'Status', 'Event Name', 'Certificate ID'];
+    const headers = ['Attendee Name', 'Agency', 'Role', 'Date Attended', 'Status', 'Event Name', 'Certificate ID'];
     const rows = attendees.map(attendee => [
       attendee.fullName || '',
-      attendee.course || '',
+      attendee.agency || '',
       attendee.role || '',
       attendee.dateAttended || '',
       attendee.status || '',
@@ -535,8 +535,8 @@ window.editEvent = async (eventId) => {
   
   document.getElementById('eventTitle').value = event.title || '';
   document.getElementById('eventDescription').value = event.description || '';
-  document.getElementById('eventDate').value = event.date || '';
-  document.getElementById('eventTime').value = event.time || '';
+  document.getElementById('eventStartDate').value = event.startDate || '';
+  document.getElementById('eventEndDate').value = event.endDate || '';
   document.getElementById('eventLocation').value = event.location || '';
   document.getElementById('eventDuration').value = event.duration || '';
   document.getElementById('department').value = event.department || '';

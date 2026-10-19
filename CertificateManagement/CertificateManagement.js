@@ -169,13 +169,13 @@ async function generateCertificate(attendee, templateBytes) {
     const renderData = {
         name: attendee.fullName || '',
         fullName: attendee.fullName || '',
-        course: attendee.course || '',
-        role: attendee.role || '',
-        dateAttended: attendee.dateAttended || '',
+        agency: attendee.agency || '',
+        course: attendee.agency || '',
         eventId: currentEvent.eventCode || '',
         eventCode: currentEvent.eventCode || '',
         eventTitle: currentEvent.title || '',
-        eventDate: currentEvent.date || '',
+        startDate: currentEvent.startDate || '',
+        endDate: currentEvent.endDate || '',
         eventLocation: currentEvent.location || ''
     };
 
@@ -217,7 +217,7 @@ function renderCertAttendeeRow(attendee) {
             <td class="py-4 px-2">
                 <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
             </td>
-            <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
+            <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.agency)}</td>
             <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
             <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.email || '')}</td>
             <td class="py-4 px-2 font-mono text-green-200/80">${escapeHtml(currentEvent?.eventCode || '')}</td>
@@ -244,7 +244,7 @@ function filterCertAttendees(searchTerm) {
     const term = searchTerm.toLowerCase();
     return allAttendees.filter(a =>
         (a.fullName || '').toLowerCase().includes(term) ||
-        (a.course || '').toLowerCase().includes(term) ||
+        (a.agency || '').toLowerCase().includes(term) ||
         (a.role || '').toLowerCase().includes(term) ||
         (a.email || '').toLowerCase().includes(term) ||
         (a.status || '').toLowerCase().includes(term)
@@ -373,7 +373,8 @@ window.sendSingleCertificate = async (attendeeId, btn) => {
             event_title: currentEvent.title,
             certificate_id: attendee.certificateId,
             event_code: currentEvent.eventCode || '',
-            course: attendee.course || '',
+            agency: attendee.agency || '',
+            course: attendee.agency || '',
             role: attendee.role || '',
             date_attended: attendee.dateAttended || '',
             verification_url: verificationUrl
@@ -424,7 +425,7 @@ window.openSendEmailModal = () => {
         <button onclick="window.sendSingleCertificate('${attendee.id}', this)" class="action-item w-full p-3 text-left flex items-center justify-between hover:bg-green-400/20">
             <div>
                 <div class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</div>
-                <div class="text-xs text-green-200/60">${escapeHtml(attendee.email)} • ${escapeHtml(attendee.course || '')} • ${escapeHtml(attendee.role || '')}</div>
+                <div class="text-xs text-green-200/60">${escapeHtml(attendee.email)} • ${escapeHtml(attendee.agency || '')} • ${escapeHtml(attendee.role || '')}</div>
             </div>
             ${getStatusBadge(attendee)}
         </button>
@@ -480,13 +481,16 @@ window.sendAllEmails = async (btn) => {
                 to_email: attendee.email,
                 to_name: attendee.fullName,
                 event_title: currentEvent.title,
-                certificate_id: attendee.certificateId,
-                event_code: currentEvent.eventCode || '',
-                course: attendee.course || '',
-                role: attendee.role || '',
-                date_attended: attendee.dateAttended || '',
-                verification_url: verificationUrl
-            };
+            certificate_id: attendee.certificateId,
+            event_code: currentEvent.eventCode || '',
+            agency: attendee.agency || '',
+            course: attendee.agency || '',
+            role: attendee.role || '',
+            date_attended: attendee.dateAttended || '',
+            start_date: currentEvent.startDate || '',
+            end_date: currentEvent.endDate || '',
+            verification_url: verificationUrl
+        };
 
             if (EMAILJS_CONFIG.publicKey && EMAILJS_CONFIG.publicKey !== 'YOUR_EMAILJS_PUBLIC_KEY') {
                 try {
@@ -585,7 +589,7 @@ window.openSelectAttendeeModal = () => {
         <button onclick="window.generateSingleCertificate('${attendee.id}', this)" class="action-item w-full p-3 text-left flex items-center justify-between hover:bg-green-400/20">
             <div>
                 <div class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</div>
-                <div class="text-xs text-green-200/60">${escapeHtml(attendee.course || '')} • ${escapeHtml(attendee.role || '')}</div>
+                <div class="text-xs text-green-200/60">${escapeHtml(attendee.agency || '')} • ${escapeHtml(attendee.role || '')}</div>
             </div>
             ${getStatusBadge(attendee)}
         </button>

@@ -154,7 +154,7 @@ exports.generateAndEmailCertificates = onCall(
         const certId = attendee.certificateId || '';
         const renderData = {
           fullName: attendee.fullName || '',
-          course: attendee.course || '',
+          agency: attendee.agency || '',
           role: attendee.role || '',
           dateAttended: dateStr,
           certificateId: certId
@@ -256,8 +256,8 @@ exports.verifyEvent = onCall(
       event: {
         title: event.title || '',
         description: event.description || '',
-        date: event.date || '',
-        time: event.time || '',
+        date: event.startDate || '',
+        endDate: event.endDate || '',
         location: event.location || '',
         duration: event.duration || null,
         department: event.department || '',
