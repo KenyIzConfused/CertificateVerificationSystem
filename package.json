@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:ui": "vitest ui"
   },
   "repository": {
     "type": "git",
@@ -13,7 +15,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/KenyIzConfused/CertificateVerificationSystem/issues"
   },
@@ -26,5 +28,8 @@
     "nodemailer": "^9.0.5",
     "pdf-lib": "^1.17.1",
     "pizzip": "^3.2.0"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.5"
   }
 }

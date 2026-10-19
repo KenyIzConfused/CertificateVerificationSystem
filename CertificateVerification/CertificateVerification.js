@@ -1,7 +1,8 @@
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import '../assets/js/AppCheck.js';
-import { showAlert, setButtonLoading } from '../assets/js/PopupSystem.js';
+import { showAlert, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../assets/js/PopupSystem.js';
+import { requireAdmin } from '../assets/js/FirebaseAdmin.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -15,6 +16,66 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+const themes = {
+  green: {
+    primary: '#22c55e',
+    dark: '#16a34a',
+    gradient: 'linear-gradient(135deg, #16a34a, #15803d, #166534)'
+  },
+  blue: {
+    primary: '#3b82f6',
+    dark: '#2563eb',
+    gradient: 'linear-gradient(135deg, #2563eb, #1d4ed8, #1e40af)'
+  },
+  red: {
+    primary: '#ef4444',
+    dark: '#dc2626',
+    gradient: 'linear-gradient(135deg, #dc2626, #b91c1c, #991b1b)'
+  },
+  orange: {
+    primary: '#f97316',
+    dark: '#ea580c',
+    gradient: 'linear-gradient(135deg, #ea580c, #c2410c, #9f330c)'
+  },
+  khaki: {
+    primary: '#ca8a04',
+    dark: '#a16207',
+    gradient: 'linear-gradient(135deg, #a16207, #854d0e, #713f12)'
+  },
+  white: {
+    primary: '#e5e7eb',
+    dark: '#9ca3af',
+    gradient: 'linear-gradient(135deg, #e5e7eb, #d1d5e7, #cbd5e1)'
+  },
+  dark: {
+    primary: '#1f2937',
+    dark: '#111827',
+    gradient: 'linear-gradient(135deg, #111827, #0f172a, #020617)'
+  },
+  purple: {
+    primary: '#a855f7',
+    dark: '#9333ea',
+    gradient: 'linear-gradient(135deg, #9333ea, #7e22ce, #6b21a8)'
+  }
+};
+
+function applyTheme(themeName) {
+  const theme = themes[themeName] || themes.green;
+  const root = document.documentElement;
+  root.style.setProperty('--theme-primary', theme.primary);
+  root.style.setProperty('--theme-dark', theme.dark);
+  root.style.setProperty('--theme-gradient', theme.gradient);
+}
+
+function loadTheme() {
+  const savedTheme = localStorage.getItem('selectedTheme');
+  if (savedTheme && themes[savedTheme]) {
+    applyTheme(savedTheme);
+  }
+}
+
+loadTheme();
 
 function getEventCodeFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -46,8 +107,8 @@ async function verifyEvent(eventCode) {
             eventId: eventDoc.id,
             title: event.title || '',
             description: event.description || '',
-            date: event.date || '',
-            time: event.time || '',
+            date: event.startDate || event.date || '',
+            endDate: event.endDate || event.time || '',
             location: event.location || '',
             duration: event.duration || null,
             department: event.department || '',
@@ -141,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="result-item participant-row flex items-start justify-between gap-3" data-id="${escapeHtml(p.id)}">
                 <div class="min-w-0">
                     <p class="font-semibold text-green-100 truncate">${escapeHtml(participantName(p))}</p>
-                    <p class="text-green-200/70 text-sm truncate">${escapeHtml([p.course, p.role].filter(Boolean).join(' • ')) || '—'}</p>
+                    <p class="text-green-200/70 text-sm truncate">${escapeHtml([p.agency, p.role].filter(Boolean).join(' • ')) || '—'}</p>
                 </div>
                 <div class="text-right shrink-0">
                     <span class="text-xs font-mono text-green-300/80 block">${escapeHtml(p.certificateId || '')}</span>
@@ -212,8 +273,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const event = result.event || {};
 
                 document.getElementById('eventName').textContent = event.title || '';
-                document.getElementById('eventDate').textContent = event.date || '';
-                document.getElementById('eventTime').textContent = event.time || '';
+                const start = event.startDate || event.date || '';
+                const end = event.endDate || event.time || '';
+                document.getElementById('eventDateRange').textContent = start
+                    ? `${start}${end ? ` to ${end}` : ''}`
+                    : '';
                 document.getElementById('eventLocation').textContent = event.location || '';
                 document.getElementById('eventDescription').textContent = event.description || '';
                 document.getElementById('eventOrganizer').textContent = event.organizer || '';

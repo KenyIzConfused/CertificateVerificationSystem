@@ -140,19 +140,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   const attendeeName = document.getElementById('attendeeName').value;
-  const course = document.getElementById('course').value;
+  const agency = document.getElementById('agency').value;
   const role = document.getElementById('role').value;
   const attendeeEmail = document.getElementById('attendeeEmail').value.trim();
   const dateAttended = getTodayDateString();
 
-  console.log('Adding attendee:', { attendeeName, course, role, attendeeEmail, dateAttended, eventId: currentEventId });
+  console.log('Adding attendee:', { attendeeName, agency, role, attendeeEmail, dateAttended, eventId: currentEventId });
   setButtonLoading(submitBtn, true, 'Adding...');
 
   try {
     const certificateId = await generateUniqueCertificateId(allAttendees);
     const attendeeData = {
       fullName: attendeeName,
-      course: course,
+      agency: agency,
       role: role,
       dateAttended: dateAttended,
       email: attendeeEmail,
@@ -271,7 +271,7 @@ function filterAttendees(attendeesList, searchTerm) {
   const term = searchTerm.toLowerCase();
   return attendeesList.filter(a =>
     (a.fullName || '').toLowerCase().includes(term) ||
-    (a.course || '').toLowerCase().includes(term) ||
+    (a.agency || '').toLowerCase().includes(term) ||
     (a.role || '').toLowerCase().includes(term) ||
     (a.dateAttended || '').toLowerCase().includes(term) ||
     ((a.status || '') + '').toLowerCase().includes(term) ||
@@ -318,7 +318,7 @@ function renderAttendeeRow(attendee) {
         <td class="py-4 px-2">
           <span class="font-medium text-green-100">${escapeHtml(attendee.fullName)}</span>
         </td>
-        <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.course)}</td>
+        <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.agency)}</td>
         <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.role)}</td>
         <td class="py-4 px-2 text-green-200/80">${escapeHtml(attendee.email || '')}</td>
         <td class="py-4 px-2 text-green-200/80">${attendee.dateAttended}</td>
@@ -400,7 +400,7 @@ window.editAttendee = async (attendeeId) => {
 
   document.getElementById('editAttendeeId').value = attendee.id;
   document.getElementById('editName').value = attendee.fullName || '';
-  document.getElementById('editCourse').value = attendee.course || '';
+  document.getElementById('editAgency').value = attendee.agency || '';
   document.getElementById('editRole').value = attendee.role || '';
   document.getElementById('editEmail').value = attendee.email || '';
   document.getElementById('editDateAttended').value = attendee.dateAttended || '';
@@ -423,7 +423,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   const editSubmitBtn = document.querySelector('#editAttendeeForm button[type="submit"]');
   const attendeeId = document.getElementById('editAttendeeId').value;
   const fullName = document.getElementById('editName').value;
-  const course = document.getElementById('editCourse').value;
+  const agency = document.getElementById('editAgency').value;
   const role = document.getElementById('editRole').value;
   const email = document.getElementById('editEmail').value;
   const status = document.getElementById('editStatus').value;
@@ -433,7 +433,7 @@ document.getElementById('editAttendeeForm').addEventListener('submit', async (e)
   try {
     await updateDoc(doc(db, 'Events', currentEventId, 'Attendees', attendeeId), {
       fullName,
-      course,
+      agency,
       role,
       email,
       status
@@ -472,7 +472,7 @@ window.exportAttendeesToExcel = async () => {
 
   const headers = [
     'Attendee Name',
-    'Course',
+    'Agency',
     'Role',
     'Date Attended',
     'Status',
@@ -491,7 +491,7 @@ window.exportAttendeesToExcel = async () => {
     const worksheet = workbook.addWorksheet('Attendees');
     worksheet.columns = [
       { header: 'Attendee Name', key: 'fullName', width: 28 },
-      { header: 'Course', key: 'course', width: 20 },
+      { header: 'Agency', key: 'agency', width: 20 },
       { header: 'Role', key: 'role', width: 18 },
       { header: 'Date Attended', key: 'dateAttended', width: 18 },
       { header: 'Status', key: 'status', width: 14 },
@@ -514,7 +514,7 @@ window.exportAttendeesToExcel = async () => {
       row.height = 18;
       row.values = [
         attendee.fullName || '',
-        attendee.course || '',
+        attendee.agency || '',
         attendee.role || '',
         attendee.dateAttended || '',
         attendee.status || '',
@@ -601,8 +601,8 @@ async function parseAttendeesFromSheet(file) {
       columnIndex.fullName = idx;
     } else if (header.includes('email') || header.includes('mail')) {
       columnIndex.email = idx;
-    } else if (header.includes('course')) {
-      columnIndex.course = idx;
+    } else if (header.includes('agency') || header.includes('course') || header.includes('organization')) {
+      columnIndex.agency = idx;
     } else if (header.includes('role')) {
       columnIndex.role = idx;
     } else if (header.includes('date')) {
@@ -652,7 +652,7 @@ async function parseAttendeesFromSheet(file) {
 
     const attendee = {
       fullName: fullName,
-      course: getCellValue(values, columnIndex.course),
+      agency: getCellValue(values, columnIndex.agency),
       role: getCellValue(values, columnIndex.role),
       email: getCellValue(values, columnIndex.email),
       dateAttended: dateAttended,
