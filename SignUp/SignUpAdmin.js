@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showToast, setButtonLoading } from '../assets/js/PopupSystem.js';
-import { createAdminFn } from '../assets/js/FirebaseAdmin.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDG0BxXk1LbmmsABIYtw2SgN4guroV8nFc",
@@ -13,6 +14,8 @@ const firebaseConfig = {
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 const form = document.querySelector('form');
 const submitBtn = form.querySelector('button[type="submit"]');
@@ -20,16 +23,10 @@ const submitBtn = form.querySelector('button[type="submit"]');
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const inviteCode = document.getElementById('inviteCode').value.trim().toUpperCase();
   const adminName = document.getElementById('adminName').value.trim();
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
-
-  if (!inviteCode) {
-    showAlert('Please enter your invite code', { type: 'warning' });
-    return;
-  }
 
   if (password !== confirmPassword) {
     showAlert('Passwords do not match', { type: 'warning' });
@@ -44,7 +41,15 @@ form.addEventListener('submit', async (e) => {
   setButtonLoading(submitBtn, true, 'Creating account...');
 
   try {
-    const result = await createAdminFn({ inviteCode, adminName, email, password });
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+    await setDoc(doc(db, 'Admin', userCredential.user.uid), {
+      adminName,
+      email,
+      role: 'admin',
+      createdAt: new Date()
+    });
+
     showToast('Account created successfully! Please sign in.');
     window.location.href = '../logIn/LogInAdmin.html';
   } catch (error) {

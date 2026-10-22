@@ -476,7 +476,7 @@ window.exportAttendeesToExcel = async () => {
     'Role',
     'Date Attended',
     'Status',
-    'Certificate ID'
+    'Email'
   ];
 
   const headerFillColor = 'FF92D050';
@@ -495,7 +495,7 @@ window.exportAttendeesToExcel = async () => {
       { header: 'Role', key: 'role', width: 18 },
       { header: 'Date Attended', key: 'dateAttended', width: 18 },
       { header: 'Status', key: 'status', width: 14 },
-      { header: 'Certificate ID', key: 'certificateId', width: 18 }
+      { header: 'Email', key: 'email', width: 28 }
     ];
 
     const headerRow = worksheet.getRow(1);
@@ -518,7 +518,7 @@ window.exportAttendeesToExcel = async () => {
         attendee.role || '',
         attendee.dateAttended || '',
         attendee.status || '',
-        attendee.certificateId || ''
+        attendee.email || ''
       ];
     });
 
@@ -544,11 +544,21 @@ window.exportAttendeesToExcel = async () => {
 
 document.getElementById('exportAttendeesBtn').addEventListener('click', window.exportAttendeesToExcel);
 
+function getCellText(value) {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'object') {
+    if (Array.isArray(value.richText)) {
+      return value.richText.map(r => (r && r.text) || '').join('').trim();
+    }
+    if (value.text !== undefined) return String(value.text).trim();
+    return String(value).trim();
+  }
+  return String(value).trim();
+}
+
 function getCellValue(values, colIndex) {
   if (!colIndex || colIndex >= values.length) return '';
-  const val = values[colIndex];
-  if (val === undefined || val === null) return '';
-  return val.toString().trim();
+  return getCellText(values[colIndex]);
 }
 
 function parseImportDate(val) {
@@ -556,7 +566,7 @@ function parseImportDate(val) {
   if (val instanceof Date) {
     return val.toISOString().split('T')[0];
   }
-  return val.toString().trim();
+  return getCellText(val);
 }
 
 async function generateUniqueCertificateIdForBatch(baseList, usedIds) {
@@ -596,7 +606,7 @@ async function parseAttendeesFromSheet(file) {
   const columnIndex = {};
   headerValues.forEach((val, idx) => {
     if (idx === 0 || !val) return;
-    const header = val.toString().toLowerCase().trim();
+    const header = getCellText(val).toLowerCase().trim();
     if (header.includes('name') || header.includes('attendee')) {
       columnIndex.fullName = idx;
     } else if (header.includes('email') || header.includes('mail')) {

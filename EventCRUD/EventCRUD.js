@@ -303,6 +303,13 @@ function renderEventCard(event) {
               </svg>
               Certificate Management
             </button>
+            <button onclick="window.shareEvent('${event.id}', '${escapeHtml(event.title)}')"
+              class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-0.482-0.114-0.938-0.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+              </svg>
+              Share Event
+            </button>
             <button onclick="window.closeEvent('${event.id}')" 
               class="btn-glass px-4 py-2 text-sm font-semibold flex items-center gap-1">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -509,6 +516,26 @@ window.closeEvent = async (eventId) => {
   } catch (error) {
     console.error('Error closing event:', error);
     showAlert('Failed to close event', { type: 'error' });
+  }
+};
+
+window.shareEvent = async (eventId, eventTitle) => {
+  const event = allEvents.find(e => e.id === eventId);
+  const code = event?.eventCode || eventId;
+  const title = eventTitle || event?.title || 'Event';
+  const shareText = `Join event "${title}": ${code}`;
+
+  try {
+    if (navigator.share && typeof navigator.canShare === 'function' && navigator.canShare({ title, text: shareText, url: window.location.href })) {
+      await navigator.share({ title, text: shareText, url: window.location.href });
+      showToast('Event shared!');
+      return;
+    }
+    await navigator.clipboard.writeText(shareText);
+    showToast('Event code copied to clipboard');
+  } catch (error) {
+    console.error('Error sharing event:', error);
+    showAlert('Failed to share event', { type: 'error' });
   }
 };
 
