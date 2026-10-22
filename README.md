@@ -217,13 +217,13 @@ Use these placeholders in your `.docx` template:
 | Placeholder | Value |
 | --- | --- |
 | `{name}` | Attendee's full name |
-| `{course}` | Course |
-| `{role}` | Role (e.g., Student, Speaker, Organizer) |
-| `{dateAttended}` | Date of attendance |
+| `{agency}` | Attendee's agency or organization |
+| `{course}` | Course (alias of `{agency}`, kept for backward compatibility) |
 | `{eventId}` | Event Code — identifies the event (certificates are per-event, not per-person) |
 | `{eventCode}` | Event Code (alias of `{eventId}`) |
 | `{eventTitle}` | Event title |
-| `{eventDate}` | Event date |
+| `{startDate}` | Event start date |
+| `{endDate}` | Event end date |
 | `{eventLocation}` | Event location |
 
 ---
@@ -231,6 +231,17 @@ Use these placeholders in your `.docx` template:
 ## 🆕 Recent Changes
 
 **Latest**
+- **Agency replaces Course** — attendee tables and forms now use an enterable **Agency** field instead of Course across Attendee Management and Certificate Management (more friendly for courses/events). Import header detection accepts `agency`/`course`/`organization`.
+- **Role dropdown** — Attendee Management add & edit forms now use a `<select>` with roles: Participant, Guest Speaker, Speaker, Emcee.
+- **Email disclaimer** — certificate emails now note that receiving an online copy is optional and that the email address is used solely for sending the certificate.
+- **Start Date | End Date** — event creation/editing replaced the single Date + Time fields with Start Date and End Date (multi-day events now supported); event cards and verification show the date range.
+- **Certificate placeholders updated** — `{startDate}` and `{endDate}` added; `{role}`, `{dateAttended}`, and `{eventDate}` removed from the docx templater. EmailJS template params pass `start_date` and `end_date`.
+- **Certificate Management theme consistency** — switched from hardcoded green hex colors to CSS variables (`--theme-primary` / `--theme-dark` / `--theme-gradient`) so the selected theme from Settings carries over when navigating from EventCRUD.
+- **Certificate Verification date fallback** — `startDate`/`endDate` fall back to legacy `date`/`time` so existing events still show their dates; dates render on one row ("Start Date to End Date").
+- **UI / aesthetic polish** — inputs now use solid white text with stronger borders and more visible placeholders; headings get a subtle text-shadow so they stay readable over lighter gradient areas; applied consistently across EventCRUD, Attendee Management, Certificate Management, Certificate Verification, Settings, SignUp, ForgotPassword, LogInAdmin, ResetPassword, and the landing page.
+- **Credits on every page** — the "Information Unit @ 2025" footer is now a link button that opens a liquid-glass modal (scale + fade entrance, green badge icon, role cards with glass fill) listing: Spearhead John Led G. Joaquin, Lead Developer Keneth Kyle E. Quiachon, UI Developer Mark Einstein P. Cielo, Project Manager Jan Mikhail M. Pating, Admin Jonathan G. Galiste, and Information Unit.
+
+**Previous**
 - **Certificate Management rehaul** — the attendee table now shows a color-coded **Status** column (present / late / absent / pending, matching Attendee Management) and an **Event ID** column (the event's code, from the same source as the `{eventId}` template placeholder) instead of the per-person Certificate ID, and the same status badge appears in the generate/email modals. The template placeholder `{certificateId}` is replaced by `{eventId}`, which carries the Event Code since certificates are per-event; search now matches status instead of certificate ID.
 - **Repository reorganization** — runtime files moved to `assets/` (favicon + the shared JS modules `UrlCleaner.js`, `PopupSystem.js`, `FirebaseAdmin.js`, `AppCheck.js`); rarely-used files moved to `tools/` (security rules, optional `functions/`, dev/CORS scripts, `.env.example`). All page references updated to the new paths; the dev server command is now `node tools/scripts/dev-server.js`. Files their tooling requires (`firebase.json`, `vercel.json`, `.firebaserc`, `package.json`, `LICENSE`) intentionally stay at the root.
 - **See All Participants** on `/verify-event` — a button above "Verify Another" opens an alphabetical (A–Z, case-insensitive) list of the event's attendees with a searchable dropdown, live search filtering, highlight-on-select, and per-row certificate IDs (emails never exposed). Requires the updated `firestore.rules` to be deployed.
