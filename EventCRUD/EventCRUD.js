@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch, setDoc, or } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 import { showAlert, showConfirm, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../assets/js/PopupSystem.js';
 import { requireAdmin } from '../assets/js/FirebaseAdmin.js';
 
@@ -523,16 +523,28 @@ window.shareEvent = async (eventId, eventTitle) => {
   const event = allEvents.find(e => e.id === eventId);
   const code = event?.eventCode || eventId;
   const title = eventTitle || event?.title || 'Event';
-  const shareText = `Join event "${title}": ${code}`;
+  const shareUrl = `${window.location.origin}${window.location.pathname}?eventCode=${code}`;
 
   try {
-    if (navigator.share && typeof navigator.canShare === 'function' && navigator.canShare({ title, text: shareText, url: window.location.href })) {
-      await navigator.share({ title, text: shareText, url: window.location.href });
-      showToast('Event shared!');
+    const eventDoc = doc(db, 'Events', eventId);
+    const snap = await getDoc(eventDoc);
+    if (!snap.exists()) {
+      showAlert('Event not found', { type: 'error' });
       return;
     }
-    await navigator.clipboard.writeText(shareText);
-    showToast('Event code copied to clipboard');
+    if (snap.data().adminId !== currentUser.uid) {
+      showAlert('Access denied.', { type: 'error' });
+      return;
+    }
+
+    await updateDoc(eventDoc, { isPublic: true });
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Event is now public — link copied');
+    } catch (clipError) {
+      showToast('Event is now public');
+    }
   } catch (error) {
     console.error('Error sharing event:', error);
     showAlert('Failed to share event', { type: 'error' });
@@ -638,7 +650,10 @@ onAuthStateChanged(auth, async (user) => {
     
     backfillAdminNames(user.uid, currentAdminName);
 
-    const q = query(collection(db, 'Events'), where('adminId', '==', user.uid));
+    const q = query(
+      collection(db, 'Events'),
+      or(where('adminId', '==', user.uid), where('isPublic', '==', true))
+    );
     onSnapshot(q, async (snapshot) => {
       const events = [];
       snapshot.forEach((doc) => {
