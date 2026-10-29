@@ -13,37 +13,25 @@ service cloud.firestore {
     }
 
     // Invite codes - created and validated only by Cloud Functions
-    // (Admin SDK). No client read/write access; codes gate admin signup.
+    // (Admin SDK). No client read/write access.
     match /inviteCodes/{code} {
       allow read, write: if false;
     }
 
-    // Events collection - admins can CRUD their own events
-    // Single-document reads stay public; list queries allowed for eventCode lookup
+    // Events collection - fully open: anyone can read, create, update, delete
     match /Events/{eventId} {
-      allow get: if true;
-      allow list: if true;
-      // Owner-only modification: resource.data is the stored document, so a
-      // logged-in user cannot take over an event by forging adminId in the payload
-      allow update, delete: if request.auth != null &&
-        resource.data.adminId == request.auth.uid;
-      // New events must be created by - and assigned to - the calling admin
-      allow create: if request.auth != null &&
-        request.resource.data.adminId == request.auth.uid;
+      allow get, list: if true;
+      allow create, update, delete: if true;
 
-      // Attendees subcollection - public read so attendees can be listed on the
-      // public "Verify Event" page (See All Participants); writes stay owner-only
+      // Attendees subcollection - fully open
       match /Attendees/{attendeeId} {
-        allow get: if true;
-        allow list: if true;
-        allow write: if request.auth != null &&
-          get(/databases/$(database)/documents/Events/$(eventId)).data.adminId == request.auth.uid;
+        allow get, list: if true;
+        allow create, update, delete: if true;
       }
 
-      // Certificate formats (docx templates) per event - editable by the event owner
+      // Certificate formats - fully open
       match /certificateFormats/{formatId} {
-        allow read, write: if request.auth != null &&
-          get(/databases/$(database)/documents/Events/$(eventId)).data.adminId == request.auth.uid;
+        allow read, write: if true;
       }
     }
   }

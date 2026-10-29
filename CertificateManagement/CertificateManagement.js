@@ -2,8 +2,7 @@ import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebase
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-import { showAlert, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../assets/js/PopupSystem.js';
-import { requireAdmin } from '../assets/js/FirebaseAdmin.js';
+import { showAlert, showToast, setButtonLoading } from '../assets/js/PopupSystem.js';
 
 const themes = {
   green: {
@@ -729,75 +728,44 @@ document.addEventListener('keydown', (e) => {
     else if (e.key === 'ArrowRight') { e.preventDefault(); window.changeCertPage(1); }
 });
 
-onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        stopSessionEnforcement();
-        window.location.href = '../logIn/LogInAdmin.html';
-        return;
-    }
+// Re-read event ID from localStorage
+currentEventId = localStorage.getItem('certEventId');
 
-    if (!(await requireAdmin())) {
-        window.location.href = '../logIn/LogInAdmin.html';
-        return;
-    }
-
-    // Load theme from Firestore if available
-    const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
-    const adminData = adminDoc.exists() ? adminDoc.data() : {};
-    if (adminData.selectedTheme) {
-        applyTheme(adminData.selectedTheme);
-    }
-
-    await registerSession(user);
-    startSessionEnforcement(user);
-
-    // Re-read event ID after auth state is confirmed
-    currentEventId = localStorage.getItem('certEventId');
-
-    if (!currentEventId) {
-        window.location.href = '../EventCRUD/EventCRUD.html';
-        return;
-    }
-
+if (!currentEventId) {
+    window.location.href = '../EventCRUD/EventCRUD.html';
+} else {
     try {
         const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
         if (!eventDoc.exists()) {
             showAlert('Event not found', { type: 'error' });
             window.location.href = '../EventCRUD/EventCRUD.html';
-            return;
-        }
-
-        if (eventDoc.data().adminId !== user.uid) {
-            showAlert('Access denied: this event belongs to another admin.', { type: 'error' });
-            window.location.href = '../EventCRUD/EventCRUD.html';
-            return;
-        }
-
-        currentEvent = { id: eventDoc.id, ...eventDoc.data() };
-        document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
-
-        // Load template - check IndexedDB cache first (avoids Firebase Storage CORS fetch)
-        const cachedTemplate = await getTemplateFromIndexedDb(currentEventId);
-        if (cachedTemplate) {
-            templateBytes = cachedTemplate;
-            document.getElementById('templateStatus').textContent = 'Template loaded from cache.';
-            document.getElementById('templateStatus').classList.remove('hidden');
         } else {
-            // No template available - user needs to upload one
-            document.getElementById('templateStatus').textContent = 'No template cached. Please upload a template.';
-            document.getElementById('templateStatus').classList.remove('hidden');
+            currentEvent = { id: eventDoc.id, ...eventDoc.data() };
+            document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
+
+            // Load template - check IndexedDB cache first (avoids Firebase Storage CORS fetch)
+            const cachedTemplate = await getTemplateFromIndexedDb(currentEventId);
+            if (cachedTemplate) {
+                templateBytes = cachedTemplate;
+                document.getElementById('templateStatus').textContent = 'Template loaded from cache.';
+                document.getElementById('templateStatus').classList.remove('hidden');
+            } else {
+                // No template available - user needs to upload one
+                document.getElementById('templateStatus').textContent = 'No template cached. Please upload a template.';
+                document.getElementById('templateStatus').classList.remove('hidden');
+            }
+
+            // Load attendees
+            const attendeesSnap = await getDocs(collection(db, 'Events', currentEventId, 'Attendees'));
+            allAttendees = [];
+            attendeesSnap.forEach(docSnap => {
+                allAttendees.push({ id: docSnap.id, ...docSnap.data() });
+            });
+
+            renderCertAttendees();
         }
-
-        // Load attendees
-        const attendeesSnap = await getDocs(collection(db, 'Events', currentEventId, 'Attendees'));
-        allAttendees = [];
-        attendeesSnap.forEach(docSnap => {
-            allAttendees.push({ id: docSnap.id, ...docSnap.data() });
-        });
-
-        renderCertAttendees();
     } catch (error) {
         console.error('Error loading event:', error);
         window.location.href = '../EventCRUD/EventCRUD.html';
     }
-});
+}

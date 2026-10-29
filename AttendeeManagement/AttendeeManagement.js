@@ -2,8 +2,7 @@ import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebase
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-import { showAlert, showToast, showConfirm, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../assets/js/PopupSystem.js';
-import { requireAdmin } from '../assets/js/FirebaseAdmin.js';
+import { showAlert, showToast, showConfirm, setButtonLoading } from '../assets/js/PopupSystem.js';
 
 const themes = {
   green: {
@@ -770,73 +769,39 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowRight') { e.preventDefault(); window.changeAttendeePage(1); }
 });
 
-onAuthStateChanged(auth, async (user) => {
-  console.log('Auth state changed:', user ? 'logged in' : 'logged out');
+// Re-read event ID from localStorage
+currentEventId = localStorage.getItem('currentEventId');
 
-  if (!user) {
-    stopSessionEnforcement();
-    window.location.href = '../logIn/LogInAdmin.html';
-    return;
-  }
-
-  if (!(await requireAdmin())) {
-    window.location.href = '../logIn/LogInAdmin.html';
-    return;
-  }
-
-  // Load theme from Firestore if available
-  const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
-  const adminData = adminDoc.exists() ? adminDoc.data() : {};
-  if (adminData.selectedTheme) {
-    applyTheme(adminData.selectedTheme);
-  }
-
-  await registerSession(user);
-  startSessionEnforcement(user);
-
-  // Re-read event ID after auth state is confirmed
-  currentEventId = localStorage.getItem('currentEventId');
-
-  if (!currentEventId) {
-    console.log('No event ID found, redirecting...');
-    window.location.href = '../EventCRUD/EventCRUD.html';
-    return;
-  }
-
-try {
+if (!currentEventId) {
+  console.log('No event ID found, redirecting...');
+  window.location.href = '../EventCRUD/EventCRUD.html';
+} else {
+  try {
     const eventDoc = await getDoc(doc(db, 'Events', currentEventId));
     if (!eventDoc.exists()) {
       showAlert('Event not found', { type: 'error' });
       window.location.href = '../EventCRUD/EventCRUD.html';
-      return;
+    } else {
+      currentEvent = { id: eventDoc.id, ...eventDoc.data() };
+      document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
+
+      console.log('Loading attendees for eventId:', currentEventId);
+      try {
+        const attendeesSnap = await getDocs(collection(db, 'Events', currentEventId, 'Attendees'));
+        console.log('Attendees snapshot, docs:', attendeesSnap.size);
+        allAttendees = [];
+        attendeesSnap.forEach((docSnap) => {
+          allAttendees.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        console.log('All attendees loaded:', allAttendees);
+        renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
+      } catch (attendeeError) {
+        console.error('Error loading attendees:', attendeeError);
+        showAlert('Failed to load attendees: ' + attendeeError.message, { type: 'error' });
+      }
     }
-
-    if (eventDoc.data().adminId !== user.uid) {
-      showAlert('Access denied: this event belongs to another admin.', { type: 'error' });
-      window.location.href = '../EventCRUD/EventCRUD.html';
-      return;
-    }
-
-    currentEvent = { id: eventDoc.id, ...eventDoc.data() };
-    document.getElementById('eventInfo').textContent = `Event: ${currentEvent.title}`;
-
-    console.log('Loading attendees for eventId:', currentEventId);
-    try {
-      const attendeesSnap = await getDocs(collection(db, 'Events', currentEventId, 'Attendees'));
-      console.log('Attendees snapshot, docs:', attendeesSnap.size);
-      allAttendees = [];
-      attendeesSnap.forEach((docSnap) => {
-        allAttendees.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      console.log('All attendees loaded:', allAttendees);
-      renderAttendees(allAttendees, document.getElementById('attendeesSearch')?.value || '');
-    } catch (attendeeError) {
-      console.error('Error loading attendees:', attendeeError);
-      showAlert('Failed to load attendees: ' + attendeeError.message, { type: 'error' });
-    }
-
   } catch (error) {
     console.error('Error loading event:', error);
     window.location.href = '../EventCRUD/EventCRUD.html';
   }
-});
+}

@@ -1,8 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, deleteDoc, updateDoc, getDoc, getDocs, writeBatch, setDoc, or } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-import { showAlert, showConfirm, showToast, setButtonLoading, registerSession, startSessionEnforcement, stopSessionEnforcement } from '../assets/js/PopupSystem.js';
-import { requireAdmin } from '../assets/js/FirebaseAdmin.js';
+import { showAlert, showConfirm, showToast, setButtonLoading } from '../assets/js/PopupSystem.js';
 
 const themes = {
   green: {
@@ -77,8 +76,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let currentUser = null;
-let currentAdminName = '';
 let allEvents = [];
 let filteredEvents = [];
 let currentPage = 1;
@@ -123,11 +120,6 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
   const submitBtn = document.querySelector('#eventForm button[type="submit"]');
   if (submitBtn.disabled) return;
   
-  if (!currentUser) {
-    showAlert('Please log in first', { type: 'warning' });
-    return;
-  }
-  
   const eventTitle = document.getElementById('eventTitle').value;
   const eventDescription = document.getElementById('eventDescription').value;
   const eventStartDate = document.getElementById('eventStartDate').value;
@@ -160,8 +152,6 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
       setButtonLoading(submitBtn, true, 'Creating...');
       const eventCode = await generateUniqueEventCode(allEvents);
       await addDoc(collection(db, 'Events'), {
-        adminId: currentUser.uid,
-        adminName: currentAdminName,
         title: eventTitle,
         description: eventDescription,
         startDate: eventStartDate,
@@ -473,10 +463,6 @@ window.deleteEvent = async (eventId) => {
       showAlert('Event not found', { type: 'error' });
       return;
     }
-    if (eventDoc.data().adminId !== currentUser.uid) {
-      showAlert('Access denied.', { type: 'error' });
-      return;
-    }
     const attendeesQuery = query(collection(db, 'Events', eventId, 'Attendees'));
     const snapshot = await getDocs(attendeesQuery);
     
@@ -504,10 +490,6 @@ window.closeEvent = async (eventId) => {
       showAlert('Event not found', { type: 'error' });
       return;
     }
-    if (eventDoc.data().adminId !== currentUser.uid) {
-      showAlert('Access denied.', { type: 'error' });
-      return;
-    }
     await updateDoc(doc(db, 'Events', eventId), {
       status: 'completed',
       closedAt: new Date()
@@ -530,10 +512,6 @@ window.shareEvent = async (eventId, eventTitle) => {
     const snap = await getDoc(eventDoc);
     if (!snap.exists()) {
       showAlert('Event not found', { type: 'error' });
-      return;
-    }
-    if (snap.data().adminId !== currentUser.uid) {
-      showAlert('Access denied.', { type: 'error' });
       return;
     }
 
@@ -560,10 +538,6 @@ window.editEvent = async (eventId) => {
   const eventDoc = await getDoc(doc(db, 'Events', eventId));
   if (!eventDoc.exists()) {
     showAlert('Event not found', { type: 'error' });
-    return;
-  }
-  if (eventDoc.data().adminId !== currentUser.uid) {
-    showAlert('Access denied.', { type: 'error' });
     return;
   }
   const event = eventDoc.data();
@@ -624,56 +598,22 @@ async function backfillAdminNames(adminUid, adminName) {
   }
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    if (!(await requireAdmin())) {
-      window.location.href = '../logIn/LogInAdmin.html';
-      return;
+const q = query(collection(db, 'Events'));
+onSnapshot(q, async (snapshot) => {
+  const events = [];
+  snapshot.forEach((doc) => {
+    events.push({ id: doc.id, ...doc.data() });
+  });
+
+  const eventsWithCounts = await Promise.all(events.map(async (event) => {
+    try {
+      const attendeesSnapshot = await getDocs(collection(db, 'Events', event.id, 'Attendees'));
+      return { ...event, attendeeCount: attendeesSnapshot.size };
+    } catch (error) {
+      console.error('Error fetching attendee count for event', event.id, error);
+      return { ...event, attendeeCount: 0 };
     }
+  }));
 
-    currentUser = user;
-    await registerSession(user);
-    startSessionEnforcement(user);
-    
-    const adminDoc = await getDoc(doc(db, 'Admin', user.uid));
-    const adminData = adminDoc.exists() ? adminDoc.data() : {};
-    const adminName = adminData.adminName || user.email;
-    currentAdminName = adminName;
-    const departmentName = adminData.departmentName || adminData.department || 'Information Unit';
-    document.getElementById('departmentName').textContent = departmentName;
-    document.title = `${departmentName}: Event CRUD`;
-    document.getElementById('adminName').textContent = `Admin: ${adminName}`;
-    
-    if (adminData.selectedTheme) {
-      applyTheme(adminData.selectedTheme);
-    }
-    
-    backfillAdminNames(user.uid, currentAdminName);
-
-    const q = query(
-      collection(db, 'Events'),
-      or(where('adminId', '==', user.uid), where('isPublic', '==', true))
-    );
-    onSnapshot(q, async (snapshot) => {
-      const events = [];
-      snapshot.forEach((doc) => {
-        events.push({ id: doc.id, ...doc.data() });
-      });
-
-      const eventsWithCounts = await Promise.all(events.map(async (event) => {
-        try {
-          const attendeesSnapshot = await getDocs(collection(db, 'Events', event.id, 'Attendees'));
-          return { ...event, attendeeCount: attendeesSnapshot.size };
-        } catch (error) {
-          console.error('Error fetching attendee count for event', event.id, error);
-          return { ...event, attendeeCount: 0 };
-        }
-      }));
-
-      window.handleEventUpdate(eventsWithCounts);
-    });
-  } else {
-    stopSessionEnforcement();
-    window.location.href = '../logIn/LogInAdmin.html';
-  }
+  window.handleEventUpdate(eventsWithCounts);
 });
