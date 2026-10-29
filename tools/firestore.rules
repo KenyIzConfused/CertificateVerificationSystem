@@ -18,18 +18,18 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Events collection - fully open: anyone can read, create, update, delete
+    // Events collection - fully public: anyone can read, create, update, delete
     match /Events/{eventId} {
       allow get, list: if true;
       allow create, update, delete: if true;
 
-      // Attendees subcollection - fully open
+      // Attendees subcollection - fully public
       match /Attendees/{attendeeId} {
         allow get, list: if true;
         allow create, update, delete: if true;
       }
 
-      // Certificate formats - fully open
+      // Certificate formats - fully public
       match /certificateFormats/{formatId} {
         allow read, write: if true;
       }

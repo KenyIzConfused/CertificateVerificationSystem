@@ -72,7 +72,7 @@
 ### 🔑 Authentication
 - Admin signup and login with email/password (the first signup creates the first admin)
 - Password reset via email
-- Each admin manages only their own events (data isolation)
+- **No data isolation** — EventCRUD, Attendee Management, and Certificate Management are open to all; any visitor can view/add/edit/delete any event and attendee records
 - Session enforcement (auto-logout after inactivity)
 - **Optional hardening:** invite-code signup and the `admin` custom claim live in `tools/functions/index.js` (`createAdmin`, `generateInviteCode`, `ensureAdminClaim`) — deploy the functions and switch `SignUpAdmin.js` back to the `createAdmin` flow to enable them
 
@@ -82,12 +82,12 @@
 
 | Area | Rule |
 | --- | --- |
-| **Event ownership** | Only the creating admin can edit, delete, or close an event. Rules check the *stored* `adminId`, so a logged-in user can't take over an event by forging `adminId` in the request |
-| **Data isolation** | The event list filters to the logged-in admin; Attendee and Certificate Management reject events owned by other admins |
-| **Public reads — Events** | `get` and `list` are public so the event-code verification lookup works for anonymous visitors |
-| **Public reads — Attendees** | `get` and `list` are public to power the **See All Participants** list on the verification page — a deliberate trade-off: attendee names, course, role, and certificate IDs for an event are visible to anyone with the event code, while **emails never are** |
-| **Certificate formats** | Owner-only read/write (templates may contain sensitive data) |
-| **Admin & sessions** | Each admin reads/writes only their own `Admin` and `adminSessions` documents |
+| **Event ownership** | Fully public — any visitor can create, edit, or delete any event. Stored `adminId` fields are ignored and not enforced |
+| **Data isolation** | None — EventCRUD, Attendee Management, and Certificate Management are open to all. Any visitor can view/add/edit/delete any event and its attendee records |
+| **Public reads — Events** | Fully open — `get` and `list` are public |
+| **Public reads — Attendees** | Fully open — attendee names, emails, agency, role, date attended, status, and certificate IDs are visible to anyone |
+| **Certificate formats** | Fully open — anyone can read/write certificate templates per event |
+| **Admin & sessions** | Admin documents remain auth-only (each account manages its own `Admin` record); Settings stays login-protected |
 | **Invite codes** | Client access disabled — created and validated only by Cloud Functions (Admin SDK) |
 | **Optional hardening** | Invite-code signup with an `admin` custom claim, and Firebase App Check (reCAPTCHA v3) via `AppCheck.js` — both off by default |
 
@@ -261,10 +261,12 @@ Use these placeholders in your `.docx` template:
 
 ## ⚠️ Notes & Gotchas
 
+- **All management pages are public** — EventCRUD, Attendee Management, and Certificate Management require no login. Any visitor can create, edit, or delete events, add/edit/delete attendees, upload templates, and generate certificates. Settings remains login-protected.
+- **`adminId` is not enforced** — existing `adminId` fields on events are ignored; new events no longer store `adminId` or `adminName`. You may leave existing `adminId` values in place or remove them; either way writes are open to everyone.
+- **Attendee emails are public** — attendee records (including emails) are visible to anyone with access to an event's attendee list.
 - **Rules vs. site deploys are separate** — deploying to Vercel/Firebase Hosting does *not* deploy `firestore.rules` (now in `tools/`). See the [Deployment](#️-deployment) warning.
 - **Where things live** — `assets/` is loaded by the browser (favicon, shared modules); `tools/` holds deploy configs, optional Cloud Functions, and dev scripts. If you move a file again, update its references: page HTML files import the shared modules as `../assets/js/*.js` and `firebase.json` points at `tools/functions`, `tools/firestore.rules`, and `tools/storage.rules`.
 - **Commit moves as renames** — the reorganization shows up as deletes plus new `assets/`/`tools/` folders until you stage everything, so commit it in one go to keep git's rename history.
-- **Attendee names are public by design** — the See All Participants feature makes an event's attendee list (names, course, role, certificate IDs — never emails) visible to anyone with the event code.
 - **Templates are per-browser** — certificate templates live in IndexedDB and don't sync across devices.
 - **Cloud Functions are optional** — only needed for invite-code signup and the email/QR generation helpers; verification itself is client-side.
 - **EmailJS free tier** — attachments need a paid plan; the current implementation sends certificate details and the verification link in the email body, with a `mailto:` fallback.
